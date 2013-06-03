@@ -1,0 +1,22 @@
+Requirements
+------------
+
+- the Boost library is used for various tasks, so install 
+	libboost-dev and possibly libboost-thread-dev and libboost-system-dev
+- GLUT and openGL (we use freeGLUT)
+	freeglut3-dev 
+	
+Compile
+-------
+
+'make' in the base directory should do the job
+
+'make clean' is also available
+
+As it is now, it will NOT work if you try to execute 'make' directly in a subdirectory. The makefiles in the subdirectories rely upon parameters sent by the base makefile.
+Even if you modified only your own application's source, compile it by running 'make' at the simulator's base directory
+
+The applications binaries will appear in subdirectories of applicationsBin
+
+Note that the makefile always computes the correct dependencies, even upon modified headers (.h) files. 
+A "make clean" is thus only necessary if you changed compile options in the makefile itself.

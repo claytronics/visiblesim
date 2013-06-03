@@ -1,0 +1,11 @@
+<?xml version="1.0" standalone="no" ?>
+<world gridsize="100.0,100.0" spacesize="20,20,20">
+<blocks loadFromVM="true" shape="blinkyblock" color="64,64,64" size="10,10,10" >
+
+<block id="0" position="1,1"/>
+<block id="1" position="3,1"/>
+<block id="2" position="1,3"/>
+
+</blocks>
+
+</world>

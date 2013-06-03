@@ -1,0 +1,45 @@
+<?xml version="1.0" standalone="no" ?>
+<world gridsize="20,20">
+	<blockList color="0,255,0" size="1,1,1" blocksize="25.0,25.0,11.0">
+
+		<block position="10,10" color="0,128,128"/>
+
+		<!--Neighbors 1-->
+		<block position="10,11"/>
+		<block position="11,10"/>
+		<block position="10,9"/>
+
+		<!--Neighbors 2-->
+		<block position="12,10"/>
+		<block position="11,11"/>
+		<block position="9,11"/>
+		<block position="10,12"/>
+
+		<!--Neighbors 3-->
+		<block position="10,13"/>
+
+		<!--others-->
+		<block position="9,13"/>
+		<block position="9,14"/>
+		<block position="10,14"/>
+		<block position="10,15"/>
+		<block position="11,15"/>
+		<block position="11,16"/>
+		<block position="12,16"/>
+		<block position="11,14"/>
+		<block position="12,14"/>
+		<block position="11,13"/>
+
+		<block position="12,9"/>
+
+
+<!--
+		<block position="1,2"/>
+		<block position="2,1"/>
+		<block position="3,0"/>
+-->
+
+	</blockList>
+</world>
+
+

@@ -1,0 +1,28 @@
+<?xml version="1.0" standalone="no" ?>
+<world gridsize="50,50">
+<blocks color="255,255,0">
+<block position="2,2" color="255,0,0"/>
+<block position="2,4" color="255,0,0"/>
+<block position="2,6" color="255,0,0"/>
+<block position="2,8"/>
+<block position="4,2"/>
+<block position="4,4"/>
+<block position="4,6"/>
+<block position="4,8"/>
+<block position="6,2"/>
+<block position="6,4"/>
+<block position="6,6"/>
+<block position="6,8"/>
+<block position="8,2"/>
+<block position="8,4"/>
+<block position="8,6"/>
+<block position="8,8"/>
+
+</blocks>
+
+<objects>
+<object position="40.5,8" velocity="0.5,1.5" path="40,8,0,10,8,42.5,-10,0"/>
+
+</objects>
+
+</world>
