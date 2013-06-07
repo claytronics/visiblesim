@@ -1,7 +1,12 @@
 visiblesim
 ==========
 
-Requierements:
-- Boost C++ Libraries : libboost-all-dev
-- GLUT : freeglut3-dev
-- GLEW : libglew1.6-dev
+Dependencies:
+	- Boost C++ Libraries
+	- GLUT 
+	- GLEW
+
+On Ubuntu 12.04:
+	- libboost-all-dev
+	- freeglut3-dev
+	- libglew1.6-dev
