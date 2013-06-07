@@ -1,5 +1,7 @@
-SUBDIRS = flavio01 blinky01 smartBlocks1 leader_election coloration\
-          coloration_v2
+#SUBDIRS = flavio01 blinky01 smartBlocks1 leader_election coloration\
+#          coloration_v2
+
+SUBDIRS = blinky01
 
 .PHONY: subdirs $(SUBDIRS)
 

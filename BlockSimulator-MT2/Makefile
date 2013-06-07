@@ -8,10 +8,10 @@
 # two versions are proposed for each, you have to choose
 
 #for macOSX
-GLOBAL_LIBS = "-L./ -L/usr/local/lib -L/opt/local/lib -lGLEW -lglut -framework GLUT -framework OpenGL -L/usr/X11/lib /usr/local/lib/libglut.dylib -lsimMultiCores -lsimBlinkyBlocks -lsimSmartBlocks -lboost_thread-mt  -lboost_system-mt" 
+#GLOBAL_LIBS = "-L./ -L/usr/local/lib -L/opt/local/lib -lGLEW -lglut -framework GLUT -framework OpenGL -L/usr/X11/lib /usr/local/lib/libglut.dylib -lsimMultiCores -lsimBlinkyBlocks -lsimSmartBlocks -lboost_thread-mt  -lboost_system-mt" 
 
 #for linux
-#GLOBAL_LIBS = "-L./ -L/usr/local/lib  -L/usr/X11/lib -lsimMultiCores -lsimBlinkyBlocks -lsimSmartBlocks -lpthread -lGLEW -lGL -lGLU -lglut -lboost_thread -lboost_system"
+GLOBAL_LIBS = "-L./ -L/usr/local/lib  -L/usr/X11/lib -lsimMultiCores -lsimBlinkyBlocks -lsimSmartBlocks -lpthread -lGLEW -lGL -lGLU -lglut -lboost_thread-mt -lboost_system"
 
 #for debug version
 GLOBAL_CCFLAGS = "-g -Wall -DTINYXML_USE_STL -DTIXML_USE_STL -DDEBUG_VM_MESSAGES"
