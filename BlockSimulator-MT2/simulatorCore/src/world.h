@@ -49,7 +49,7 @@ public:
 	inline GlBlock* getSelectedBlock() { return selectedBlock; };
 	inline GlBlock* setSelectedBlock(int n) { return (selectedBlock=tabGlBlocks[n]); };
 	inline GlBlock* getBlockByNum(int n) { return tabGlBlocks[n]; };
-
+	
 	void lock();
 	void unlock();
 	virtual void glDraw() {};

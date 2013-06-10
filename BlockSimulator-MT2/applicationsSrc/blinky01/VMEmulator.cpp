@@ -7,6 +7,9 @@
 
 #include <iostream>
 #include <boost/asio.hpp>
+#include "VMEmulator.h"
+#include <list>
+#include <boost/thread.hpp>
 
 using namespace std;
 using boost::asio::ip::tcp;
@@ -20,16 +23,29 @@ using boost::asio::ip::tcp;
 #define VM_MESSAGE_TYPE_RECEIVE_MESSAGE         7
 #define VM_MESSAGE_TYPE_WAIT_FOR_MESSAGE	8
 
-typedef struct VMMessage_tt {
-        uint64_t messageType;
-        uint64_t param1;
-        uint64_t param2;
-        uint64_t param3;
-} VMMessage_t;
+class SimulatedVM {
+protected:
+//	static int nextId;
+public:
+	static int nextId;
+	int id;
+	SimulatedVM() {
+		id = nextId;
+		nextId++;
+		cout << "created VM " << id << endl;
+	}
+	~SimulatedVM() {
 
-int main(int argc, char **argv) {
+	}
+};
+
+int SimulatedVM::nextId = 0;
+list<SimulatedVM*> simulatedVMList;
+list<boost::thread*> threadsList;
+
+void vm_thread_function(void *data) {
 	cout << "VMEmulator start" << endl;
-
+	
 	boost::asio::io_service ios;
 	boost::asio::ip::tcp::resolver resolver(ios);
 
@@ -41,6 +57,7 @@ int main(int argc, char **argv) {
 	boost::asio::ip::tcp::endpoint endpoint;
 
 	string msg ("Bienvenue sur le serveur !");
+	cout << msg << endl;
 	if (iter != end) {
 		endpoint = *iter;
 		std::cout << endpoint << std::endl;
@@ -51,12 +68,35 @@ int main(int argc, char **argv) {
 	tcp::socket socket(ios);
 	//socket.open(tcp::v4());
 	//boost::asio::connect(socket, iter);
+	try {
 	socket.connect(*iter);
+	} catch (std::exception& e) { cerr << "Connection to the Simulator failed" << endl; }
 
 	VMMessage_t response;
 	boost::asio::ip::tcp::endpoint VMEndpoint;
 	size_t length;
 
+	/*try {
+		length = boost::asio::read(socket,boost::asio::buffer((void*)&response, sizeof(response)) );
+		if (length > 0) cout << "response : " << response.messageType << " from block " << response.param1 << endl;
+		cout << "response received" << endl;
+	} catch (std::exception& e) {
+		cout << "VMEmulator" << endl;	
+	}*/
+	
+	cout << "VMEmulator start" << endl;
+	/*VMMessage_t m1;
+	m1.messageType = VM_MESSAGE_TYPE_START_SIMULATION;
+	m1.param1 = 2;
+	boost::asio::write(socket, boost::asio::buffer((void*)&m1,sizeof(m1)));
+	getchar();*/
+	VMMessage_t mes;
+	boost::asio::read(socket,boost::asio::buffer((void*)&mes, sizeof(VMMessage_t)) );
+	cout << "VM id received: " << mes.param1 << endl;
+	cout << "VMEmulator end" << endl;
+
+
+	/*
 	cout << "press a key to proceed" << endl;
 
 	getchar();
@@ -110,7 +150,7 @@ int main(int argc, char **argv) {
 	if (length > 0) cout << "response : " << response.messageType << " from block " << response.param1 << endl;
 	cout << "response received" << endl;
 
-
+	*/
 	/*
 	getchar();
 	m1.messageType = VM_MESSAGE_TYPE_COMPUTATION_LOCK;
@@ -120,7 +160,7 @@ int main(int argc, char **argv) {
 	cout << "COMPUTATION_LOCK for 1 sent (6)" << endl;
 */
 
-
+/*
 	getchar();
 	m1.messageType = VM_MESSAGE_TYPE_COMPUTATION_LOCK;
 	m1.param1 = 0;
@@ -145,7 +185,7 @@ int main(int argc, char **argv) {
 	length = boost::asio::read(socket,boost::asio::buffer((void*)&response, sizeof(response)) );
 	if (length > 0) cout << "response : " << response.messageType << " from block " << response.param1 << endl;
 	cout << "response received" << endl;
-
+*/
 	/*
 	getchar();
 	m1.messageType = VM_MESSAGE_TYPE_WAIT_FOR_MESSAGE;
@@ -154,7 +194,7 @@ int main(int argc, char **argv) {
 	cout << "WAIT_FOR_MESSAGE sent to 0" << endl;
 */
 
-
+/*
 	getchar();
 	m1.messageType = VM_MESSAGE_TYPE_SEND_MESSAGE;
 	m1.param1 = 0;
@@ -190,5 +230,35 @@ int main(int argc, char **argv) {
 	cout << "END_SIMULATION sent" << endl;
 
 	cout << "VMEmulator end" << endl;
-
+*/
 }
+
+void threadFunction(void *data) {
+	SimulatedVM *simulatedVM = (SimulatedVM*)data;
+	cout << "thread started to handle VM " << simulatedVM->id << endl;
+	vm_thread_function(NULL);
+	cout << "end of thread handling VM " << simulatedVM->id << endl;
+}
+
+
+int main(int argc, char **argv) {
+	SimulatedVM *sVM = new SimulatedVM();
+	simulatedVMList.push_back(sVM);
+	threadFunction(sVM);
+	/*	
+	cout << "VMEmulator start" << endl;
+
+	SimulatedVM *sVM;
+	for (int i = 0; i < 2; i++) {
+		sVM = new SimulatedVM();
+		simulatedVMList.push_back(sVM);
+		threadsList.push_back(new boost::thread(threadFunction, sVM));
+	}
+	list<boost::thread*>::iterator it;
+	for (it=threadsList.begin(); it != threadsList.end(); it++) {
+		(*it)->join();
+	}
+
+	cout << "VMEmulator end" << endl; */
+}
+

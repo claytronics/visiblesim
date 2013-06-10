@@ -1,6 +1,10 @@
 <?xml version="1.0" standalone="no" ?>
-<world gridsize="20,20">
-	<blockList color="0,255,0">
-		
+<world gridsize="20,20">	
+	<blockList color="0,255,0" blocksize="25.0,25.0,11.0">
+		<block position="5,5" color="0,128,128"/>
+		<block position="5,6"/>
+		<block position="6,5"/>
 	</blockList>
 </world>
+
+
