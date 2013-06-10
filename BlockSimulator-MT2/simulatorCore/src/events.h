@@ -64,6 +64,7 @@ public:
 
 	static unsigned int getNextId();
 	static unsigned int getNbLivingEvents();
+	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return NULL; };
 };
 
 //===========================================================================================================
@@ -80,6 +81,7 @@ public:
 	~CodeStartEvent();
 	void consume();
 	const virtual string getEventName();
+	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 //===========================================================================================================
@@ -96,6 +98,7 @@ public:
 	~ProcessLocalEvent();
 	void consume();
 	const virtual string getEventName();
+	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 //===========================================================================================================

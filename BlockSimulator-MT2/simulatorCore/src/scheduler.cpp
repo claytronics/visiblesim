@@ -81,14 +81,14 @@ bool Scheduler::schedule(Event *ev) {
 
 void Scheduler::removeEventsToBlock(BuildingBlock *bb) {
 	multimap<uint64_t,EventPtr>::iterator im = eventsMap.begin();
+	BuildingBlock *cb=NULL;
 	while (im!=eventsMap.end()) {
-		/*if ((*im)->eventType==EVENT_CODE_START) {
-			CodeStartEvent *cse = (CodeStartEvent*)(*im);
-			if (cse->concernedBlock==bb) {
-
-			}
-		}*/
-		im++;
+		cb=(*im).second->getConcernedBlock();
+		if (cb==bb) {
+			multimap<uint64_t,EventPtr>::iterator im2 = im;
+			im--;
+			eventsMap.erase(im2);
+		} else im++;
 	}
 }
 
