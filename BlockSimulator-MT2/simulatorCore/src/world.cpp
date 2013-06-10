@@ -30,8 +30,7 @@ World::World() {
 World::~World() {
 	//MODIF NICO
 	std::map<int, BuildingBlock*>::iterator it;
-	for( it = buildingBlocksMap.begin() ; it != buildingBlocksMap.end() ; ++it)
-	{
+	for( it = buildingBlocksMap.begin() ; it != buildingBlocksMap.end() ; ++it) {
 		delete it->second;
 	}
 	//FIN MODIF NICO

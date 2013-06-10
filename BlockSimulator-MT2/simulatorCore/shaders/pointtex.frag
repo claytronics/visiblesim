@@ -14,7 +14,7 @@ void main()
   if (textureEnable) {
   	texel=diffuse*texture2D(tex,gl_TexCoord[0].st); 
   } else {
-    texel=diffuse;
+    	texel=diffuse;
   } 
   vec4 color = ambientGlobal + ambient;
   vec3 D = normalize(gl_LightSource[0].spotDirection);
@@ -29,5 +29,5 @@ void main()
 	color += shade*gl_FrontMaterial.specular * gl_LightSource[0].specular * 
 	pow(NdotHV,gl_FrontMaterial.shininess);
   }	
-  gl_FragColor = color;	
+  gl_FragColor = vec4(color.rgb,1.0);	
 }

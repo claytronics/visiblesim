@@ -24,7 +24,7 @@ void Blinky01BlockCode::startup() {
 	stringstream info;
 
 	info << "  Starting Blinky01BlockCode in block " << hostBlock->blockId;
-	getScheduler()->trace(info.str());
+	BlinkyBlocks::getScheduler()->trace(info.str());
 }
 
 

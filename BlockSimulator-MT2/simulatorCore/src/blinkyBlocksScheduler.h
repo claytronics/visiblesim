@@ -8,25 +8,22 @@
 #ifndef BLINKYBLOCKSSCHEDULER_H_
 #define BLINKYBLOCKSSCHEDULER_H_
 
-#include <boost/asio.hpp>
-#include <boost/thread.hpp>
 #include "scheduler.h"
-#include "network.h"
-
-using namespace boost;
-using boost::asio::ip::udp;
-using boost::asio::ip::tcp;
+#include <boost/thread.hpp>
+#include <boost/bind.hpp>
+#include <boost/interprocess/sync/interprocess_semaphore.hpp>
 
 namespace BlinkyBlocks {
 
 class BlinkyBlocksScheduler : public BaseSimulator::Scheduler {
-protected:	
+protected:
 	BlinkyBlocksScheduler();
 	virtual ~BlinkyBlocksScheduler();
 	void* startPaused(/*void *param */);
 
+	boost::interprocess::interprocess_semaphore *sem_schedulerStart;
 	boost::thread *schedulerThread;
-	//int schedulerMode;
+	int schedulerMode;
 
 public:
 	static void createScheduler();
@@ -39,6 +36,7 @@ public:
 	void printInfo() {
 		cout << "I'm a BlinkyBlocksScheduler" << endl;
 	}
+	void start(int mode);
 
 };
 

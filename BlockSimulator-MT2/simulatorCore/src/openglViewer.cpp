@@ -21,9 +21,9 @@ int GlutContext::keyboardModifier = 0;
 //bool GlutContext::showLinks=false;
 GlutSlidingMainWindow *GlutContext::mainWindow=NULL;
 GlutPopupWindow *GlutContext::popup=NULL;
+GlutPopupMenuWindow *GlutContext::popupMenu=NULL;
 
 void GlutContext::init(int argc, char **argv) {
-
 	cout << "Avant glutInit()" << endl;
 	glutInit(&argc,argv);
 	cout << "Après glutInit()" << endl;
@@ -55,7 +55,6 @@ void GlutContext::init(int argc, char **argv) {
 	glEnable(GL_LIGHT0);
 	glEnable(GL_NORMALIZE);
 
-
 	glutReshapeFunc(reshapeFunc);
 	glutDisplayFunc(drawFunc);
 	glutMouseFunc(mouseFunc);
@@ -71,6 +70,7 @@ void GlutContext::init(int argc, char **argv) {
 void GlutContext::deleteContext() {
 	delete mainWindow;
 	delete popup;
+	delete popupMenu;
 }
 
 void *GlutContext::lanceScheduler(void *param) {
@@ -120,7 +120,10 @@ void GlutContext::passiveMotionFunc(int x,int y) {
 	} else {
 		popup->show(false);
 	}
+	mainWindow->mouseFunc(-1,-1,x,screenHeight - y);
+	if (popupMenu) popupMenu->mouseFunc(-1,-1,x,screenHeight - y);
 }
+
 //////////////////////////////////////////////////////////////////////////////
 // fonction associée aux interruptions générées par le clic de souris
 // - bouton : code du bouton
@@ -128,6 +131,14 @@ void GlutContext::passiveMotionFunc(int x,int y) {
 // - x,y : coordonnée du curseur dans la fenêtre
 void GlutContext::mouseFunc(int button,int state,int x,int y) {
 	mainWindow->mouseFunc(button,state,x,screenHeight - y);
+	if (popupMenu) {
+		int n=popupMenu->mouseFunc(button,state,x,screenHeight - y);
+		if (n) {
+			popupMenu->show(false);
+			getWorld()->menuChoice(n);
+		}
+	}
+
 	keyboardModifier = glutGetModifiers();
 	if (keyboardModifier!=GLUT_ACTIVE_CTRL) { // rotation du point de vue
 		Camera* camera=getWorld()->getCamera();
@@ -157,13 +168,19 @@ void GlutContext::mouseFunc(int button,int state,int x,int y) {
 		}
 	} else { // selection of the clicked block
 		if (state==GLUT_DOWN) {
-			int n=selectFunc(x,y);
-		 	if (n) {
-		  		GlBlock *slct=BaseSimulator::getWorld()->getSelectedBlock();
-		  		if (slct) {
-		  			slct->toggleHighlight();
-		  		}
-		  		BaseSimulator::getWorld()->setSelectedBlock(n-1)->toggleHighlight();
+			if (button==GLUT_LEFT_BUTTON) {
+				int n=selectFunc(x,y);
+				if (n) {
+					GlBlock *slct=BaseSimulator::getWorld()->getSelectedBlock();
+					if (slct) slct->toggleHighlight();
+		  			BaseSimulator::getWorld()->setSelectedBlock(n-1)->toggleHighlight();
+				}
+		  	} else if (button==GLUT_RIGHT_BUTTON) {
+				int n=selectFaceFunc(x,y);
+				if (n) {
+					BaseSimulator::getWorld()->setSelectedFace(n-1);
+					BaseSimulator::getWorld()->createPopupMenu(x,y);
+				}
 		  	}
 		}
 	}
@@ -244,7 +261,7 @@ void GlutContext::drawFunc(void) {
 	glLoadIdentity();
 	mainWindow->glDraw();
 	popup->glDraw();
-
+	if (popupMenu) popupMenu->glDraw();
 	glEnable(GL_DEPTH_TEST);
 	glutSwapBuffers();
 }
@@ -273,6 +290,37 @@ int GlutContext::selectFunc(int x,int y) {
 
 	glPushMatrix();
   	BaseSimulator::getWorld()->glDrawId();
+  	glPopMatrix();
+
+  	glFlush();
+  	hits = glRenderMode(GL_RENDER);
+  	return processHits(hits,selectBuf);
+ }
+
+//////////////////////////////////////////////////////////////////////////////
+// fonction de détection d'un objet à l'écran en position x,y.
+int GlutContext::selectFaceFunc(int x,int y) {
+	GLuint selectBuf[512];
+	GLint hits;
+	GLint viewport[4];
+	Camera* camera=getWorld()->getCamera();
+
+	glGetIntegerv(GL_VIEWPORT,viewport); // récupération de la position et de la taille de la fenêtre
+
+	glSelectBuffer(512,selectBuf);
+	glRenderMode(GL_SELECT);
+	glInitNames();
+	glPushName(0);
+	glMatrixMode(GL_PROJECTION);
+	glLoadIdentity();
+	gluPickMatrix((float) x,(float)(screenHeight-y),3.0,3.0,viewport);
+	camera->glProjection();
+	glMatrixMode(GL_MODELVIEW);
+	glLoadIdentity();
+	camera->glLookAt();
+
+	glPushMatrix();
+  	BaseSimulator::getWorld()->glDrawIdByMaterial();
   	glPopMatrix();
 
   	glFlush();

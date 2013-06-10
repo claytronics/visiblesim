@@ -18,7 +18,7 @@ using boost::asio::ip::tcp;
 #define VM_MESSAGE_TYPE_COMPUTATION_UNLOCK      5
 #define VM_MESSAGE_TYPE_SEND_MESSAGE            6
 #define VM_MESSAGE_TYPE_RECEIVE_MESSAGE         7
-#define VM_MESSAGE_TYPE_WAIT_FOR_MESSAGE	8
+#define VM_MESSAGE_TYPE_WAIT_FOR_MESSAGE		8
 
 typedef struct VMMessage_tt {
         uint64_t messageType;
@@ -26,6 +26,8 @@ typedef struct VMMessage_tt {
         uint64_t param2;
         uint64_t param3;
 } VMMessage_t;
+
+
 
 int main(int argc, char **argv) {
 	cout << "VMEmulator start" << endl;

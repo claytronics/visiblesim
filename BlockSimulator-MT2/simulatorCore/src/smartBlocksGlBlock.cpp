@@ -1,5 +1,6 @@
 #include "smartBlocksGlBlock.h"
 
+namespace SmartBlocks {
 SmartBlocksGlBlock::SmartBlocksGlBlock(int id) : GlBlock(id) {
 }
 
@@ -18,11 +19,11 @@ void SmartBlocksGlBlock::glDraw(ObjLoader::ObjLoader *ptrObj) {
 	    c[1]=color[1]*n;
 	    c[2]=color[2]*n;
 	    c[3]=1.0;
-	    ptrObj->setAmbientAndDiffuseColor(c);
+	    ptrObj->setLightedColor(c);
 //	    glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,c);
 	} else {
 //		GLfloat gray[]={0.2,0.2,0.2,1.0};
-	    ptrObj->setAmbientAndDiffuseColor(color);
+	    ptrObj->setLightedColor(color);
 //		glMaterialfv(GL_FRONT,GL_AMBIENT_AND_DIFFUSE,color);
 	}
 	ptrObj->glDraw();
@@ -38,4 +39,6 @@ void SmartBlocksGlBlock::glDrawId(ObjLoader::ObjLoader *ptrObj) {
 
 string SmartBlocksGlBlock::getInfo() {
 	return GlBlock::getInfo();
+}
+
 }

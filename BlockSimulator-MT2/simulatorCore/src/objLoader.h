@@ -88,7 +88,7 @@ class Mtl
 { 
 public :
   int id; 
-  char *nom;
+  char *name;
   GLfloat Ka[4],Kd[4],Ks[4],Ke[4],Ns;
   char *mapKd;
   GLuint glTexId;
@@ -106,7 +106,7 @@ public :
 
   MtlLib(const char *rep,const char *titre);
   MtlLib() {};
-  Mtl *getMtlByName(char *nom);
+  Mtl *getMtlByName(const char *nom);
   Mtl *getMtlById(int);
   Mtl *getDefaultMtl();
 };
@@ -129,6 +129,7 @@ class ObjData
   void addFace(Sommet &ptr1,Sommet &ptr2,Sommet &ptr3);
   GLuint addVertex(const Sommet &s);
   void glDraw(void);
+  void glDrawId(void);
   void createVertexArray();
 };
 
@@ -137,6 +138,7 @@ class ObjData
 class ObjLoader {
 	std::vector <ObjData*> tabObj;
 	MtlLib *mtls;
+	Mtl *ptrMtlLighted;
 protected :
 	void numeroPoint(char* str,int &vert,int &norm,int &tex);
 public:
@@ -144,7 +146,10 @@ public:
 	~ObjLoader(void);
 	void createVertexArrays();
 	void glDraw(void);
-	void setAmbientAndDiffuseColor(GLfloat *color);
+	void glDrawIdByMaterial(int &i);
+	void glDrawId(int &i);
+	void setLightedColor(GLfloat *color);
+	inline string getObjMtlName(int pos) { return tabObj[pos]->objMtl->name; };
 };
 
 }

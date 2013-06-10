@@ -56,7 +56,7 @@ public:
 	virtual bool schedule(Event *ev);
 	uint64_t now();
 	virtual void trace(string message);
-
+	void removeEventsToBlock(BuildingBlock *bb);
 //	void lock();
 //	void unlock();
 	virtual void start(int) {};

@@ -203,13 +203,14 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
 #ifdef DEBUG
     							cout << ligne << endl;
 #endif
-    							Mtl *ptrMtl = mtls->getMtlByName(ligne+7);
+    							extraire(ligne+7,str_pt1,64);
+    							Mtl *ptrMtl = mtls->getMtlByName(str_pt1);
     							if (objCourant->objMtl==NULL) {
     								objCourant->objMtl = ptrMtl;
 #ifdef WIN32
     								sprintf_s(objCourant->nom,"%s_%s",objCourant->nomOriginal,ptrMtl->nom);
 #else
-    								sprintf(objCourant->nom,"%s_%s",objCourant->nomOriginal,ptrMtl->nom);
+    								sprintf(objCourant->nom,"%s_%s",objCourant->nomOriginal,ptrMtl->name);
 #endif
 #ifdef DEBUG
     								cout << "associe l'objet " << objCourant->nom << endl;
@@ -231,7 +232,7 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
 #ifdef WIN32
     									sprintf_s(nom2,"%s_%s",nom,ptrMtl->nom);
 #else
-    									sprintf(nom2,"%s_%s",nom,ptrMtl->nom);
+    									sprintf(nom2,"%s_%s",nom,ptrMtl->name);
 #endif
     									objCourant = new ObjData(objCourant->nomOriginal);
     									tabObj.push_back(objCourant);
@@ -239,7 +240,7 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
 #ifdef WIN32
     									sprintf_s(objCourant->nom,"%s_%s",objCourant->nomOriginal,ptrMtl->nom);
 #else
-    									sprintf(objCourant->nom,"%s_%s",objCourant->nomOriginal,ptrMtl->nom);
+    									sprintf(objCourant->nom,"%s_%s",objCourant->nomOriginal,ptrMtl->name);
 #endif
 #ifdef DEBUG
 					  					cout << "nouvel objet :" << objCourant->nom << endl;
@@ -271,6 +272,14 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
 #endif
 	} while (!fin.eof());
 	createVertexArrays();
+
+
+	// find 'lighted' texture
+	ptrMtlLighted = mtls->getMtlByName("lighted");
+	if (!ptrMtlLighted) {
+		cerr << "No 'lighted' texture" << endl;
+		ptrMtlLighted = mtls->getMtlById(1);
+	}
 }
 
 void ObjLoader::glDraw(void) {
@@ -282,13 +291,30 @@ void ObjLoader::glDraw(void) {
 	}
 }
 
-void ObjLoader::setAmbientAndDiffuseColor(GLfloat *color) {
+void ObjLoader::glDrawId(int &n) {
 	vector <ObjData*>::const_iterator ci = tabObj.begin();
+
+	glLoadName(n++);
 	while (ci!=tabObj.end()) {
-		memcpy((*ci)->objMtl->Ka,color,4*sizeof(GLfloat));
-		memcpy((*ci)->objMtl->Kd,color,4*sizeof(GLfloat));
+		(*ci)->glDrawId();
 		ci++;
 	}
+}
+
+void ObjLoader::glDrawIdByMaterial(int &n) {
+	vector <ObjData*>::const_iterator ci = tabObj.begin();
+
+	while (ci!=tabObj.end()) {
+		glLoadName(n++);
+		(*ci)->glDrawId();
+		ci++;
+	}
+}
+
+void ObjLoader::setLightedColor(GLfloat *color) {
+
+	memcpy(ptrMtlLighted->Ka,color,4*sizeof(GLfloat));
+	memcpy(ptrMtlLighted->Kd,color,4*sizeof(GLfloat));
 }
 
 
@@ -360,6 +386,19 @@ ObjData::~ObjData() {
 
 void ObjData::glDraw(void) {
 	objMtl->glBind();
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glEnableClientState(GL_VERTEX_ARRAY);
+	glNormalPointer(GL_FLOAT, 0, tabNormals);
+	glTexCoordPointer(2, GL_FLOAT, 0, tabTexCoords);
+	glVertexPointer(3, GL_FLOAT, 0, tabVertices);
+	glDrawElements(GL_TRIANGLES, nbreIndices,GL_UNSIGNED_INT,tabIndices);
+	glDisableClientState(GL_VERTEX_ARRAY);  // disable vertex arrays
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);
+}
+
+void ObjData::glDrawId(void) {
 	glEnableClientState(GL_NORMAL_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
@@ -464,7 +503,7 @@ MtlLib::MtlLib(const char *rep,const char *titre) {
 	}
   
 // lecture des lignes
-	char ligne[255];
+	char ligne[255],dest[255];
 	while (!fin.eof()) {
 		fin.getline(ligne,255);
 		int i=0;
@@ -480,13 +519,16 @@ MtlLib::MtlLib(const char *rep,const char *titre) {
 				case ' ' : break;
 				case 'n' : { // le nom du mat�riau (newmtl)
 					currentMtl = new Mtl();
-					int lng = (int)strlen(ligne)-6-i;
-					currentMtl->nom = new char[lng];
 #ifdef WIN32
+					int lng = (int)strlen(ligne);
+					currentMtl->nom = new char[lng];
 					strncpy_s(currentMtl->nom,lng,ligne+i+7,lng);
 		            odprintf("newmtl %s",currentMtl->nom);
 #else
-					strncpy(currentMtl->nom,ligne+7,lng);
+		            extraire(ligne+i+7,dest,255);
+		            int lng = (int)strlen(dest)+1;
+		            currentMtl->name = new char[lng];
+					strncpy(currentMtl->name,dest,lng);
 #endif
 					tabMtl.push_back(currentMtl);
 				}
@@ -535,9 +577,9 @@ MtlLib::MtlLib(const char *rep,const char *titre) {
 #endif
 						if (currentMtl->Ns==0) {
 							currentMtl->Ks[0]=0.;
-							currentMtl->Ks[0]=0.;
-							currentMtl->Ks[0]=0.;
-							currentMtl->Ks[0]=1.;
+							currentMtl->Ks[1]=0.;
+							currentMtl->Ks[2]=0.;
+							currentMtl->Ks[3]=1.;
 						}
 						currentMtl->Ns*=2.55f;
 					}
@@ -556,6 +598,10 @@ MtlLib::MtlLib(const char *rep,const char *titre) {
 						strncpy_s(currentMtl->mapKd,lng,ligne+pos+1,lng);
 #else
 						sprintf(currentMtl->mapKd,"%s/%s",rep,txt+pos);
+						currentMtl->Kd[0]=1.;
+						currentMtl->Kd[1]=1.;
+						currentMtl->Kd[2]=1.;
+						currentMtl->Kd[3]=1.;
 //						cout << currentMtl->mapKd << "," << strlen(rep)+str.length()+2-pos << endl;
 						//strncpy(currentMtl->mapKd,ligne+pos+1,lng);
 #endif
@@ -573,11 +619,12 @@ MtlLib::MtlLib(const char *rep,const char *titre) {
 /////////////////////////////////////////////////////////////////////////////
 // mtlLib::getMtlByName(nom)
 // Recherche d'un matériau dans la liste par son nom
-Mtl *MtlLib::getMtlByName(char *nom) {
-	vector<Mtl*>::const_iterator p;
+Mtl *MtlLib::getMtlByName(const char *searched) {
+	vector<Mtl*>::const_iterator p=tabMtl.begin();
 
-	for (p=tabMtl.begin(); p!=tabMtl.end(); p++) {
-		if (strcmp((*p)->nom,nom)==0) return *p;
+	while (p!=tabMtl.end()) {
+		if (strcmp((*p)->name,searched)==0) return *p;
+		p++;
 	}
 	return NULL;
 }  
@@ -600,11 +647,11 @@ Mtl *MtlLib::getMtlById(int id) {
 Mtl *MtlLib::getDefaultMtl() {
 	if (tabMtl.empty()) {
 		Mtl *current = new Mtl();
-		current->nom = new char[20];
+		current->name = new char[20];
 #ifdef WIN32
-		strncpy_s(current->nom,20,"mtl_default_loader",20);
+		strncpy_s(current->name,20,"mtl_default_loader",20);
 #else
-		strncpy(current->nom,"mtl_default_loader",20);
+		strncpy(current->name,"mtl_default_loader",20);
 #endif
 		current->Ka[0]=0.1f;
 		current->Ka[1]=0.1f;
@@ -631,12 +678,12 @@ Mtl::Mtl() {
 
 	id = num++;
 	mapKd=NULL;
-	nom=NULL;
+	name=NULL;
 	glTexId=0;
 };
 
 Mtl::~Mtl() {
-	delete [] nom;
+	delete [] name;
 	delete [] mapKd;
 };
 
@@ -645,7 +692,8 @@ void Mtl::glBind() {
 	glMaterialfv(GL_FRONT,GL_DIFFUSE,Kd);
 	if (mapKd) {
 		if (!glTexId) {
-			glTexId = GlutWindow::loadTexture(mapKd);
+			int lx,ly;
+			glTexId = GlutWindow::loadTexture(mapKd,lx,ly);
 		}
 		//glEnable(GL_TEXTURE_2D);
 		enableTexture(true);

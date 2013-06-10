@@ -11,7 +11,15 @@ GlutWindow::GlutWindow(GlutWindow *parent,GLuint pid,GLint px,GLint py,GLint pw,
 :id(pid) {
 	if (parent) parent->addChild(this);
 	setGeometry(px,py,pw,ph);
-	idTexture=loadTexture(titreTexture);
+	if (titreTexture) {
+		if (pw==0||ph==0) { idTexture=loadTexture(titreTexture,w,h);
+		} else {
+			int iw,ih;
+			idTexture=loadTexture(titreTexture,iw,ih);
+		}
+	} else {
+		idTexture=0;
+	}
 }
 
 GlutWindow::~GlutWindow() {
@@ -29,11 +37,11 @@ void GlutWindow::addChild(GlutWindow *child) {
 
 void GlutWindow::glDraw() {
 	vector <GlutWindow*>::const_iterator cw = children.begin();
-	while (cw!=children.end())
-	{	glPushMatrix();
-	    glTranslatef(x,y,0);
-	    (*cw)->glDraw();
-	    glPopMatrix();
+	while (cw!=children.end()) {
+		glPushMatrix();
+		glTranslatef(x,y,0);
+		(*cw)->glDraw();
+		glPopMatrix();
 		cw++;
 	}
 }
@@ -41,14 +49,14 @@ void GlutWindow::glDraw() {
 int GlutWindow::mouseFunc(int button,int state,int mx,int my) {
 	int id=0;
 
-	if (mx>=x && mx<=x+w && my>=y && my<=y+h)
-	{ vector <GlutWindow*>::const_iterator cw = children.begin();
-	  while (cw!=children.end())
-	  {	id = (*cw)->mouseFunc(button,state,mx-x,my-y);
-	    if (id!=0) return id;
-		cw++;
-	  }
-	  return id;
+	if (mx>=x && mx<=x+w && my>=y && my<=y+h) {
+		vector <GlutWindow*>::const_iterator cw = children.begin();
+		while (cw!=children.end()) {
+			id = (*cw)->mouseFunc(button,state,mx-x,my-y);
+			if (id!=0) return id;
+			cw++;
+		}
+		return id;
 	}
 	return 0;
 }
@@ -188,6 +196,9 @@ void GlutButton::glDraw()
     	if (isDown) {
     		tx=0.0;
     		ty=0.0;
+    	} else if (isHighlighted){
+    		tx=0.5;
+    		ty=0.0;
     	} else {
     		tx=0.5;
     		ty=0.5;
@@ -213,24 +224,24 @@ void GlutButton::glDraw()
   	glPopMatrix();
 }
 
-int GlutButton::mouseFunc(int button,int state,int mx,int my)
-{ if (mx>x && mx<x+w && my>y && my<y+h) {
+int GlutButton::mouseFunc(int button,int state,int mx,int my) {
+	isHighlighted=(mx>x && mx<x+w && my>y && my<y+h);
+	isDown=false;
+	if (isHighlighted) {
 	  isDown=(state==GLUT_DOWN);
-	  return (isActive && isDown)? id:0;
+	  return (isActive && state==GLUT_UP)? id:0;
   }
   return 0;
 }
 
-
 /////////////////////////////////////////////////////////////////////////////
 // loadTextures
 // lecture de l'identifiant de texture
-GLuint GlutWindow::loadTexture(const char *titre) {
+GLuint GlutWindow::loadTexture(const char *titre,int &tw,int &th) {
 	unsigned char *image;
-	int w,h;
 	GLuint id=0;
 	cout << "loading " << titre << endl;
-	if (!(image=lectureTarga(titre,w,h))) {
+	if (!(image=lectureTarga(titre,tw,th))) {
 		cerr << "Error : can't open " << titre << endl;
 	} else {
 		glGenTextures(1,&id);
@@ -239,7 +250,7 @@ GLuint GlutWindow::loadTexture(const char *titre) {
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_REPEAT);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 		glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
-		gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA,w,h,GL_RGBA,GL_UNSIGNED_BYTE,image);
+		gluBuild2DMipmaps(GL_TEXTURE_2D,GL_RGBA,tw,th,GL_RGBA,GL_UNSIGNED_BYTE,image);
 		glTexEnvf(GL_TEXTURE_ENV, GL_TEXTURE_ENV_MODE, GL_REPLACE);
 		delete [] image;
 	}
@@ -345,8 +356,9 @@ unsigned char *GlutWindow::lectureTarga(const char *titre, int& width, int& heig
 /***************************************************************************************/
 /* GlutPopupWindow */
 /***************************************************************************************/
+
 GlutPopupWindow::GlutPopupWindow(GlutWindow *parent,GLint px,GLint py,GLint pw,GLint ph)
-:GlutWindow(parent,99,px,py,pw,ph,"") {
+:GlutWindow(parent,99,px,py,pw,ph,NULL) {
 	isVisible=false;
 }
 
@@ -367,4 +379,56 @@ void GlutPopupWindow::glDraw() {
 		drawString(5.0,h-20.0,info.c_str());
 		glPopMatrix();
 	}
+}
+
+/***************************************************************************************/
+/* GlutPopupMenuWindow */
+/***************************************************************************************/
+
+GlutPopupMenuWindow::GlutPopupMenuWindow(GlutWindow *parent,GLint px,GLint py,GLint pw,GLint ph)
+:GlutWindow(parent,49,px,py,pw,ph,NULL) {
+	isVisible=false;
+}
+
+void GlutPopupMenuWindow::addButton(int i,const char *titre) {
+	int py=0;
+	std::vector <GlutWindow*>::const_iterator cb=children.begin();
+	while (cb!=children.end()) {
+		py+=(*cb)->h+5;
+		cb++;
+	}
+	GlutButton *button = new GlutButton(this,i,0,0,0,0,titre);
+	button->setGeometry(10,h-5-button->h/2-py,button->w/2,button->h/2);
+}
+
+void GlutPopupMenuWindow::glDraw() {
+	if (isVisible) {
+		glDisable(GL_LIGHTING);
+		glDisable(GL_TEXTURE_2D);
+		glColor4f(1.0,1.0,0.0,0.75);
+		glPushMatrix();
+		glTranslatef(x,y,0);
+		glBegin(GL_QUADS);
+		glVertex2i(0,0);
+		glVertex2i(w,0);
+		glVertex2i(w,h);
+		glVertex2i(0,h);
+		glEnd();
+		glPopMatrix();
+		GlutWindow::glDraw();
+	}
+}
+
+int GlutPopupMenuWindow::mouseFunc(int button,int state,int mx,int my) {
+	if (!isVisible) return 0;
+	int n = GlutWindow::mouseFunc(button,state,mx,my);
+	switch (n) {
+		case 1 :
+
+		break;
+		case 2 :
+
+		break;
+	}
+	return n;
 }

@@ -22,6 +22,7 @@ SmartBlocksWorld::SmartBlocksWorld(int gw,int gh,int argc, char *argv[]):World()
 	gridWidth = gw;
 	gridHeight = gh;
 	tabPtrBlocks = new SmartBlocksBlock*[gw*gh];
+	// initialise grid of blocks
 	int i=gw*gh;
 	SmartBlocksBlock **ptr = tabPtrBlocks;
 	while (i--) {
@@ -95,7 +96,6 @@ void SmartBlocksWorld::linkBlocks() {
 					(ptrBlock)->getInterface(North)->connect(NULL);
 				}
 				if (ix<gridWidth-1 && getGridPtr(ix+1,iy)) {
-					cout << "id=" << getGridPtr(ix+1,iy)->blockId << endl;
 					(ptrBlock)->getInterface(East)->connect(getGridPtr(ix+1,iy)->getInterface(West));
 					cout << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix+1,iy)->blockId << endl;
 				} else {
@@ -122,7 +122,6 @@ void SmartBlocksWorld::linkBlocks() {
 void SmartBlocksWorld::glDraw() {
 	static const GLfloat white[]={1.0,1.0,1.0,1.0},
 			gray[]={0.2,0.2,0.2,1.0};
-
 
 	glMaterialfv(GL_FRONT,GL_AMBIENT,gray);
 	glMaterialfv(GL_FRONT,GL_DIFFUSE,white);
@@ -166,9 +165,6 @@ void SmartBlocksWorld::glDraw() {
 }
 
 void SmartBlocksWorld::glDrawId() {
-	static const GLfloat white[]={1.0,1.0,1.0,1.0},
-				gray[]={0.2,0.2,0.2,1.0};
-
 	glPushMatrix();
 	glDisable(GL_TEXTURE_2D);
 	//glTranslatef(-gridWidth/2.0f*blockSize[0],-gridHeight/2.0f*blockSize[1],0);
@@ -186,7 +182,8 @@ void SmartBlocksWorld::glDrawId() {
 
 void SmartBlocksWorld::loadTextures(const string &str) {
 	string path = str+"/circuit.tga";
-	idTextureFloor = GlutWindow::loadTexture(path.c_str());
+	int lx,ly;
+	idTextureFloor = GlutWindow::loadTexture(path.c_str(),lx,ly);
 }
 
 void SmartBlocksWorld::updateGlData(SmartBlocksBlock*blc) {

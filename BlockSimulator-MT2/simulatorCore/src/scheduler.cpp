@@ -79,6 +79,19 @@ bool Scheduler::schedule(Event *ev) {
 	return(true);
 }
 
+void Scheduler::removeEventsToBlock(BuildingBlock *bb) {
+	multimap<uint64_t,EventPtr>::iterator im = eventsMap.begin();
+	while (im!=eventsMap.end()) {
+		/*if ((*im)->eventType==EVENT_CODE_START) {
+			CodeStartEvent *cse = (CodeStartEvent*)(*im);
+			if (cse->concernedBlock==bb) {
+
+			}
+		}*/
+		im++;
+	}
+}
+
 uint64_t Scheduler::now() {
 	return(currentDate);
 }

@@ -42,7 +42,7 @@ public:
 	}
 
 	virtual void addBlock(int blockId, SmartBlocksBlockCode *(*smartBlockCodeBuildingFunction)(SmartBlocksBlock*),const Vecteur &pos,const Vecteur &col);
-	inline void setBlockSize(float *siz) { blockSize[0]=siz[0];blockSize[1]=siz[1];blockSize[2]=siz[2];};
+	inline void setBlocksSize(float *siz) { blockSize[0]=siz[0];blockSize[1]=siz[1];blockSize[2]=siz[2];};
 	void linkBlocks();
 	void loadTextures(const string &str);
 	virtual void glDraw();
@@ -63,6 +63,5 @@ inline void deleteWorld() {
 inline SmartBlocksWorld* getWorld() { return(SmartBlocksWorld::getWorld()); }
 
 } // SmartBlocks namespace
-
 
 #endif /* SMARTBLOCKSWORLD_H_ */

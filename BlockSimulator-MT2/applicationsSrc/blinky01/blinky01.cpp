@@ -26,8 +26,8 @@ int main(int argc, char **argv) {
 	}
 
 	getSimulator()->printInfo();
-	getScheduler()->printInfo();
-	getWorld()->printInfo();
+	BlinkyBlocks::getScheduler()->printInfo();
+	BaseSimulator::getWorld()->printInfo();
 
 	deleteSimulator();
 

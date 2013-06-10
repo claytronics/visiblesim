@@ -7,44 +7,24 @@
 
 #include <iostream>
 #include <stdlib.h>
+#include <boost/asio.hpp>
 #include "blinkyBlocksScheduler.h"
-#include "blinkyBlocksSimulator.h"
-#include "blinkyBlocksWorld.h"
-#include "buildingBlock.h"
-#include "blockCode.h"
 
 using namespace std;
-using boost::asio::ip::tcp;
-//using namespace BaseSimulator;
-
+using namespace boost;
 namespace BlinkyBlocks {
 
 BlinkyBlocksScheduler::BlinkyBlocksScheduler() {
 	cout << "BlinkyBlocksScheduler constructor" << endl;
-	map<int, BaseSimulator::BuildingBlock*>::iterator it;
-	for(it = getWorld()->getBuildingBlocksMap().begin(); it != getWorld()->getBuildingBlocksMap().end(); it++) {
-			cout << it->first << endl;
-	}
-}
-
-void *BlinkyBlocksScheduler::startPaused() {
-	int systemStartTime, systemStopTime;
-    multimap<uint64_t, EventPtr>::iterator first;
-    EventPtr pev;
-   	//int s = getWorld()->getBuildingBlocksMap().size();
-	map<int, BaseSimulator::BuildingBlock*>::iterator it;
-	for(it = getWorld()->getBuildingBlocksMap().begin(); it != getWorld()->getBuildingBlocksMap().end(); it++) {
-			cout << it->first << endl;
-	}
-    // sem.wait(); // attend le 1er message
-	trace("\033[1;33mScheduler : created and waiting for VM connection : \033[0m");
-	
-	trace("\033[1;33mScheduler : VM connected and waiting for start order : \033[0m");
-	return(NULL);
+	sem_schedulerStart = new boost::interprocess::interprocess_semaphore(0);
+	schedulerMode = SCHEDULER_MODE_FASTEST;
+	schedulerThread = new thread(bind(&BlinkyBlocksScheduler::startPaused, this));
 }
 
 BlinkyBlocksScheduler::~BlinkyBlocksScheduler() {
-	cout << "BlinkyBlocksScheduler destructor" << endl;
+	cout << "\033[1;31mBlinkyBlocksScheduler destructor\33[0m" << endl;
+	delete sem_schedulerStart;
+	delete schedulerThread;
 }
 
 
@@ -55,36 +35,107 @@ void BlinkyBlocksScheduler::createScheduler() {
 void BlinkyBlocksScheduler::deleteScheduler() {
 	delete((BlinkyBlocksScheduler*)scheduler);
 }
-/*
-void startPaused() {
-    
-    while (!eventsMap.empty() || !undefinedBlocksSetIsEmpty()) && currentDate < maximumDate) {
-        while (!undefinedBlocksSetIsEmpty()) {
-               sem.wait(); // attend un message
-            }
-        if (!eventsMap.empty()) {
-                mutex.lock();
-                first=eventsMap.begin();
-                pev = (*first).second;
-                currentDate = pev->date;
-                pev->consume();
-                eventsMap.erase(first);
-                eventsMapSize--;
-                mutex.unlock();
-            }
-    }
+
+void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
+	//MultiCoresScheduler *scheduler = (MultiCoresScheduler*)param;
+	bool mustStop;
+	uint64_t systemCurrentTime, systemCurrentTimeMax;
+
+	usleep(1000000);
+	cout << "\033[1;33mScheduler Mode :" << schedulerMode << endl;
+
+	sem_schedulerStart->wait();
+
+	int systemStartTime, systemStopTime;
+	multimap<uint64_t, EventPtr>::iterator first;
+	EventPtr pev;
+
+	systemStartTime = (glutGet(GLUT_ELAPSED_TIME))*1000;
+	cout << "\033[1;33m" << "Scheduler : start order received " << systemStartTime << "\033[0m" << endl;
+
+	switch (schedulerMode) {
+	case SCHEDULER_MODE_FASTEST:
+
+
+		while ( (!eventsMap.empty() ) && currentDate < maximumDate) {
+	    	first=eventsMap.begin();
+	    	pev = (*first).second;
+				pev->consume();
+				eventsMap.erase(first);
+				eventsMapSize--;
+	    }
+		break;
+	case SCHEDULER_MODE_REALTIME:
+
+		cout << "Realtime mode scheduler\n";
+		mustStop = false;
+	    while(!mustStop && !eventsMap.empty()) {
+	      //gettimeofday(&heureGlobaleActuelle,NULL);
+	    	systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
+	    	systemCurrentTimeMax = systemCurrentTime - systemStartTime;
+	      //ev = *(listeEvenements.begin());
+	    	first=eventsMap.begin();
+	    	pev = (*first).second;
+	    	while (!eventsMap.empty() && pev->date <= systemCurrentTimeMax) {
+	    		first=eventsMap.begin();
+	    		pev = (*first).second;
+
+			  /* traitement du mouvement des objets physiques*/
+			  //Physics::update(ev->heureEvenement);
+	    		currentDate = pev->date;
+	    		//lock();
+	    		pev->consume();
+	    		//unlock();
+	    		//pev->nbRef--;
+
+	    		//listeEvenements.pop_front();
+	    		eventsMap.erase(first);
+	    		eventsMapSize--;
+	    		//	    	  ev = *(listeEvenements.begin());
+	    		//first=eventsMap.begin();
+	    		//pev = (*first).second;
+	      }
+	    	systemCurrentTime = systemCurrentTimeMax;
+	      if (!eventsMap.empty()) {
+	        //ev = *(listeEvenements.begin());
+	        first=eventsMap.begin();
+	        pev = (*first).second;
+#ifdef WIN32
+			Sleep(5);
+#else
+	        usleep(5000);
+#endif
+	      }
+	    }
+
+		break;
+	default:
+		cout << "ERROR : Scheduler mode not recognized !!" << endl;
+	}
+
+	systemStopTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
+
+	cout << "\033[1;33m" << "Scheduler end : " << systemStopTime << "\033[0m" << endl;
+
+	pev.reset();
+
+	cout << "end time : " << currentDate << endl;
+	cout << "real time elapsed : " << ((double)(systemStopTime-systemStartTime))/1000000 << endl;
+//	cout << "Nombre d'événements restants en mémoire : " << Evenement::nbEvenements << endl;
+//	cout << "Nombre de messages restants en mémoire : " << Message::nbMessages << endl;
+	cout << "Maximum sized reached by the events list : " << largestEventsMapSize << endl;
+	cout << "Size of the events list at the end : " << eventsMap.size() << endl;
+	cout << "Number of events processed : " << Event::getNextId() << endl;
+	cout << "Events(s) left in memory before destroying Scheduler : " << Event::getNbLivingEvents() << endl;
+	cout << "Message(s) left in memory before destroying Scheduler : " << Message::getNbMessages() << endl;
+
+	return(NULL);
 }
 
-void callback (message, socket) {
-    mutex.lock();
-    switch message( ) {
-        ...
-        ajout de l'évènement à la file d'évènements
-        ...
-    }
-    mutex.unlock();
-    async(socket, ..., callback, ...); // relance une écoute sur cette socket
-    sem.post();
-} 
-*/
+void BlinkyBlocksScheduler::start(int mode) {
+	BlinkyBlocksScheduler* sbs = (BlinkyBlocksScheduler*)scheduler;
+	sbs->schedulerMode = mode;
+	sbs->sem_schedulerStart->post();
+}
+
 } // BlinkyBlocks namespace

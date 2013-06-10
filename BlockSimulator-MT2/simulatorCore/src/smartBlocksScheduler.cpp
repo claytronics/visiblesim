@@ -50,10 +50,7 @@ void *SmartBlocksScheduler::startPaused(/*void *param*/) {
 	usleep(1000000);
 	cout << "\033[1;33mScheduler Mode :" << schedulerMode << endl;
 
-	fprintf(stderr,"scheduler avant le wait\n");
-
 	sem_schedulerStart->wait();
-	fprintf(stderr,"\033[1;31mscheduler après le wait");
 
 	int systemStartTime, systemStopTime;
 	multimap<uint64_t, EventPtr>::iterator first;

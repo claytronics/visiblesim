@@ -131,7 +131,7 @@ SmartBlocksSimulator::SmartBlocksSimulator(int argc, char *argv[], SmartBlocksBl
 		   siz[1] = atof(str.substr(pos1+1,pos2-pos1-1).c_str());
 		   siz[2] = atof(str.substr(pos2+1,str.length()-pos1-1).c_str());
 		   cout << "blocksize =" << siz[0] <<"," << siz[1]<< endl;
-		   world->setBlockSize(siz);
+		   world->setBlocksSize(siz);
 		}
 
 /* Reading a smartblock */

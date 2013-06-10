@@ -24,13 +24,13 @@ class GlutWindow {
 
 protected :
 	GLuint id;
-	GLint x,y,w,h;
 	vector<GlutWindow*> children;
 	GLuint idTexture;
 
 	void addChild(GlutWindow *child);
 	void bindTexture();
   public :
+	GLint x,y,w,h;
 	GlutWindow(GlutWindow *parent,GLuint pid,GLint px,GLint py,GLint pw,GLint ph,const char *titreTexture);
 	virtual ~GlutWindow();
 	inline void setGeometry(GLint px,GLint py,GLint pw,GLint ph) { x=px; y=py; w=pw; h=ph; };
@@ -38,7 +38,8 @@ protected :
 	virtual void glDraw();
 	virtual int mouseFunc(int button,int state,int x,int y);
 	virtual void reshapeFunc(int mw,int mh) {};
-	static GLuint loadTexture(const char *titre);
+	static GLuint loadTexture(const char *titre,int &tw,int &th);
+	//GLuint loadTexture(const char *titre);
 	static unsigned char *lectureTarga(const char *titre, int& width, int& height ,bool retourner=false);
 	static GLfloat drawString(GLfloat x,GLfloat y,const char *str);
 };
@@ -46,6 +47,7 @@ protected :
 class GlutButton : public GlutWindow {
 	bool isActive;
 	bool isDown;
+	bool isHighlighted;
 public :
 	GlutButton(GlutWindow *parent,GLuint pid,GLint px,GLint py,GLint pw,GLint ph,const char *titreTexture,bool pia=true);
 	virtual ~GlutButton() {};
@@ -81,6 +83,19 @@ public :
 	void show(bool v) { isVisible=v;};
 	void setCenterPosition(int ix,int iy) { x=ix-w/2; y=iy; };
 	void setInfo(const string &str) { info=str; };
+	void glDraw();
+};
+
+class GlutPopupMenuWindow : public GlutWindow {
+	bool isVisible;
+public :
+	GlutPopupMenuWindow(GlutWindow *parent,GLint px,GLint py,GLint pw,GLint ph);
+	virtual ~GlutPopupMenuWindow() {};
+
+	void show(bool v) { isVisible=v;};
+	void setCenterPosition(int ix,int iy) { x=ix-w/2; y=iy; };
+	void addButton(int id,const char *titre);
+	int mouseFunc(int button,int state,int x,int y);
 	void glDraw();
 };
 

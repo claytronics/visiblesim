@@ -48,13 +48,17 @@ public:
 
 	inline GlBlock* getSelectedBlock() { return selectedBlock; };
 	inline GlBlock* setSelectedBlock(int n) { return (selectedBlock=tabGlBlocks[n]); };
+	virtual void setSelectedFace(int n) {};
 	inline GlBlock* getBlockByNum(int n) { return tabGlBlocks[n]; };
-	
+
 	void lock();
 	void unlock();
 	virtual void glDraw() {};
 	virtual void glDrawId() {};
+	virtual void glDrawIdByMaterial() {};
+	virtual void createPopupMenu(int ix,int iy) {};
 	virtual Camera *getCamera() { return NULL; };
+	virtual void menuChoice(int) {};
 };
 
 inline void deleteWorld() {

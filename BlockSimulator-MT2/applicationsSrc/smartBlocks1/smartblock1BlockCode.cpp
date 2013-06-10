@@ -102,7 +102,7 @@ void SmartBlock1BlockCode::processLocalEvent(EventPtr pev) {
 							if( p2p->connectedInterface) {
 								//except to the sender
 								if( p2p != recv_interface) {
-									time_offset = (i+1)*10000;
+									time_offset = (i+1)*1000000;
 									send_dist( my_distance + 1, p2p, time_offset);
 
 									isAck[i] = false;

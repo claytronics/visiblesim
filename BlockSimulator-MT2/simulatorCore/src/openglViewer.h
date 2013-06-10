@@ -23,11 +23,12 @@ class GlutContext;
 //
 //===========================================================================================================
 class GlutContext {
-	static int screenWidth, screenHeight;
 	static int keyboardModifier;
 	public :
     static GlutSlidingMainWindow *mainWindow;
     static GlutPopupWindow *popup;
+    static GlutPopupMenuWindow *popupMenu;
+	static int screenWidth, screenHeight;
 //	bool showLinks;
 
 	static void init(int argc, char **argv);
@@ -42,8 +43,9 @@ private :
 	static void drawFunc(void);
 	static void idleFunc(void);
 	static int selectFunc(int x,int y);
+	static int selectFaceFunc(int x,int y);
 	static int processHits(GLint hits, GLuint *buffer);
-	
+	static bool saveScreen(char *titre);
 	static void *lanceScheduler(void *param);
 };
 
