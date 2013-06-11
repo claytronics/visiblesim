@@ -47,6 +47,7 @@ public:
 	void setColor(int num);
 	void setPosition(const Vecteur &p);
 	inline P2PNetworkInterface *getInterface(NeighborDirection d) { return tabInterfaces[d]; }
+	void waitVMEnd();
 	NeighborDirection getDirection( P2PNetworkInterface*);
 	tcp::socket& getSocket() {return *(socket.get());}
 	VMMessage_t*  getBufferPtr() { return &buffer;}

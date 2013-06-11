@@ -32,6 +32,10 @@ BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, boost::shared_ptr<tcp::socket> s, 
 
 BlinkyBlocksBlock::~BlinkyBlocksBlock() {
 	cout << "BlinkyBlocksBlock destructor" << endl;
+	kill(pid, SIGTERM);
+}
+
+void BlinkyBlocksBlock::waitVMEnd() {	
 	waitpid(pid, NULL, 0);
 }
 
