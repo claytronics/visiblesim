@@ -9,9 +9,16 @@
 #define BLINKYBLOCKSSCHEDULER_H_
 
 #include "scheduler.h"
+#include "network.h"
+#include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
+
+using namespace boost;
+using boost::asio::ip::udp;
+using boost::asio::ip::tcp;
 
 namespace BlinkyBlocks {
 
@@ -22,6 +29,7 @@ protected:
 	void* startPaused(/*void *param */);
 
 	boost::interprocess::interprocess_semaphore *sem_schedulerStart;
+	//boost::interprocess::interprocess_mutex mutex_schedule;
 	boost::thread *schedulerThread;
 	int schedulerMode;
 
@@ -37,6 +45,18 @@ public:
 		cout << "I'm a BlinkyBlocksScheduler" << endl;
 	}
 	void start(int mode);
+
+	void waitForSchedulerEnd() {
+		schedulerThread->join();
+	}
+	/*
+	void lock() {
+		mutex_schedule.lock();
+	}
+
+	void unlock() {
+		mutex_schedule.unlock();
+	}*/
 
 };
 
