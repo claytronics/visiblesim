@@ -28,10 +28,11 @@ CC = g++
 %.depends: %.cpp
 	$(CC) -M $(CCFLAGS) $(INCLUDES) $< > $@
 	
-all: $(OUT) blinkyThreadsManager
+all: $(OUT) blinkyThreadsManager VMEmulator
 
-autoinstall: $(OUT) blinkyThreadsManager
-	cp $(OUT) blinkyThreadsManager $(APPDIR)
+autoinstall: $(OUT) blinkyThreadsManager VMEmulator
+	cp $(OUT) blinkyThreadsManager $(APPDIR)	
+	cp $(OUT) VMEmulator $(APPDIR)
 
 $(APPDIR)/$(OUT): $(OUT)
 
@@ -44,6 +45,9 @@ $(APPDIR)/$(OUT): $(OUT)
 
 $(OUT): $(SIMULATORLIB) $(OBJS) 
 	$(CC) -o $(OUT) $(OBJS) $(LIBS)
+
+VMEmulator: VMEmulator.cpp
+	$(CC) $(CCFLAGS) $(INCLUDES) -o VMEmulator VMEmulator.cpp -L/opt/local/lib $(LIBS)
 
 blinkyThreadsManager: blinkyThreadsManager.cpp
 	$(CC) $(CCFLAGS) $(INCLUDES) -o blinkyThreadsManager blinkyThreadsManager.cpp -L/opt/local/lib $(LIBS)

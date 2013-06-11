@@ -13,6 +13,7 @@
 #include "vecteur.h"
 #include "blinkyBlocksBlock.h"
 #include "objLoader.h"
+#include <boost/asio.hpp>
 
 namespace BlinkyBlocks {
 
@@ -27,6 +28,8 @@ protected:
 	GLushort numSelectedFace;
 	GLuint numSelectedBlock;
 	GLint menuId;
+	boost::asio::io_service ios;
+	tcp::acceptor *acceptor;
 
 	BlinkyBlocksWorld(int slx,int sly,int slz,int argc, char *argv[]);
 	virtual ~BlinkyBlocksWorld();
@@ -57,6 +60,13 @@ public:
 	inline virtual Camera *getCamera() { return camera; };
 	virtual void setSelectedFace(int n);
 	virtual void menuChoice(int n);
+
+	map<int, BaseSimulator::BuildingBlock*>& getBuildingBlocksMap()
+	{
+		return buildingBlocksMap;
+	}
+
+	boost::asio::io_service& getIos() {return ios;}
 };
 
 inline void createWorld(int slx,int sly,int slz,int argc, char *argv[]) {

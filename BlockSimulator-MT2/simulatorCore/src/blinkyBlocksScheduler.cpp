@@ -7,11 +7,15 @@
 
 #include <iostream>
 #include <stdlib.h>
-#include <boost/asio.hpp>
 #include "blinkyBlocksScheduler.h"
+#include "blinkyBlocksSimulator.h"
+#include "blinkyBlocksWorld.h"
+#include "buildingBlock.h"
+#include "blockCode.h"
 
 using namespace std;
 using namespace boost;
+using boost::asio::ip::tcp;
 namespace BlinkyBlocks {
 
 BlinkyBlocksScheduler::BlinkyBlocksScheduler() {
@@ -27,6 +31,15 @@ BlinkyBlocksScheduler::~BlinkyBlocksScheduler() {
 	delete schedulerThread;
 }
 
+void handler(const boost::system::error_code& error, std::size_t bytes_transferred, BlinkyBlocksBlock* bb){
+
+cout << bb->blockId << " sends: " << bb->getBufferPtr()->param1 << endl;
+		/*boost::asio::async_read(bb->getSocket(), 
+				boost::asio::buffer((void*)bb->getBufferPtr(), sizeof(VMMessage_t)),
+				boost::bind(handler, boost::asio::placeholders::error,
+				boost::asio::placeholders::bytes_transferred, bb));*/
+// getWorld()->getIos().run(); // synchronization...
+}
 
 void BlinkyBlocksScheduler::createScheduler() {
 	scheduler = new BlinkyBlocksScheduler();
@@ -55,8 +68,6 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 
 	switch (schedulerMode) {
 	case SCHEDULER_MODE_FASTEST:
-
-
 		while ( (!eventsMap.empty() ) && currentDate < maximumDate) {
 	    	first=eventsMap.begin();
 	    	pev = (*first).second;

@@ -8,6 +8,7 @@
 #include <iostream>
 #include "blinkyBlocksBlock.h"
 #include "blinkyBlocksWorld.h"
+#include <sys/wait.h>
 
 using namespace std;
 
@@ -17,10 +18,12 @@ static const GLfloat tabColors[12][4]={{1.0,0.0,0.0,1.0},{1.0,0.647058824,0.0,1.
 {0.980392157,0.5,0.456,1.0},{0.549019608,0.5,0.5,1.0},{0.980392157,0.843137255,0.0,1.0},{0.094117647,0.545098039,0.094117647,1.0}};
 
 
-BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) : BaseSimulator::BuildingBlock(bId) {
+BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, boost::shared_ptr<tcp::socket> s, pid_t p, BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) : BaseSimulator::BuildingBlock(bId) {
 	cout << "BlinkyBlocksBlock constructor" << endl;
 	buildNewBlockCode = blinkyBlocksBlockCodeBuildingFunction;
 	blockCode = (BaseSimulator::BlockCode*)buildNewBlockCode(this);
+	socket = s;
+	pid = p;
 	for (int i=0; i<6; i++) {
 		tabInterfaces[i] = new P2PNetworkInterface(this);
 	}
@@ -29,6 +32,7 @@ BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, BlinkyBlocksBlockCode *(*blinkyBlo
 
 BlinkyBlocksBlock::~BlinkyBlocksBlock() {
 	cout << "BlinkyBlocksBlock destructor" << endl;
+	waitpid(pid, NULL, 0);
 }
 
 void BlinkyBlocksBlock::setPosition(const Vecteur &p) {

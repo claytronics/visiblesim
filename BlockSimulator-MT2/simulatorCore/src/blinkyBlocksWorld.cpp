@@ -8,12 +8,13 @@
 #include <iostream>
 #include <stdlib.h>
 #include "blinkyBlocksWorld.h"
+#include "blinkyBlocksBlock.h"
 
 using namespace std;
 
 namespace BlinkyBlocks {
 
-BlinkyBlocksWorld::BlinkyBlocksWorld(int slx,int sly,int slz,int argc, char *argv[]):World() {
+BlinkyBlocksWorld::BlinkyBlocksWorld(int slx,int sly,int slz,int argc, char *argv[]):World(), ios() {
 	cout << "\033[1;31mBlinkyBlocksWorld constructor\033[0m" << endl;
 	gridSize[0]=slx;
 	gridSize[1]=sly;
@@ -43,6 +44,7 @@ BlinkyBlocksWorld::BlinkyBlocksWorld(int slx,int sly,int slz,int argc, char *arg
 	menuId=0;
 	numSelectedFace=0;
 	numSelectedBlock=0;
+	acceptor =  new tcp::acceptor(ios, tcp::endpoint(tcp::v4(), 7800));
 }
 
 BlinkyBlocksWorld::~BlinkyBlocksWorld() {
@@ -74,9 +76,28 @@ void BlinkyBlocksWorld::addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlo
 		blockId++;
 	}
 
+	// Start the VM
+	pid_t VMPid;
+	char* cmd[] = {(char*)"VMEmulator", (char*)"-f", (char*)"program.meld", NULL };
+	VMPid = fork();	
+	if(VMPid < 0) {cerr << "Error when starting the VM" << endl;}
+    	if(VMPid == 0) {execv("VMEmulator", const_cast<char**>(cmd));}
 
-	BlinkyBlocksBlock *blinkyBlock = new BlinkyBlocksBlock(blockId,blinkyBlockCodeBuildingFunction);
-	buildingBlocksMap.insert(std::pair<int,BaseSimulator::BuildingBlock*>(blinkyBlock->blockId, (BaseSimulator::BuildingBlock*)blinkyBlock) );
+	// Wait for an incoming connection	
+	boost::shared_ptr<tcp::socket> socket(new tcp::socket(ios));	
+	acceptor->accept(*(socket.get()));
+	cout << "VM "<< blockId << " connected" << endl;
+	
+	// Send the id to the block
+	VMMessage_t m1;
+	m1.messageType = 0;
+	m1.param1 = blockId;
+	boost::asio::write(*(socket.get()), boost::asio::buffer((void*)&m1,sizeof(m1)));
+	cout << "message written to VM "<< blockId << endl;
+
+	BlinkyBlocksBlock *blinkyBlock = new BlinkyBlocksBlock(blockId, socket, VMPid, blinkyBlockCodeBuildingFunction);
+	buildingBlocksMap.insert(std::pair<int,BaseSimulator::BuildingBlock*>(blinkyBlock->blockId, (BaseSimulator::BuildingBlock*)blinkyBlock));
+
 	getScheduler()->schedule(new CodeStartEvent(getScheduler()->now(), blinkyBlock));
 
 	BlinkyBlocksGlBlock *glBlock = new BlinkyBlocksGlBlock(blockId);
