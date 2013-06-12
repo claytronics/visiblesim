@@ -7,7 +7,9 @@
 
 #include <iostream>
 #include "blinkyBlocksBlock.h"
+#include "buildingBlock.h"
 #include "blinkyBlocksWorld.h"
+#include "blinkyBlocksSimulator.h"
 #include <sys/wait.h>
 
 using namespace std;
@@ -21,9 +23,10 @@ static const GLfloat tabColors[12][4]={{1.0,0.0,0.0,1.0},{1.0,0.647058824,0.0,1.
 BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, boost::shared_ptr<tcp::socket> s, pid_t p, BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) : BaseSimulator::BuildingBlock(bId) {
 	cout << "BlinkyBlocksBlock constructor" << endl;
 	buildNewBlockCode = blinkyBlocksBlockCodeBuildingFunction;
-	blockCode = (BaseSimulator::BlockCode*)buildNewBlockCode(this);
 	socket = s;
 	pid = p;
+	buffer.message = NULL;
+	blockCode = (BaseSimulator::BlockCode*)buildNewBlockCode(this);
 	for (int i=0; i<6; i++) {
 		tabInterfaces[i] = new P2PNetworkInterface(this);
 	}
@@ -32,8 +35,12 @@ BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, boost::shared_ptr<tcp::socket> s, 
 
 BlinkyBlocksBlock::~BlinkyBlocksBlock() {
 	cout << "BlinkyBlocksBlock destructor" << endl;
-	kill(pid, SIGTERM);
-	waitpid(pid, NULL, 0);
+	//kill(pid, SIGTERM); -- seg fault
+	if(waitpid(pid, NULL, WNOHANG) == 0) {
+			cout << pid << " killed" <<endl;
+			//kill(pid, SIGINT); --seg fault ...
+			waitpid(pid, NULL, 0);
+	}
 }
 
 void BlinkyBlocksBlock::waitVMEnd() {	
@@ -67,4 +74,22 @@ NeighborDirection BlinkyBlocksBlock::getDirection(P2PNetworkInterface *given_int
   return NeighborDirection(0);
 }
 
+  void BlinkyBlocksBlock::readMessageHandler(const boost::system::error_code& error, std::size_t bytes_transferred){
+	if(error) {cout << "socket closed ?" <<endl; return;}
+    //cout << "SIM RECEPTION: VM " << blockId << " sends: " << buffer.size << " bytes" << endl;
+    delete[] buffer.message;
+    buffer.message = new uint64_t[buffer.size/sizeof(uint64_t)];
+    boost::asio::read(getSocket(),boost::asio::buffer((void*)buffer.message, buffer.size) );
+    //cout << "SIM RECEPTION: VM " << blockId << " message: " << buffer.message[0] << endl;
+    ((BlinkyBlocksBlockCode*)blockCode)->handleNewMessage();
+    this->readMessageFromVM();
+  }
+  
+  void BlinkyBlocksBlock::readMessageFromVM() {
+	boost::asio::async_read(getSocket(), 
+      boost::asio::buffer(&buffer.size, sizeof(uint64_t)),
+      boost::bind(&BlinkyBlocksBlock::readMessageHandler, this, boost::asio::placeholders::error,
+      boost::asio::placeholders::bytes_transferred));  
+  }
+  
 }

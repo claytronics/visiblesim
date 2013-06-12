@@ -77,7 +77,7 @@ void BlinkyBlocksWorld::addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlo
 	}
 
 	// Start the VM
-	pid_t VMPid;
+	pid_t VMPid = 0;
 	char* cmd[] = {(char*)"VMEmulator", (char*)"-f", (char*)"program.meld", NULL };
 	VMPid = fork();	
 	if(VMPid < 0) {cerr << "Error when starting the VM" << endl;}
@@ -87,13 +87,6 @@ void BlinkyBlocksWorld::addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlo
 	boost::shared_ptr<tcp::socket> socket(new tcp::socket(ios));	
 	acceptor->accept(*(socket.get()));
 	cout << "VM "<< blockId << " connected" << endl;
-	
-	// Send the id to the block
-	VMMessage_t m1;
-	m1.messageType = 0;
-	m1.param1 = blockId;
-	boost::asio::write(*(socket.get()), boost::asio::buffer((void*)&m1,sizeof(m1)));
-	cout << "message written to VM "<< blockId << endl;
 
 	BlinkyBlocksBlock *blinkyBlock = new BlinkyBlocksBlock(blockId, socket, VMPid, blinkyBlockCodeBuildingFunction);
 	buildingBlocksMap.insert(std::pair<int,BaseSimulator::BuildingBlock*>(blinkyBlock->blockId, (BaseSimulator::BuildingBlock*)blinkyBlock));

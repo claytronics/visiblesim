@@ -10,6 +10,7 @@
 
 #include "scheduler.h"
 #include "network.h"
+#include "blinkyBlocksBlock.h"
 #include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
@@ -27,7 +28,7 @@ protected:
 	BlinkyBlocksScheduler();
 	virtual ~BlinkyBlocksScheduler();
 	void* startPaused(/*void *param */);
-
+	
 	boost::interprocess::interprocess_semaphore *sem_schedulerStart;
 	//boost::interprocess::interprocess_mutex mutex_schedule;
 	boost::thread *schedulerThread;
@@ -49,6 +50,7 @@ public:
 	void waitForSchedulerEnd() {
 		schedulerThread->join();
 	}
+	
 	/*
 	void lock() {
 		mutex_schedule.lock();

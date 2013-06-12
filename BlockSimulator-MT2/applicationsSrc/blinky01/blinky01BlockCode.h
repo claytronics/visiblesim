@@ -20,7 +20,8 @@ public:
 
 	void startup();
 	void processLocalEvent(EventPtr pev);
-
+	void handleNewMessage();
+	
 	static BlinkyBlocks::BlinkyBlocksBlockCode *buildNewBlockCode(BlinkyBlocks::BlinkyBlocksBlock *host);
 };
 

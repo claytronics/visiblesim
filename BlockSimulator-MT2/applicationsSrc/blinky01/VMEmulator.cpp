@@ -7,22 +7,34 @@
 
 #include <iostream>
 #include <boost/asio.hpp>
-#include "VMEmulator.h"
 #include <list>
 #include <boost/thread.hpp>
 
 using namespace std;
 using boost::asio::ip::tcp;
 
-#define VM_MESSAGE_TYPE_START_SIMULATION        1
-#define VM_MESSAGE_TYPE_END_SIMULATION          2
-#define VM_MESSAGE_TYPE_CREATE_LINK             3
-#define VM_MESSAGE_TYPE_COMPUTATION_LOCK        4
-#define VM_MESSAGE_TYPE_COMPUTATION_UNLOCK      5
-#define VM_MESSAGE_TYPE_SEND_MESSAGE            6
-#define VM_MESSAGE_TYPE_RECEIVE_MESSAGE         7
-#define VM_MESSAGE_TYPE_WAIT_FOR_MESSAGE	8
+#define VM_MESSAGE_SET_ID		1
+#define VM_MESSAGE_STOP			4
+#define VM_MESSAGE_ADD_NEIGHBOR		5
+#define VM_MESSAGE_REMOVE_NEIGHBOR	6
+#define VM_MESSAGE_TAP			7
+#define VM_MESSAGE_SET_COLOR		8
+#define VM_MESSAGE_SEND_MESSAGE		9
+#define VM_MESSAGE_RECEIVE_MESSAGE	10
+#define VM_MESSAGE_ACCEL		11
+#define VM_MESSAGE_SHAKE		12
 
+typedef struct VMMessage_tt {
+        uint64_t size;
+        uint64_t type;
+        uint64_t param1;
+        uint64_t param2;
+	uint64_t param3;
+	uint64_t param4;
+	uint64_t param5;
+} VMMessage_t;
+
+/*
 class SimulatedVM {
 protected:
 //	static int nextId;
@@ -41,214 +53,65 @@ public:
 
 int SimulatedVM::nextId = 0;
 list<SimulatedVM*> simulatedVMList;
-list<boost::thread*> threadsList;
+list<boost::thread*> threadsList; */
 
-void vm_thread_function(void *data) {
-	cout << "VMEmulator start" << endl;
-	
+void vm_thread_function(void *data) {	
 	boost::asio::io_service ios;
 	boost::asio::ip::tcp::resolver resolver(ios);
-
 	boost::asio::ip::tcp::resolver::query query("127.0.0.1", "7800");
-
 	boost::asio::ip::tcp::resolver::iterator iter = resolver.resolve(query);
 	boost::asio::ip::tcp::resolver::iterator end;
-
-	boost::asio::ip::tcp::endpoint endpoint;
-
-	string msg ("Bienvenue sur le serveur !");
-	cout << msg << endl;
+	boost::asio::ip::tcp::endpoint endpoint;	
+	boost::asio::ip::tcp::endpoint VMEndpoint;
 	if (iter != end) {
 		endpoint = *iter;
 		std::cout << endpoint << std::endl;
 	} else {
 		exit(EXIT_FAILURE);
 	}
-
 	tcp::socket socket(ios);
-	//socket.open(tcp::v4());
-	//boost::asio::connect(socket, iter);
 	try {
-	socket.connect(*iter);
-	} catch (std::exception& e) { cerr << "Connection to the Simulator failed" << endl; }
-
-	VMMessage_t response;
-	boost::asio::ip::tcp::endpoint VMEndpoint;
-	size_t length;
-
-	/*try {
-		length = boost::asio::read(socket,boost::asio::buffer((void*)&response, sizeof(response)) );
-		if (length > 0) cout << "response : " << response.messageType << " from block " << response.param1 << endl;
-		cout << "response received" << endl;
+		socket.connect(*iter);
+		cout << "Connected to the Simulator" << endl;
 	} catch (std::exception& e) {
-		cout << "VMEmulator" << endl;	
-	}*/
-	
+		cerr << "Connection to the Simulator failed" << endl;
+	}
+
+	VMMessage_t in, out;
+	int id;	
 	cout << "VMEmulator start" << endl;
-	/*VMMessage_t m1;
-	m1.messageType = VM_MESSAGE_TYPE_START_SIMULATION;
-	m1.param1 = 2;
-	boost::asio::write(socket, boost::asio::buffer((void*)&m1,sizeof(m1)));
-	getchar();*/
-	VMMessage_t mes;
-	boost::asio::read(socket,boost::asio::buffer((void*)&mes, sizeof(VMMessage_t)) );
-	cout << "VM id received: " << mes.param1 << endl;
-	
-	mes.messageType = VM_MESSAGE_TYPE_START_SIMULATION; //1
-	mes.param1 = 2;
-	boost::asio::write(socket, boost::asio::buffer((void*)&mes,sizeof(VMMessage_t)));
-	cout << "VM sends a message: " << mes.param1 << endl;
+
+	boost::asio::read(socket,boost::asio::buffer((void*)&in, 3*sizeof(uint64_t)));
+	id = in.param1;
+	cout << "VM received id: " << id << endl;
+
+	out.size = 5*sizeof(uint64_t);
+	out.type = VM_MESSAGE_SET_COLOR;
+	out.param1 = 255; // red
+	out.param2 = 0;
+	out.param3 = 0;
+	out.param4 = 0;
+	boost::asio::write(socket, boost::asio::buffer((void*)&out,6*sizeof(uint64_t)));
+	cout << "VM " << id << " sent SET_COLOR(red)" <<  endl;
+	//getchar();
 	cout << "VMEmulator end" << endl;
-	/*
-	cout << "press a key to proceed" << endl;
 
-	getchar();
-	VMMessage_t m1;
-	m1.messageType = VM_MESSAGE_TYPE_START_SIMULATION;
-	m1.param1 = 2;
-	//socket.send_to(boost::asio::buffer((void*)&m1,sizeof(m1)),endpoint);
-	boost::asio::write(socket, boost::asio::buffer((void*)&m1,sizeof(m1)));
-	cout << "START_SIMULATION sent" << endl;
-
-	getchar();
-
-	m1.messageType = VM_MESSAGE_TYPE_CREATE_LINK;
-	m1.param1 = 0;
-	m1.param2 = 1;
-	//socket.send_to(boost::asio::buffer((void*)&m1,sizeof(m1)),endpoint);
-	boost::asio::write(socket, boost::asio::buffer((void*)&m1,sizeof(m1)));
-	cout << "CREATE_LINK sent" << endl;
-
-	getchar();
-	m1.messageType = VM_MESSAGE_TYPE_COMPUTATION_LOCK;
-	m1.param1 = 0;
-	m1.param2 = 10000000;
-	//socket.send_to(boost::asio::buffer((void*)&m1,sizeof(m1)),endpoint);
-	boost::asio::write(socket, boost::asio::buffer((void*)&m1,sizeof(m1)));
-	cout << "COMPUTATION_LOCK for 0 sent (10)" << endl;
-
-	getchar();
-	m1.messageType = VM_MESSAGE_TYPE_COMPUTATION_LOCK;
-	m1.param1 = 1;
-	m1.param2 = 20000000;
-	//socket.send_to(boost::asio::buffer((void*)&m1,sizeof(m1)),endpoint);
-	boost::asio::write(socket, boost::asio::buffer((void*)&m1,sizeof(m1)));
-	cout << "COMPUTATION_LOCK for 1 sent (20)" << endl;
-
-//	size_t length = socket.receive_from(boost::asio::buffer((void*)&response, sizeof(VMMessage_t)), VMEndpoint);
-	length = boost::asio::read(socket,boost::asio::buffer((void*)&response, sizeof(response)) );
-	if (length > 0) cout << "response : " << response.messageType << " from block " << response.param1 << endl;
-	cout << "response received" << endl;
-
-	getchar();
-	m1.messageType = VM_MESSAGE_TYPE_COMPUTATION_LOCK;
-	m1.param1 = 0;
-	m1.param2 = 5000000;
-	//socket.send_to(boost::asio::buffer((void*)&m1,sizeof(m1)),endpoint);
-	boost::asio::write(socket, boost::asio::buffer((void*)&m1,sizeof(m1)));
-	cout << "COMPUTATION_LOCK for 0 sent (5)" << endl;
-
-//	length = socket.receive_from(boost::asio::buffer((void*)&response, sizeof(VMMessage_t)), VMEndpoint);
-	length = boost::asio::read(socket,boost::asio::buffer((void*)&response, sizeof(response)) );
-	if (length > 0) cout << "response : " << response.messageType << " from block " << response.param1 << endl;
-	cout << "response received" << endl;
-
-	*/
-	/*
-	getchar();
-	m1.messageType = VM_MESSAGE_TYPE_COMPUTATION_LOCK;
-	m1.param1 = 1;
-	m1.param2 = 6000000;
-	socket.send_to(boost::asio::buffer((void*)&m1,sizeof(m1)),endpoint);
-	cout << "COMPUTATION_LOCK for 1 sent (6)" << endl;
-*/
-
-/*
-	getchar();
-	m1.messageType = VM_MESSAGE_TYPE_COMPUTATION_LOCK;
-	m1.param1 = 0;
-	m1.param2 = 30000000;
-	//socket.send_to(boost::asio::buffer((void*)&m1,sizeof(m1)),endpoint);
-	boost::asio::write(socket, boost::asio::buffer((void*)&m1,sizeof(m1)));
-	cout << "COMPUTATION_LOCK for 0 sent (30)" << endl;
-
-	//length = socket.receive_from(boost::asio::buffer((void*)&response, sizeof(VMMessage_t)), VMEndpoint);
-	length = boost::asio::read(socket,boost::asio::buffer((void*)&response, sizeof(response)) );
-	if (length > 0) cout << "response : " << response.messageType << " from block " << response.param1 << endl;
-	cout << "response received" << endl;
-
-	getchar();
-	m1.messageType = VM_MESSAGE_TYPE_WAIT_FOR_MESSAGE;
-	m1.param1 = 1;
-	//socket.send_to(boost::asio::buffer((void*)&m1,sizeof(m1)),endpoint);
-	boost::asio::write(socket, boost::asio::buffer((void*)&m1,sizeof(m1)));
-	cout << "WAIT_FOR_MESSAGE sent to 1" << endl;
-
-	//length = socket.receive_from(boost::asio::buffer((void*)&response, sizeof(VMMessage_t)), VMEndpoint);
-	length = boost::asio::read(socket,boost::asio::buffer((void*)&response, sizeof(response)) );
-	if (length > 0) cout << "response : " << response.messageType << " from block " << response.param1 << endl;
-	cout << "response received" << endl;
-*/
-	/*
-	getchar();
-	m1.messageType = VM_MESSAGE_TYPE_WAIT_FOR_MESSAGE;
-	m1.param1 = 0;
-	socket.send_to(boost::asio::buffer((void*)&m1,sizeof(m1)),endpoint);
-	cout << "WAIT_FOR_MESSAGE sent to 0" << endl;
-*/
-
-/*
-	getchar();
-	m1.messageType = VM_MESSAGE_TYPE_SEND_MESSAGE;
-	m1.param1 = 0;
-	m1.param2 = 1;
-	m1.param3 = 1500;
-	//socket.send_to(boost::asio::buffer((void*)&m1,sizeof(m1)),endpoint);
-	boost::asio::write(socket, boost::asio::buffer((void*)&m1,sizeof(m1)));
-	cout << "SEND_MESSAGE sent to 0" << endl;
-
-	getchar();
-	m1.messageType = VM_MESSAGE_TYPE_WAIT_FOR_MESSAGE;
-	m1.param1 = 0;
-	//socket.send_to(boost::asio::buffer((void*)&m1,sizeof(m1)),endpoint);
-	boost::asio::write(socket, boost::asio::buffer((void*)&m1,sizeof(m1)));
-	cout << "WAIT_FOR_MESSAGE sent to 0" << endl;
-
-	//length = socket.receive_from(boost::asio::buffer((void*)&response, sizeof(VMMessage_t)), VMEndpoint);
-	length = boost::asio::read(socket,boost::asio::buffer((void*)&response, sizeof(response)) );
-	if (length > 0) cout << "response : " << response.messageType << " from block " << response.param1 << endl;
-	cout << "response received" << endl;
-
-	getchar();
-	m1.messageType = VM_MESSAGE_TYPE_WAIT_FOR_MESSAGE;
-	m1.param1 = 1;
-	//socket.send_to(boost::asio::buffer((void*)&m1,sizeof(m1)),endpoint);
-	boost::asio::write(socket, boost::asio::buffer((void*)&m1,sizeof(m1)));
-	cout << "WAIT_FOR_MESSAGE sent to 0" << endl;
-
-	getchar();
-	m1.messageType = VM_MESSAGE_TYPE_END_SIMULATION;
-	//socket.send_to(boost::asio::buffer((void*)&m1,sizeof(m1)),endpoint);
-	boost::asio::write(socket, boost::asio::buffer((void*)&m1,sizeof(m1)));
-	cout << "END_SIMULATION sent" << endl;
-
-	cout << "VMEmulator end" << endl;
-*/
 }
 
+/*
 void threadFunction(void *data) {
 	SimulatedVM *simulatedVM = (SimulatedVM*)data;
 	cout << "thread started to handle VM " << simulatedVM->id << endl;
 	vm_thread_function(NULL);
 	cout << "end of thread handling VM " << simulatedVM->id << endl;
 }
-
+*/
 
 int main(int argc, char **argv) {
-	SimulatedVM *sVM = new SimulatedVM();
+	vm_thread_function(NULL);
+	/*SimulatedVM *sVM = new SimulatedVM();
 	simulatedVMList.push_back(sVM);
-	threadFunction(sVM);
-	/*	
+	threadFunction(sVM);	
 	cout << "VMEmulator start" << endl;
 
 	SimulatedVM *sVM;
@@ -261,7 +124,6 @@ int main(int argc, char **argv) {
 	for (it=threadsList.begin(); it != threadsList.end(); it++) {
 		(*it)->join();
 	}
-
 	cout << "VMEmulator end" << endl; */
 }
 

@@ -16,7 +16,23 @@
 using namespace std;
 using namespace boost;
 using boost::asio::ip::tcp;
+
 namespace BlinkyBlocks {
+
+  void async_listener_thread() {
+	for (;;) {
+		try
+		{
+			getWorld()->getIos().run();
+			break;
+		}
+		catch (std::exception& e)
+		{
+			cout << "listener thread exeception" << endl;
+		}
+	}
+	cout << "out of the loop" << endl;
+  }
 
   BlinkyBlocksScheduler::BlinkyBlocksScheduler() {
     cout << "BlinkyBlocksScheduler constructor" << endl;
@@ -31,15 +47,6 @@ namespace BlinkyBlocks {
     delete schedulerThread;
   }
 
-  void handler(const boost::system::error_code& error, std::size_t bytes_transferred, BlinkyBlocksBlock* bb){
-
-    cout << bb->blockId << " sends: " << bb->getBufferPtr()->param1 << endl;
-    /*boost::asio::async_read(bb->getSocket(), 
-      boost::asio::buffer((void*)bb->getBufferPtr(), sizeof(VMMessage_t)),
-      boost::bind(handler, boost::asio::placeholders::error,
-      boost::asio::placeholders::bytes_transferred, bb));*/
-  }
-
   void BlinkyBlocksScheduler::createScheduler() {
     scheduler = new BlinkyBlocksScheduler();
   }
@@ -49,7 +56,6 @@ namespace BlinkyBlocks {
   }
 
   void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
-    //MultiCoresScheduler *scheduler = (MultiCoresScheduler*)param;
     bool mustStop;
     uint64_t systemCurrentTime, systemCurrentTimeMax;
 
@@ -57,24 +63,26 @@ namespace BlinkyBlocks {
     cout << "\033[1;33mScheduler Mode :" << schedulerMode << endl;
 
     sem_schedulerStart->wait();
-
+	new boost::thread(async_listener_thread);
+    
     int systemStartTime, systemStopTime;
     multimap<uint64_t, EventPtr>::iterator first;
     EventPtr pev;
     // Launch asynchrone reads on the tcp socket of each block
-    map<int, BaseSimulator::BuildingBlock*>::iterator it;
+    /*map<int, BaseSimulator::BuildingBlock*>::iterator it;
     for(it = getWorld()->getBuildingBlocksMap().begin(); 
 	it != getWorld()->getBuildingBlocksMap().end(); it++) {
       BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-      boost::asio::async_read(bb->getSocket(), 
+      bb->readMessageFromVM();*/
+      /*boost::asio::async_read(bb->getSocket(), 
 			      boost::asio::buffer((void*)bb->getBufferPtr(),
 						  sizeof(VMMessage_t)),
 			      boost::bind(handler, 
 					  boost::asio::placeholders::error,
-					  boost::asio::placeholders::bytes_transferred, bb)); 
+					  boost::asio::placeholders::bytes_transferred, bb)); */
       //boost::asio::read(bb->getSocket(),boost::asio::buffer((void*)bb->getBufferPtr(), sizeof(VMMessage_t)) );
-    }
-    cout << "sync" << endl;
+    //}
+    //cout << "sync" << endl;
     //getWorld()->getIos().run(); // force to wait for all async tasks...
     /* VM process are killed in the destructor, no more need to wait them
     // Wait the end of all the VM programs

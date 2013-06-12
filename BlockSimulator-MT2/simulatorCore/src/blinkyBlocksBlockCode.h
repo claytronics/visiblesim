@@ -20,6 +20,8 @@ public:
 	BlinkyBlocksBlockCode(BlinkyBlocksBlock *host);
 	virtual ~BlinkyBlocksBlockCode();
 
+	virtual void handleNewMessage();
+
 	//static BlinkyBlocksBlockCode* buildNewBlockCode(BlinkyBlocksBlock *host);
 	virtual void processLocalEvent(EventPtr pev) = 0;
 };

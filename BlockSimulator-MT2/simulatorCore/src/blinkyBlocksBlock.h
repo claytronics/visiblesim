@@ -16,10 +16,8 @@
 using boost::asio::ip::tcp;
 
 typedef struct VMMessage_tt {
-        uint64_t messageType;
-        uint64_t param1;
-        uint64_t param2;
-        uint64_t param3;
+        uint64_t size;
+        uint64_t *message;
 } VMMessage_t;
 
 namespace BlinkyBlocks {
@@ -51,10 +49,15 @@ public:
 	NeighborDirection getDirection( P2PNetworkInterface*);
 	tcp::socket& getSocket() {return *(socket.get());}
 	VMMessage_t*  getBufferPtr() { return &buffer;}
+	
+	void sendMessageToVm(uint64_t size, uint64_t* message);
+	void readMessageFromVM();
+	
 protected:
 	boost::shared_ptr<tcp::socket> socket;
 	pid_t pid;
 	VMMessage_t buffer;
+	void readMessageHandler(const boost::system::error_code& error, std::size_t bytes_transferred);
 };
 
 }
