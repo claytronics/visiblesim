@@ -27,7 +27,6 @@ using boost::asio::ip::tcp;
 #define VM_MESSAGE_ACCEL						11
 #define VM_MESSAGE_SHAKE						12
 
-
 Blinky01BlockCode::Blinky01BlockCode(BlinkyBlocksBlock *host):BlinkyBlocksBlockCode(host) {
 	cout << "Blinky01BlockCode constructor" << endl;
 	// Send the id to the block
@@ -102,8 +101,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[1] = VM_MESSAGE_ADD_NEIGHBOR;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 		message[3] = -1; // souce node
-		message[4] = 0; // target ????
-		message[5] = 0; // face
+		message[4] = (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->target; // target ????
+		message[5] = (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->face; // face
 		bb->sendMessageToVM(6*sizeof(uint64_t), message);
 		}
 		break;
@@ -114,7 +113,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[1] = VM_MESSAGE_REMOVE_NEIGHBOR;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 		message[3] = -1; // souce node
-		message[4] = 0; // face
+		message[4] = (boost::static_pointer_cast<VMRemoveNeighborEvent>(pev))->face; // face
 		bb->sendMessageToVM(5*sizeof(uint64_t), message);
 		}
 		break;
@@ -148,9 +147,9 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[1] = VM_MESSAGE_ACCEL;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 		message[3] = -1; // souce node
-		message[4] = 0; // x
-		message[5] = 0; // y
-		message[6] = 0; // z
+		message[4] = (boost::static_pointer_cast<VMAccelEvent>(pev))->x; // x
+		message[5] = (boost::static_pointer_cast<VMAccelEvent>(pev))->y;; // y
+		message[6] = (boost::static_pointer_cast<VMAccelEvent>(pev))->z;; // z
 		bb->sendMessageToVM(7*sizeof(uint64_t), message);
 		}
 		break;
@@ -161,7 +160,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[1] = VM_MESSAGE_SET_ID;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 		message[3] = -1; // souce node
-		message[4] = 0;// force
+		message[4] = (boost::static_pointer_cast<VMShakeEvent>(pev))->force; // force
 		bb->sendMessageToVM(5*sizeof(uint64_t), message);
 		}
 		break;
