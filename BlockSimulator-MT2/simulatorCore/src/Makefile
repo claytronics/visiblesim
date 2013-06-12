@@ -48,7 +48,7 @@ CC = g++
 .PHONY: clean all
 
 .cpp.o:
-	$(CC) $(INCLUDES) $(CCFLAGS) -c $< -o $@
+	$(CC) $(CCFLAGS) $(INCLUDES) -c $< -o $@
 
 all: libsimMultiCores.a libsimBlinkyBlocks.a libsimSmartBlocks.a #$(OUT)
 

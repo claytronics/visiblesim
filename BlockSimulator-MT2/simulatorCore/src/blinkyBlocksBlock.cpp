@@ -92,4 +92,10 @@ NeighborDirection BlinkyBlocksBlock::getDirection(P2PNetworkInterface *given_int
       boost::asio::placeholders::bytes_transferred));  
   }
   
+  void BlinkyBlocksBlock::sendMessageToVM(uint64_t size, uint64_t* message){
+		try {
+			boost::asio::write(getSocket(), boost::asio::buffer((void*)message,size));
+		} catch (std::exception& e) {cout << "connection to the VM lost" << endl;}
+	}
+  
 }

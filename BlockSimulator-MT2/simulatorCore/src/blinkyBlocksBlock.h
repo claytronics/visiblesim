@@ -12,11 +12,15 @@
 #include "blinkyBlocksBlockCode.h"
 #include "blinkyBlocksGlBlock.h"
 #include <boost/asio.hpp> 
+#include <stdexcept>
 
 using boost::asio::ip::tcp;
 
 typedef struct VMMessage_tt {
         uint64_t size;
+        //uint64_t type;
+        //uint64_t timestamp;
+        //uint64_t sourcenode;
         uint64_t *message;
 } VMMessage_t;
 
@@ -47,10 +51,10 @@ public:
 	inline P2PNetworkInterface *getInterface(NeighborDirection d) { return tabInterfaces[d]; }
 	void waitVMEnd();
 	NeighborDirection getDirection( P2PNetworkInterface*);
-	tcp::socket& getSocket() {return *(socket.get());}
+	tcp::socket& getSocket() {if(socket.get() == NULL) {cout << "NULL" << endl; throw std::logic_error("socket pointer is NULL");} return *(socket.get());}
 	VMMessage_t*  getBufferPtr() { return &buffer;}
 	
-	void sendMessageToVm(uint64_t size, uint64_t* message);
+	void sendMessageToVM(uint64_t size, uint64_t* message);
 	void readMessageFromVM();
 	
 protected:

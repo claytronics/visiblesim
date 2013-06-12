@@ -52,25 +52,20 @@ void Blinky01BlockCode::handleNewMessage() {
 		uint64_t* message = bb->getBufferPtr()->message;
 		
 		switch (message[0]) {
-			case VM_MESSAGE_SET_COLOR:			{
+			case VM_MESSAGE_SET_COLOR:			
+			{
 				// <red> <blue> <green> <intensity>
-				Vecteur color(message[1]/255.0, message[2]/255.0, message[3]/255.0, message[4]/255.0);
+				Vecteur color(message[3]/255.0, message[4]/255.0, message[5]/255.0, message[6]/255.0);
 				bb->setColor(color);
 			}	
-				break;
-			/*
-			case VM_MESSAGE_TYPE_CREATE_LINK:
-				info.str("");
-				info << " Linking block " << mes.param1 << " with " << mes.param2;
-				Scheduler::trace(info.str());
-				MultiCoresBlock *b0, *b1;
-				b0 = getWorld()->getBlockById(mes.param1);
-				b1 = getWorld()->getBlockById(mes.param2);
-				b0->addP2PNetworkInterfaceAndConnectTo(b1);
-				break;
-			*/
+			break;
+			case VM_MESSAGE_SEND_MESSAGE:
+			{
+				// to do
+				cout << "message transmission not supported yet" << endl;
+			}
 			default:
-				cout << "*** ERROR *** : unsupported message received from VM" << endl;
+				cerr << "*** ERROR *** : unsupported message received from VM" << endl;
 				break;
 		}
 	}
@@ -79,29 +74,99 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
 	switch (pev->eventType) {
 	case EVENT_SET_ID:
-		uint64_t message[3];
-		message[0] = 2*sizeof(uint64_t);	
+		{
+		uint64_t message[5];
+		message[0] = 4*sizeof(uint64_t);	
 		message[1] = VM_MESSAGE_SET_ID;
-		message[2] = hostBlock->blockId;
-		try {
-			boost::asio::write(bb->getSocket(), boost::asio::buffer((void*)message,3*sizeof(uint64_t)));
-		} catch (std::exception& e) {cout << "connection to the VM lost" << endl;}
+		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
+		message[3] = -1; // souce node
+		message[4] = hostBlock->blockId;
+		bb->sendMessageToVM(5*sizeof(uint64_t), message);
+		cout << "ID sent to the VM " << hostBlock->blockId << endl;
+		}
 		break;
 	case EVENT_STOP:
+		{			
+		uint64_t message[4];
+		message[0] = 3*sizeof(uint64_t);	
+		message[1] = VM_MESSAGE_STOP;
+		message[2] = BaseSimulator::getScheduler()->now();
+		message[3] = -1; // souce node
+		bb->sendMessageToVM(4*sizeof(uint64_t), message);
+		}
 		break;
 	case EVENT_ADD_NEIGHBOR:
+		{
+		uint64_t message[6];
+		message[0] = 5*sizeof(uint64_t);	
+		message[1] = VM_MESSAGE_ADD_NEIGHBOR;
+		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
+		message[3] = -1; // souce node
+		message[4] = 0; // target ????
+		message[5] = 0; // face
+		bb->sendMessageToVM(6*sizeof(uint64_t), message);
+		}
 		break;
 	case EVENT_REMOVE_NEIGHBOR:
+		{
+		uint64_t message[5];
+		message[0] = 4*sizeof(uint64_t);	
+		message[1] = VM_MESSAGE_REMOVE_NEIGHBOR;
+		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
+		message[3] = -1; // souce node
+		message[4] = 0; // face
+		bb->sendMessageToVM(5*sizeof(uint64_t), message);
+		}
 		break;
 	case EVENT_TAP:
+		{
+		uint64_t message[4];
+		message[0] = 3*sizeof(uint64_t);	
+		message[1] = VM_MESSAGE_TAP;
+		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
+		message[3] = -1; // souce node
+		bb->sendMessageToVM(4*sizeof(uint64_t), message);
+		}
 		break;
 	case EVENT_RECEIVE_MESSAGE:
+		{
+		cout << "message transmission not supported yet" << endl;
+		/*uint64_t message[5];
+		message[0] = 4*sizeof(uint64_t);	
+		message[1] = VM_MESSAGE_TAP;
+		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
+		message[3] = -1; // souce node
+		message[4] = 0; // face
+		// mappe avec le contenu envoyer
+		bb->sendMessageToVM(5*sizeof(uint64_t), message); */
+		}
 		break;
 	case EVENT_ACCEL:
+		{
+		uint64_t message[7];
+		message[0] = 6*sizeof(uint64_t);	
+		message[1] = VM_MESSAGE_ACCEL;
+		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
+		message[3] = -1; // souce node
+		message[4] = 0; // x
+		message[5] = 0; // y
+		message[6] = 0; // z
+		bb->sendMessageToVM(7*sizeof(uint64_t), message);
+		}
 		break;
 	case EVENT_SHAKE:
+		{
+		uint64_t message[5];
+		message[0] = 4*sizeof(uint64_t);	
+		message[1] = VM_MESSAGE_SET_ID;
+		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
+		message[3] = -1; // souce node
+		message[4] = 0;// force
+		bb->sendMessageToVM(5*sizeof(uint64_t), message);
+		}
 		break;
 	default:
+		cerr << "*** ERROR *** : unknown local event" << endl;
 		break;
 	}
 }
