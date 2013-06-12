@@ -80,10 +80,13 @@ void vm_thread_function(void *data) {
 	VMMessage_t in, out;
 	int id;	
 	cout << "VMEmulator start" << endl;
-
-	boost::asio::read(socket,boost::asio::buffer((void*)&in, 3*sizeof(uint64_t)));
-	id = in.param1;
-	cout << "VM received id: " << id << endl;
+	try {
+		boost::asio::read(socket,boost::asio::buffer((void*)&in, 3*sizeof(uint64_t)));
+		id = in.param1;
+		cout << "VM received id: " << id << endl;
+	} catch (std::exception& e) {
+		cerr << "Connection to the Simulator lost" << endl;
+	}
 
 	out.size = 5*sizeof(uint64_t);
 	out.type = VM_MESSAGE_SET_COLOR;
@@ -91,8 +94,12 @@ void vm_thread_function(void *data) {
 	out.param2 = 0;
 	out.param3 = 0;
 	out.param4 = 0;
-	boost::asio::write(socket, boost::asio::buffer((void*)&out,6*sizeof(uint64_t)));
-	cout << "VM " << id << " sent SET_COLOR(red)" <<  endl;
+	try {
+		boost::asio::write(socket, boost::asio::buffer((void*)&out,6*sizeof(uint64_t)));
+		cout << "VM " << id << " sent SET_COLOR(red)" <<  endl;
+	} catch (std::exception& e) {
+		cerr << "Connection to the Simulator lost" << endl;
+	}
 	//getchar();
 	cout << "VMEmulator end" << endl;
 

@@ -43,7 +43,6 @@ public:
 
 	void startup();
 	void processLocalEvent(EventPtr pev);
-
 	static BlinkyBlocks::BlinkyBlocksBlockCode *buildNewBlockCode( BlinkyBlocks::BlinkyBlocksBlock *host);
 
 	void send_dist( unsigned int distance,  P2PNetworkInterface * by_interface, uint64_t time_offset);

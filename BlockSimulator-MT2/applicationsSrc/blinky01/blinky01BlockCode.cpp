@@ -8,12 +8,13 @@
 #include <iostream>
 #include <sstream>
 #include "blinky01BlockCode.h"
-//#include <boost/asio.hpp> 
+#include "scheduler.h"
+#include <boost/asio.hpp> 
+#include "blinkyBlocksEvents.h"
 
 using namespace std;
 using namespace BlinkyBlocks;
-//using boost::asio::ip::udp;
-//using boost::asio::ip::tcp;
+using boost::asio::ip::tcp;
 
 #define VM_MESSAGE_SET_ID				        1
 #define VM_MESSAGE_STOP							4
@@ -30,11 +31,7 @@ using namespace BlinkyBlocks;
 Blinky01BlockCode::Blinky01BlockCode(BlinkyBlocksBlock *host):BlinkyBlocksBlockCode(host) {
 	cout << "Blinky01BlockCode constructor" << endl;
 	// Send the id to the block
-	uint64_t message[3];
-	message[0] = 2*sizeof(uint64_t);	
-	message[1] = VM_MESSAGE_SET_ID;
-	message[2] = host->blockId;
-	boost::asio::write(host->getSocket(), boost::asio::buffer((void*)message,3*sizeof(uint64_t)));
+	BaseSimulator::getScheduler()->schedule(new VMSetIdEvent(BaseSimulator::getScheduler()->now(), (BlinkyBlocksBlock*)hostBlock));
 }
 
 Blinky01BlockCode::~Blinky01BlockCode() {
@@ -48,7 +45,7 @@ void Blinky01BlockCode::startup() {
 	((BlinkyBlocksBlock*)hostBlock)->readMessageFromVM();
 }
 
-	void Blinky01BlockCode::handleNewMessage() {
+void Blinky01BlockCode::handleNewMessage() {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
 		cout << "Scheduler: message size: " << bb->getBufferPtr()->size << endl;
 		cout << "Scheduler: param1: " << bb->getBufferPtr()->message[0] << endl;
@@ -79,7 +76,34 @@ void Blinky01BlockCode::startup() {
 	}
 
 void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
-
+	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
+	switch (pev->eventType) {
+	case EVENT_SET_ID:
+		uint64_t message[3];
+		message[0] = 2*sizeof(uint64_t);	
+		message[1] = VM_MESSAGE_SET_ID;
+		message[2] = hostBlock->blockId;
+		try {
+			boost::asio::write(bb->getSocket(), boost::asio::buffer((void*)message,3*sizeof(uint64_t)));
+		} catch (std::exception& e) {cout << "connection to the VM lost" << endl;}
+		break;
+	case EVENT_STOP:
+		break;
+	case EVENT_ADD_NEIGHBOR:
+		break;
+	case EVENT_REMOVE_NEIGHBOR:
+		break;
+	case EVENT_TAP:
+		break;
+	case EVENT_RECEIVE_MESSAGE:
+		break;
+	case EVENT_ACCEL:
+		break;
+	case EVENT_SHAKE:
+		break;
+	default:
+		break;
+	}
 }
 
 BlinkyBlocks::BlinkyBlocksBlockCode* Blinky01BlockCode::buildNewBlockCode(BlinkyBlocksBlock *host) {

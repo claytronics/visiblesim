@@ -10,7 +10,6 @@
 
 #include "blinkyBlocksBlockCode.h"
 #include "blinkyBlocksSimulator.h"
-#include "blinkyBlocksScheduler.h"
 
 class Blinky01BlockCode : public BlinkyBlocks::BlinkyBlocksBlockCode {
 public:
@@ -24,7 +23,5 @@ public:
 	
 	static BlinkyBlocks::BlinkyBlocksBlockCode *buildNewBlockCode(BlinkyBlocks::BlinkyBlocksBlock *host);
 };
-
-
 
 #endif /* BLINKY01BLOCKCODE_H_ */

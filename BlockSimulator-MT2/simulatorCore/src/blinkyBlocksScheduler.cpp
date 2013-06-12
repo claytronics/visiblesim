@@ -68,30 +68,6 @@ namespace BlinkyBlocks {
     int systemStartTime, systemStopTime;
     multimap<uint64_t, EventPtr>::iterator first;
     EventPtr pev;
-    // Launch asynchrone reads on the tcp socket of each block
-    /*map<int, BaseSimulator::BuildingBlock*>::iterator it;
-    for(it = getWorld()->getBuildingBlocksMap().begin(); 
-	it != getWorld()->getBuildingBlocksMap().end(); it++) {
-      BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-      bb->readMessageFromVM();*/
-      /*boost::asio::async_read(bb->getSocket(), 
-			      boost::asio::buffer((void*)bb->getBufferPtr(),
-						  sizeof(VMMessage_t)),
-			      boost::bind(handler, 
-					  boost::asio::placeholders::error,
-					  boost::asio::placeholders::bytes_transferred, bb)); */
-      //boost::asio::read(bb->getSocket(),boost::asio::buffer((void*)bb->getBufferPtr(), sizeof(VMMessage_t)) );
-    //}
-    //cout << "sync" << endl;
-    //getWorld()->getIos().run(); // force to wait for all async tasks...
-    /* VM process are killed in the destructor, no more need to wait them
-    // Wait the end of all the VM programs
-  for(it = getWorld()->getBuildingBlocksMap().begin(); 
-	it != getWorld()->getBuildingBlocksMap().end(); it++) {
-     BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-     bb->waitVMEnd();
-  }
-    */
     systemStartTime = (glutGet(GLUT_ELAPSED_TIME))*1000;
     cout << "\033[1;33m" << "Scheduler : start order received " << systemStartTime << "\033[0m" << endl;
 
