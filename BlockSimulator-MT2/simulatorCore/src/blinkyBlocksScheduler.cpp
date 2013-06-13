@@ -29,7 +29,7 @@ namespace BlinkyBlocks {
 		}
 	}
 	BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
-	BlinkyBlocksScheduler::getScheduler()->waitForSchedulerEnd();
+	//BlinkyBlocksScheduler::getScheduler()->waitForSchedulerEnd();
     cout << "No more connected VM" << endl;
   }
 
