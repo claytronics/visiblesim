@@ -37,7 +37,8 @@ namespace BlinkyBlocks {
   BlinkyBlocksScheduler::BlinkyBlocksScheduler() {
     cout << "BlinkyBlocksScheduler constructor" << endl;
     sem_schedulerStart = new boost::interprocess::interprocess_semaphore(0);
-    schedulerMode = SCHEDULER_MODE_FASTEST;
+    //schedulerMode = SCHEDULER_MODE_FASTEST;
+	schedulerMode = SCHEDULER_MODE_REALTIME;
     schedulerThread = new thread(bind(&BlinkyBlocksScheduler::startPaused, this));
   }
 

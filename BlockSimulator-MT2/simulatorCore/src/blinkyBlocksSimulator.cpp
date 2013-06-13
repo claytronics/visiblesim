@@ -16,7 +16,7 @@ namespace BlinkyBlocks {
 
   BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) : BaseSimulator::Simulator(argc, argv) {
     cout << "\033[1;34m" << "BlinkyBlocksSimulator constructor" << "\033[0m" << endl;
-
+	int port = 34000;
     buildNewBlockCode = blinkyBlocksBlockCodeBuildingFunction;
     createScheduler();
 
@@ -28,14 +28,18 @@ namespace BlinkyBlocks {
       TiXmlElement* worldElement = node->ToElement();
       string str = worldElement->Attribute("gridsize");
       int pos1 = str.find_first_of(','),
-	pos2 = str.find_last_of(',');
+	  pos2 = str.find_last_of(',');
       int lx = atoi(str.substr(0,pos1).c_str());
       int ly = atoi(str.substr(pos1+1,pos2-pos1-1).c_str());
       int lz = atoi(str.substr(pos2+1,str.length()-pos1-1).c_str());
 
       cout << "grid size : " << lx << " x " << ly << " x " << lz << endl;
-
-      createWorld(lx,ly,lz,argc,argv);
+	  const char *attr = worldElement->Attribute("serverport");
+	  if (attr) {
+		port = atoi(attr);
+	  }
+	  cout << "server port : " << port << endl;
+      createWorld(lx,ly,lz,port,argc,argv);
       world = getWorld();
       world->loadTextures("../../simulatorCore/blinkyBlocksTextures");
     } else {
@@ -136,7 +140,17 @@ namespace BlinkyBlocks {
 	cout << "blocksize =" << siz[0] <<"," << siz[1] <<"," << siz[2]<< endl;
 	world->setBlocksSize(siz);
       }
-
+      
+    attr = element->Attribute("vmPath");
+    if (attr) {
+		string vmPath(attr);
+		world->setVmPath(vmPath);
+	}	
+	attr = element->Attribute("programPath");
+	if (attr) {
+		string programPath(attr);
+		world->setProgramPath(programPath);
+	}
       /* Reading a blinkyblock */
       cout << "default color :" << defaultColor << endl;
       nodeBlock = nodeBlock->FirstChild("block");
@@ -165,8 +179,7 @@ namespace BlinkyBlocks {
 	  position.pt[2] = atoi(str.substr(pos2+1,str.length()-pos1-1).c_str());
 	  cout << "position : " << position << endl;
 	}
-
-	world->addBlock(currentID++,BlinkyBlocksSimulator::buildNewBlockCode,position,color);
+	world->addBlock(currentID++, BlinkyBlocksSimulator::buildNewBlockCode, position, color);
 	nodeBlock = nodeBlock->NextSibling("block");
       } // end while (nodeBlock)
 

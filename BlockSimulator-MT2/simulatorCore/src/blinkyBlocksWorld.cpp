@@ -14,7 +14,7 @@ using namespace std;
 
 namespace BlinkyBlocks {
 
-BlinkyBlocksWorld::BlinkyBlocksWorld(int slx,int sly,int slz,int argc, char *argv[]):World(), ios() {
+BlinkyBlocksWorld::BlinkyBlocksWorld(int slx,int sly,int slz, int p, int argc, char *argv[]):World(), ios() {
 	cout << "\033[1;31mBlinkyBlocksWorld constructor\033[0m" << endl;
 	gridSize[0]=slx;
 	gridSize[1]=sly;
@@ -44,7 +44,8 @@ BlinkyBlocksWorld::BlinkyBlocksWorld(int slx,int sly,int slz,int argc, char *arg
 	menuId=0;
 	numSelectedFace=0;
 	numSelectedBlock=0;
-	acceptor =  new tcp::acceptor(ios, tcp::endpoint(tcp::v4(), 7800));
+	port = p;
+	acceptor =  new tcp::acceptor(ios, tcp::endpoint(tcp::v4(), port));
 }
 
 BlinkyBlocksWorld::~BlinkyBlocksWorld() {
@@ -57,8 +58,8 @@ BlinkyBlocksWorld::~BlinkyBlocksWorld() {
 }
 
 
-void BlinkyBlocksWorld::createWorld(int slx,int sly,int slz,int argc, char *argv[]) {
-	world = new BlinkyBlocksWorld(slx,sly,slz,argc,argv);
+void BlinkyBlocksWorld::createWorld(int slx,int sly,int slz, int p, int argc, char *argv[]) {
+	world = new BlinkyBlocksWorld(slx,sly,slz, p, argc,argv);
 }
 
 void BlinkyBlocksWorld::deleteWorld() {
@@ -78,10 +79,14 @@ void BlinkyBlocksWorld::addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlo
 
 	// Start the VM
 	pid_t VMPid = 0;
-	char* cmd[] = {(char*)"VMEmulator", (char*)"-f", (char*)"program.meld", NULL };
+	char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), NULL };
+	//char* cmd[] = {(char*)"xterm", (char*)"pwd", NULL };
 	VMPid = fork();	
 	if(VMPid < 0) {cerr << "Error when starting the VM" << endl;}
-    	if(VMPid == 0) {execv("VMEmulator", const_cast<char**>(cmd));}
+    	if(VMPid == 0) {
+			execv(vmPath.c_str(), const_cast<char**>(cmd));
+			//execv("xterm", const_cast<char**>(cmd));
+			}
 
 	// Wait for an incoming connection	
 	boost::shared_ptr<tcp::socket> socket(new tcp::socket(ios));	

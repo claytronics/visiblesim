@@ -28,15 +28,18 @@ protected:
 	GLushort numSelectedFace;
 	GLuint numSelectedBlock;
 	GLint menuId;
+	int port;
 	boost::asio::io_service ios;
 	tcp::acceptor *acceptor;
+	string vmPath;
+	string programPath;
 
-	BlinkyBlocksWorld(int slx,int sly,int slz,int argc, char *argv[]);
+	BlinkyBlocksWorld(int slx,int sly,int slz,int p, int argc, char *argv[]);
 	virtual ~BlinkyBlocksWorld();
 	inline BlinkyBlocksBlock* getGridPtr(int ix,int iy,int iz) { return gridPtrBlocks[ix+(iy+iz*gridSize[1])*gridSize[0]]; };
 	inline void setGridPtr(int ix,int iy,int iz,BlinkyBlocksBlock *ptr) { gridPtrBlocks[ix+(iy+iz*gridSize[1])*gridSize[0]]=ptr; };
 public:
-	static void createWorld(int slx,int sly,int slz,int argc, char *argv[]);
+	static void createWorld(int slx,int sly,int slz, int p, int argc, char *argv[]);
 	static void deleteWorld();
 	static BlinkyBlocksWorld* getWorld() {
 		assert(world != NULL);
@@ -50,6 +53,8 @@ public:
 	virtual void addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlockCodeBuildingFunction)(BlinkyBlocksBlock*),const Vecteur &pos,const Vecteur &col);
 	void deleteBlock(BlinkyBlocksBlock *bb);
 	inline void setBlocksSize(float *siz) { blockSize[0]=siz[0];blockSize[1]=siz[1];blockSize[2]=siz[2];};
+	inline void setVmPath(string p) {vmPath = p;};
+	inline void setProgramPath(string p) {programPath = p;};
 	void linkBlocks();
 	void loadTextures(const string &str);
 	virtual void glDraw();
@@ -69,8 +74,8 @@ public:
 	boost::asio::io_service& getIos() {return ios;}
 };
 
-inline void createWorld(int slx,int sly,int slz,int argc, char *argv[]) {
-	BlinkyBlocksWorld::createWorld(slx,sly,slz,argc,argv);
+inline void createWorld(int slx,int sly,int slz, int p, int argc, char *argv[]) {
+	BlinkyBlocksWorld::createWorld(slx,sly,slz, p, argc,argv);
 }
 
 inline void deleteWorld() {
