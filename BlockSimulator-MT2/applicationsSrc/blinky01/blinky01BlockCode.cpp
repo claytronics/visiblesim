@@ -86,7 +86,7 @@ void Blinky01BlockCode::startup() {
 void Blinky01BlockCode::handleNewMessage() {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
 		cout << "Scheduler: message size: " << bb->getBufferPtr()->size << endl;
-		cout << "Scheduler: param1: " << bb->getBufferPtr()->message[0] << endl;
+		cout << "Scheduler: type: " << bb->getBufferPtr()->message[0] << endl;
 		uint64_t* message = bb->getBufferPtr()->message;
 		uint64_t size = bb->getBufferPtr()->size;
 		
@@ -107,11 +107,13 @@ void Blinky01BlockCode::handleNewMessage() {
 				//getScheduler()->trace(info.str());
 				P2PNetworkInterface *interface;
 				interface = bb->getInterface((NeighborDirection)message[3]);
+				if (interface == NULL) {cout << "no right neighbor" << endl;}
 				BaseSimulator::getScheduler()->schedule(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
 					new VMDataMessage(hostBlock->blockId, size, message), interface));
 			}
+			break;
 			default:
-				cerr << "*** ERROR *** : unsupported message received from VM" << endl;
+				cerr << "*** ERROR *** : unsupported message received from VM (" << message[0] <<")" << endl;
 				break;
 		}
 	}

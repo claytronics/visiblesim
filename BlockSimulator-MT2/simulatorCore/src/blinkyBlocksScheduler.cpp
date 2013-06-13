@@ -21,15 +21,15 @@ namespace BlinkyBlocks {
 
   void async_listener_thread() {
     for (;;) {
-		try {
-			getWorld()->getIos().run();
-			break;
-		} catch (std::exception& e) {
-		cout << "listener thread exeception" << endl;
-		}
-	}
-	BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
-	//BlinkyBlocksScheduler::getScheduler()->waitForSchedulerEnd();
+      try {
+	getWorld()->getIos().run();
+	break;
+      } catch (std::exception& e) {
+	cout << "listener thread exeception" << endl;
+      }
+    }
+    BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
+    //BlinkyBlocksScheduler::getScheduler()->waitForSchedulerEnd();
     cout << "No more connected VM" << endl;
   }
 
@@ -84,41 +84,43 @@ namespace BlinkyBlocks {
     case SCHEDULER_MODE_REALTIME:
       cout << "Realtime mode scheduler\n";
       mustStop = false;
-	  while(!mustStop && !eventsMap.empty()) {  
-		systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
-		systemCurrentTimeMax = systemCurrentTime - systemStartTime;
-		first=eventsMap.begin();
-		pev = (*first).second;
-		while (!eventsMap.empty() && pev->date <= systemCurrentTimeMax) {
-			first=eventsMap.begin();
-			pev = (*first).second;
-			if (pev->eventType == EVENT_END_SIMULATION) {
-				mustStop = true;
-			}
-			// traitement du mouvement des objets physiques
-			//Physics::update(ev->heureEvenement);
-			currentDate = pev->date;
-			//lock();
-			pev->consume();
-			//unlock();
-			//pev->nbRef--;
-			//listeEvenements.pop_front();
-			eventsMap.erase(first);
-			eventsMapSize--;
-			//ev = *(listeEvenements.begin());
-			//first=eventsMap.begin();
-			//pev = (*first).second;
-		}
-		systemCurrentTime = systemCurrentTimeMax;
-		if (!eventsMap.empty()) {
-			//ev = *(listeEvenements.begin());
-			first=eventsMap.begin();
-			pev = (*first).second;
+      while(!mustStop || !eventsMap.empty()) {  
+	systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
+	systemCurrentTimeMax = systemCurrentTime - systemStartTime;
+	if(!eventsMap.empty()){
+	  first=eventsMap.begin();
+	  pev = (*first).second;
+	  while (!eventsMap.empty() && pev->date <= systemCurrentTimeMax) {
+	    first=eventsMap.begin();
+	    pev = (*first).second;
+	    if (pev->eventType == EVENT_END_SIMULATION) {
+	      mustStop = true;
+	    }
+	    // traitement du mouvement des objets physiques
+	    //Physics::update(ev->heureEvenement);
+	    currentDate = pev->date;
+	    //lock();
+	    pev->consume();
+	    //unlock();
+	    //pev->nbRef--;
+	    //listeEvenements.pop_front();
+	    eventsMap.erase(first);
+	    eventsMapSize--;
+	    //ev = *(listeEvenements.begin());
+	    //first=eventsMap.begin();
+	    //pev = (*first).second;
+	  }
+	  systemCurrentTime = systemCurrentTimeMax;
+	  if (!eventsMap.empty()) {
+	    //ev = *(listeEvenements.begin());
+	    first=eventsMap.begin();
+	    pev = (*first).second;
 #ifdef WIN32
-	  Sleep(5);
+	    Sleep(5);
 #else
-	  usleep(5000);
+	    usleep(5000);
 #endif
+	  }
 	}
       }
       break;
@@ -141,7 +143,7 @@ namespace BlinkyBlocks {
     cout << "Number of events processed : " << Event::getNextId() << endl;
     cout << "Events(s) left in memory before destroying Scheduler : " << Event::getNbLivingEvents() << endl;
     cout << "Message(s) left in memory before destroying Scheduler : " << Message::getNbMessages() << endl;
-	return(NULL);
+    return(NULL);
   }
 
   void BlinkyBlocksScheduler::start(int mode) {
