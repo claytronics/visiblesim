@@ -88,18 +88,12 @@ namespace BlinkyBlocks {
 		systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
 		systemCurrentTimeMax = systemCurrentTime - systemStartTime;
 		first=eventsMap.begin();
-		pev = (*first).second;/*
-		if (pev->eventType == EVENT_END_SIMULATION) {
-				mustStop = true;
-				cout << "SIM END" << endl;
-				//break;
-			} */
+		pev = (*first).second;
 		while (!eventsMap.empty() && pev->date <= systemCurrentTimeMax) {
 			first=eventsMap.begin();
 			pev = (*first).second;
 			if (pev->eventType == EVENT_END_SIMULATION) {
 				mustStop = true;
-				cout << "SIM END" << endl;
 			}
 			// traitement du mouvement des objets physiques
 			//Physics::update(ev->heureEvenement);

@@ -11,6 +11,15 @@
 #include "blinkyBlocksBlockCode.h"
 #include "blinkyBlocksSimulator.h"
 
+class VMDataMessage : public Message {	
+public:
+	uint64_t *message;
+	
+	VMDataMessage(uint64_t src, uint64_t size, uint64_t* m);	
+	~VMDataMessage();	
+	virtual unsigned int size();
+};
+
 class Blinky01BlockCode : public BlinkyBlocks::BlinkyBlocksBlockCode {
 public:
 
