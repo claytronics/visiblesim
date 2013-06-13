@@ -84,6 +84,30 @@ const string CodeStartEvent::getEventName() {
 
 //===========================================================================================================
 //
+//          CodeEndSimulationEvent  (class)
+//
+//===========================================================================================================
+
+CodeEndSimulationEvent::CodeEndSimulationEvent(uint64_t t):Event(t) {
+	eventType = EVENT_END_SIMULATION;
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+CodeEndSimulationEvent::~CodeEndSimulationEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void CodeEndSimulationEvent::consume() {
+	EVENT_CONSUME_INFO();
+}
+
+const string CodeEndSimulationEvent::getEventName() {
+	return("CodeEndSimulation Event");
+}
+
+
+//===========================================================================================================
+//
 //          ProcessLocalEvent  (class)
 //
 //===========================================================================================================

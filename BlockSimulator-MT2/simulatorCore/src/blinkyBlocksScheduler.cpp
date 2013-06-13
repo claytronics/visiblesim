@@ -20,25 +20,24 @@ using boost::asio::ip::tcp;
 namespace BlinkyBlocks {
 
   void async_listener_thread() {
-	for (;;) {
-		try
-		{
+    for (;;) {
+		try {
 			getWorld()->getIos().run();
 			break;
-		}
-		catch (std::exception& e)
-		{
-			cout << "listener thread exeception" << endl;
+		} catch (std::exception& e) {
+		cout << "listener thread exeception" << endl;
 		}
 	}
-	cout << "out of the loop" << endl;
+	BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
+	BlinkyBlocksScheduler::getScheduler()->waitForSchedulerEnd();
+    cout << "No more connected VM" << endl;
   }
 
   BlinkyBlocksScheduler::BlinkyBlocksScheduler() {
     cout << "BlinkyBlocksScheduler constructor" << endl;
     sem_schedulerStart = new boost::interprocess::interprocess_semaphore(0);
     //schedulerMode = SCHEDULER_MODE_FASTEST;
-	schedulerMode = SCHEDULER_MODE_REALTIME;
+    schedulerMode = SCHEDULER_MODE_REALTIME;
     schedulerThread = new thread(bind(&BlinkyBlocksScheduler::startPaused, this));
   }
 
@@ -64,7 +63,7 @@ namespace BlinkyBlocks {
     cout << "\033[1;33mScheduler Mode :" << schedulerMode << "\033[0m" << endl;
 
     sem_schedulerStart->wait();
-	new boost::thread(async_listener_thread);
+    new boost::thread(async_listener_thread);
     
     int systemStartTime, systemStopTime;
     multimap<uint64_t, EventPtr>::iterator first;
@@ -83,40 +82,44 @@ namespace BlinkyBlocks {
       }
       break;
     case SCHEDULER_MODE_REALTIME:
-
       cout << "Realtime mode scheduler\n";
       mustStop = false;
-      while(!mustStop && !eventsMap.empty()) {
-	//gettimeofday(&heureGlobaleActuelle,NULL);
-	systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
-	systemCurrentTimeMax = systemCurrentTime - systemStartTime;
-	//ev = *(listeEvenements.begin());
-	first=eventsMap.begin();
-	pev = (*first).second;
-	while (!eventsMap.empty() && pev->date <= systemCurrentTimeMax) {
-	  first=eventsMap.begin();
-	  pev = (*first).second;
-
-	  /* traitement du mouvement des objets physiques*/
-	  //Physics::update(ev->heureEvenement);
-	  currentDate = pev->date;
-	  //lock();
-	  pev->consume();
-	  //unlock();
-	  //pev->nbRef--;
-
-	  //listeEvenements.pop_front();
-	  eventsMap.erase(first);
-	  eventsMapSize--;
-	  //	    	  ev = *(listeEvenements.begin());
-	  //first=eventsMap.begin();
-	  //pev = (*first).second;
-	}
-	systemCurrentTime = systemCurrentTimeMax;
-	if (!eventsMap.empty()) {
-	  //ev = *(listeEvenements.begin());
-	  first=eventsMap.begin();
-	  pev = (*first).second;
+	  while(!mustStop && !eventsMap.empty()) {  
+		systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
+		systemCurrentTimeMax = systemCurrentTime - systemStartTime;
+		first=eventsMap.begin();
+		pev = (*first).second;/*
+		if (pev->eventType == EVENT_END_SIMULATION) {
+				mustStop = true;
+				cout << "SIM END" << endl;
+				//break;
+			} */
+		while (!eventsMap.empty() && pev->date <= systemCurrentTimeMax) {
+			first=eventsMap.begin();
+			pev = (*first).second;
+			if (pev->eventType == EVENT_END_SIMULATION) {
+				mustStop = true;
+				cout << "SIM END" << endl;
+			}
+			// traitement du mouvement des objets physiques
+			//Physics::update(ev->heureEvenement);
+			currentDate = pev->date;
+			//lock();
+			pev->consume();
+			//unlock();
+			//pev->nbRef--;
+			//listeEvenements.pop_front();
+			eventsMap.erase(first);
+			eventsMapSize--;
+			//ev = *(listeEvenements.begin());
+			//first=eventsMap.begin();
+			//pev = (*first).second;
+		}
+		systemCurrentTime = systemCurrentTimeMax;
+		if (!eventsMap.empty()) {
+			//ev = *(listeEvenements.begin());
+			first=eventsMap.begin();
+			pev = (*first).second;
 #ifdef WIN32
 	  Sleep(5);
 #else
@@ -124,7 +127,6 @@ namespace BlinkyBlocks {
 #endif
 	}
       }
-
       break;
     default:
       cout << "ERROR : Scheduler mode not recognized !!" << endl;
@@ -145,8 +147,7 @@ namespace BlinkyBlocks {
     cout << "Number of events processed : " << Event::getNextId() << endl;
     cout << "Events(s) left in memory before destroying Scheduler : " << Event::getNbLivingEvents() << endl;
     cout << "Message(s) left in memory before destroying Scheduler : " << Message::getNbMessages() << endl;
-
-    return(NULL);
+	return(NULL);
   }
 
   void BlinkyBlocksScheduler::start(int mode) {
