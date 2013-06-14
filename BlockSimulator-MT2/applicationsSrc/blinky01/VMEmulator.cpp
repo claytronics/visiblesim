@@ -9,6 +9,8 @@
 #include <boost/asio.hpp>
 #include <list>
 #include <boost/thread.hpp>
+#include <stdlib.h>
+#include <time.h>
 
 using namespace std;
 using boost::asio::ip::tcp;
@@ -176,6 +178,31 @@ void vm_thread_function(void *data) {
 				cerr << "Connection to the Simulator lost" << endl;
 			}
 		}		
+	}
+#endif
+#ifdef COLOR_ON_TAP_EXAMPLE
+	while(true) {
+		try {
+			boost::asio::read(socket,boost::asio::buffer((void*)&in, 4*sizeof(uint64_t)));
+		} catch (std::exception& e) {
+			cerr << "Connection to the Simulator lost" << endl;
+			break;
+		}
+		if (in.type == VM_MESSAGE_TAP) {
+			out.size = 7*sizeof(uint64_t);
+			out.type = VM_MESSAGE_SET_COLOR;
+			out.param1 = rand() % 256;
+			out.param2 = rand() % 256;
+			out.param3 = rand() % 256;
+			out.param4 = 0;
+			try {
+				boost::asio::write(socket, boost::asio::buffer((void*)&out,8*sizeof(uint64_t)));
+				cout << "VM " << id << " sent SET_COLOR(random)" <<  endl;
+			} catch (std::exception& e) {
+				cerr << "Connection to the Simulator lost" << endl;
+				break;
+			}
+		}
 	}
 #endif
 	cout << "VMEmulator end" << endl;
