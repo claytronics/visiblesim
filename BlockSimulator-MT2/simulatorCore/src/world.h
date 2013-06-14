@@ -59,6 +59,7 @@ public:
 	virtual void createPopupMenu(int ix,int iy) {};
 	virtual Camera *getCamera() { return NULL; };
 	virtual void menuChoice(int) {};
+	virtual void tapBlock(int bId) {};
 };
 
 inline void deleteWorld() {

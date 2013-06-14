@@ -57,6 +57,8 @@ public:
 	void sendMessageToVM(uint64_t size, uint64_t* message);
 	void readMessageFromVM();
 	
+	void tap();
+	
 protected:
 	boost::shared_ptr<tcp::socket> socket;
 	pid_t pid;

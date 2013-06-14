@@ -8,6 +8,7 @@
 #include "openglViewer.h"
 #include "world.h"
 #include "scheduler.h"
+#include "events.h"
 
 //===========================================================================================================
 //
@@ -146,6 +147,11 @@ void GlutContext::mouseFunc(int button,int state,int x,int y) {
 			case GLUT_LEFT_BUTTON:
 				if (state==GLUT_DOWN) {
 					camera->mouseDown(x,y);
+					int n=selectFunc(x,y);
+					GlBlock *glb = BaseSimulator::getWorld()->getSelectedBlock();
+					if (glb != NULL && n && n == glb->blockId) {
+						BaseSimulator::getWorld()->tapBlock(glb->blockId);
+					}
 				} else
 				if (state==GLUT_UP) {
 					camera->mouseUp(x,y);

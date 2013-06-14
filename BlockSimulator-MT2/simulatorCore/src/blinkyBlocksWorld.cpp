@@ -404,4 +404,9 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
     else if (name=="face_front") numSelectedFace=Front;
     else if (name=="face_back") numSelectedFace=Back;
 }
+
+	void BlinkyBlocksWorld::tapBlock(int bId) {
+		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*)getBlockById(bId);
+		bb->tap();
+	}
 } // BlinkyBlock namespace

@@ -10,6 +10,7 @@
 #include "buildingBlock.h"
 #include "blinkyBlocksWorld.h"
 #include "blinkyBlocksSimulator.h"
+#include "blinkyBlocksEvents.h"
 #include <sys/wait.h>
 
 using namespace std;
@@ -97,5 +98,9 @@ NeighborDirection BlinkyBlocksBlock::getDirection(P2PNetworkInterface *given_int
 			boost::asio::write(getSocket(), boost::asio::buffer((void*)message,size));
 		} catch (std::exception& e) {cout << "connection to the VM lost" << endl;}
 	}
+  
+  void BlinkyBlocksBlock::tap() {
+	  getScheduler()->schedule(new VMTapEvent(getScheduler()->now(), this));
+  }
   
 }

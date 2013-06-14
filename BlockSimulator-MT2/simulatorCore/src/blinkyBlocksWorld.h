@@ -65,11 +65,7 @@ public:
 	inline virtual Camera *getCamera() { return camera; };
 	virtual void setSelectedFace(int n);
 	virtual void menuChoice(int n);
-
-	map<int, BaseSimulator::BuildingBlock*>& getBuildingBlocksMap()
-	{
-		return buildingBlocksMap;
-	}
+	void tapBlock(int bId);
 
 	boost::asio::io_service& getIos() {return ios;}
 };
