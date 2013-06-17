@@ -125,11 +125,22 @@ void P2PNetworkInterface::send() {
 
 void P2PNetworkInterface::connect(P2PNetworkInterface *ni) {
 	// test ajouté par Ben, gestion du cas : connect(NULL)
-	if (ni) {
-		if (ni->connectedInterface != NULL) {
-			cout << "ERROR : connecting to an already connected P2PNetwork interface" << endl;
+	if (ni) { // Connection
+		if (ni->connectedInterface != this) {
+			if (ni->connectedInterface != NULL) {
+				cout << "ERROR : connecting to an already connected P2PNetwork interface" << endl;
+				ni->connectedInterface->hostBlock->removeNeighbor(ni->connectedInterface);
+				ni->hostBlock->removeNeighbor(ni);
+			}
+			ni->connectedInterface = this;
+			hostBlock->addNeighbor(ni->connectedInterface, ni->hostBlock);
+			ni->hostBlock->addNeighbor(ni, ni->connectedInterface->hostBlock);
 		}
-		ni->connectedInterface = this;
+	} else if (connectedInterface != NULL) {
+		// disconnect this interface and the remote one
+		hostBlock->removeNeighbor(this);
+		connectedInterface->hostBlock->removeNeighbor(connectedInterface);
+		connectedInterface->connectedInterface = NULL;
 	}
 	connectedInterface = ni;
 }

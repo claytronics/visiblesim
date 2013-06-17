@@ -120,6 +120,7 @@ void Blinky01BlockCode::handleNewMessage() {
 
 void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
+	cout << "Blinky01BlockCode: " << pev->getEventName() << endl;
 	switch (pev->eventType) {
 	case EVENT_SET_ID:
 		{
@@ -150,8 +151,9 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[1] = VM_MESSAGE_ADD_NEIGHBOR;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 		message[3] = -1; // souce node
-		message[4] = (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->target; // target ????
+		message[4] = (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->target; // target
 		message[5] = (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->face; // face
+		//cout << "Blinky01BlockCode: " << message[4] << " " << message[5] << " " << endl;
 		bb->sendMessageToVM(6*sizeof(uint64_t), message);
 		}
 		break;

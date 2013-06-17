@@ -18,7 +18,8 @@ using boost::asio::ip::tcp;
 
 //#define SET_COLOR_EXAMPLE
 //#define COLOR_SPREADING_EXAMPLE
-#define COLOR_ON_TAP_EXAMPLE
+//#define COLOR_ON_TAP_EXAMPLE
+#define NEIGHBOR_LIST_EXAMPLE
 
 #define VM_MESSAGE_SET_ID		1
 #define VM_MESSAGE_STOP			4
@@ -33,7 +34,7 @@ using boost::asio::ip::tcp;
 
 typedef struct VMMessage_tt {
         uint64_t size;
-        uint64_t type;
+    uint64_t type;
 	uint64_t timestamp;
 	uint64_t sourcenode;
         uint64_t param1;
@@ -42,6 +43,37 @@ typedef struct VMMessage_tt {
 	uint64_t param4;
 	uint64_t param5;
 } VMMessage_t;
+
+enum NeighborDirection {Front=0, Back, Left, Right, Top, Bottom };
+
+typedef pair<uint64_t, uint64_t> Neighbor;
+
+string getStringDirection(uint64_t d) {
+		switch(d) {
+			case Front:
+				return string("Front");
+				break;
+			case Back:
+				return string("Back");
+				break;
+			case Left:
+				return string("Left");
+				break;
+			case Right:
+				return string("Right");
+				break;
+			case Top:
+				return string("Top");
+				break;
+			case Bottom:
+				return string("Bottom");
+				break;
+			default:
+				cerr << "Unknown direction" << endl;
+				return string("Unknown");
+				break;
+		}
+}
 
 /*
 class SimulatedVM {
@@ -63,6 +95,21 @@ public:
 int SimulatedVM::nextId = 0;
 list<SimulatedVM*> simulatedVMList;
 list<boost::thread*> threadsList; */
+
+int readMessageFromVM(tcp::socket &socket, VMMessage_t *buffer, int id) {
+	try {
+		boost::asio::read(socket,boost::asio::buffer((void*)&buffer->size, sizeof(uint64_t)));
+		boost::asio::read(socket,boost::asio::buffer((void*)&buffer->type, buffer->size));
+		if (id != -1) {
+			cout << "VM " << id << " receive a message" << endl;
+		}
+		return 1;
+	} catch (std::exception& e) {
+		cerr << "Connection to the Simulator lost" << endl;
+		return 0;
+	}
+	return 1;
+}
 
 void vm_thread_function(void *data) {	
 	boost::asio::io_service ios;
@@ -88,15 +135,15 @@ void vm_thread_function(void *data) {
 
 	VMMessage_t in, out;
 	int id;	
-	cout << "VMEmulator start" << endl;	
-	try {
-		boost::asio::read(socket,boost::asio::buffer((void*)&in, 5*sizeof(uint64_t)));
-		id = in.param1;
-		cout << "VM received id: " << id << endl;
-	} catch (std::exception& e) {
-		cerr << "Connection to the Simulator lost" << endl;
+	cout << "VMEmulator start" << endl;
+	if (readMessageFromVM(socket, &in, -1) == 1) {
+		if (in.type == VM_MESSAGE_SET_ID) {
+			id = in.param1;
+			cout << "VM received id: " << id << endl;
+		} else {
+			cout << "problem id not first message" << endl;
+		}
 	}
-
 #ifdef SET_COLOR_EXAMPLE
 	out.size = 7*sizeof(uint64_t);
 	out.type = VM_MESSAGE_SET_COLOR;
@@ -142,52 +189,42 @@ void vm_thread_function(void *data) {
 			cerr << "Connection to the Simulator lost" << endl;
 		} sleep(5);
 	} else {
-		// RECEIVE MESSAGE
-		try {
-		boost::asio::read(socket,boost::asio::buffer((void*)&in, 9*sizeof(uint64_t)));
-			cout << "VM " << id << "received a message: " << endl;
-		} catch (std::exception& e) {
-			cerr << "Connection to the Simulator lost" << endl;
-		}
-		// SET COLOR
-		out.size = 7*sizeof(uint64_t);
-		out.type = VM_MESSAGE_SET_COLOR;
-		out.param1 = in.param2;
-		out.param2 = in.param3;
-		out.param3 = in.param4;
-		out.param4 = in.param5;
-		try {
-			boost::asio::write(socket, boost::asio::buffer((void*)&out,8*sizeof(uint64_t)));
-			cout << "VM " << id << " sent SET_COLOR(after receiving a message)" <<  endl;
-		} catch (std::exception& e) {
-			cerr << "Connection to the Simulator lost" << endl;
-		}
-		if (id != 5) {
-			// SEND MESSAGE ON RIGHT		
-			out.size = 8*sizeof(uint64_t);
-			out.type = VM_MESSAGE_SEND_MESSAGE;
-			out.param1 = 3; // face: right
-			out.param2 = in.param2;
-			out.param3 = in.param3; // green
-			out.param4 = in.param4;
-			out.param5 = in.param5;
+		// RECEIVE MESSAGE & SET COLOR
+		if(readMessageFromVM(socket, &in, id) && in.type == VM_MESSAGE_RECEIVE_MESSAGE) {
+			out.size = 7*sizeof(uint64_t);
+			out.type = VM_MESSAGE_SET_COLOR;
+			out.param1 = in.param2;
+			out.param2 = in.param3;
+			out.param3 = in.param4;
+			out.param4 = in.param5;
 			try {
-				boost::asio::write(socket, boost::asio::buffer((void*)&out,9*sizeof(uint64_t)));
+				boost::asio::write(socket, boost::asio::buffer((void*)&out,8*sizeof(uint64_t)));
 				cout << "VM " << id << " sent SET_COLOR(after receiving a message)" <<  endl;
 			} catch (std::exception& e) {
 				cerr << "Connection to the Simulator lost" << endl;
 			}
-		}		
+			if (id != 5) {
+				// SEND MESSAGE ON RIGHT		
+				out.size = 8*sizeof(uint64_t);
+				out.type = VM_MESSAGE_SEND_MESSAGE;
+				out.param1 = 3; // face: right
+				out.param2 = in.param2;
+				out.param3 = in.param3; // green
+				out.param4 = in.param4;
+				out.param5 = in.param5;
+				try {
+					boost::asio::write(socket, boost::asio::buffer((void*)&out,9*sizeof(uint64_t)));
+					cout << "VM " << id << " sent SET_COLOR(after receiving a message)" <<  endl;
+				} catch (std::exception& e) {
+					cerr << "Connection to the Simulator lost" << endl;
+				}
+			}		
+		}
 	}
 #endif
 #ifdef COLOR_ON_TAP_EXAMPLE
 	while(true) {
-		try {
-			boost::asio::read(socket,boost::asio::buffer((void*)&in, 4*sizeof(uint64_t)));
-		} catch (std::exception& e) {
-			cerr << "Connection to the Simulator lost" << endl;
-			break;
-		}
+		if (!readMessageFromVM(socket, &in, id)) {break;}
 		if (in.type == VM_MESSAGE_TAP) {
 			out.size = 7*sizeof(uint64_t);
 			out.type = VM_MESSAGE_SET_COLOR;
@@ -203,6 +240,20 @@ void vm_thread_function(void *data) {
 				break;
 			}
 		}
+	}
+#endif
+#ifdef NEIGHBOR_LIST_EXAMPLE
+	std::list<Neighbor> n; 
+	while(true) {
+		if (!readMessageFromVM(socket, &in, id)) {break;}
+		if (in.type == VM_MESSAGE_ADD_NEIGHBOR) {
+			cout << "VM "<< id << " has a new neighbor: " << in.param1 << " on " << getStringDirection(in.param2) << " face" << endl;
+			n.push_back(Neighbor(in.param1, in.param2));
+		} else if (in.type == VM_MESSAGE_REMOVE_NEIGHBOR) {
+			cout << "VM " << id << " has no more neighbor on face " << in.param1 << endl;
+			//remove
+		}
+		// Display neighbor list		
 	}
 #endif
 	cout << "VMEmulator end" << endl;

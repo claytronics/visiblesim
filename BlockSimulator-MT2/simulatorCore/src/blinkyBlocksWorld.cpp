@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include "blinkyBlocksWorld.h"
 #include "blinkyBlocksBlock.h"
+#include "blinkyBlocksEvents.h"
 
 using namespace std;
 
@@ -174,6 +175,8 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 	for(int i=0; i<6; i++) {
 		P2PNetworkInterface *bbi = bb->getInterface(NeighborDirection(i));
 		if (bbi->connectedInterface) {
+			bb->removeNeighbor(bbi);
+			bbi->connectedInterface->hostBlock->removeNeighbor(bbi->connectedInterface);
 			bbi->connectedInterface->connectedInterface=NULL;
 			bbi->connectedInterface=NULL;
 		}

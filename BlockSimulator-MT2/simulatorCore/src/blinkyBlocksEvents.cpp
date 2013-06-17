@@ -89,6 +89,8 @@ VMAddNeighborEvent::VMAddNeighborEvent(VMAddNeighborEvent *ev) : Event(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 	concernedBlock = ev->concernedBlock;
 	eventType = ev->eventType;
+	face = ev->face;
+	target = ev->target;
 }
 
 VMAddNeighborEvent::~VMAddNeighborEvent() {
@@ -121,6 +123,7 @@ VMRemoveNeighborEvent::VMRemoveNeighborEvent(VMRemoveNeighborEvent *ev) : Event(
 	EVENT_CONSTRUCTOR_INFO();
 	concernedBlock = ev->concernedBlock;
 	eventType = ev->eventType;
+	face = ev->face;
 }
 
 VMRemoveNeighborEvent::~VMRemoveNeighborEvent() {
@@ -221,6 +224,9 @@ VMAccelEvent::VMAccelEvent(VMAccelEvent *ev) : Event(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 	concernedBlock = ev->concernedBlock;
 	eventType = ev->eventType;
+	x = ev->x;
+	y = ev->y;
+	z = ev->z;
 }
 
 VMAccelEvent::~VMAccelEvent() {
@@ -253,6 +259,7 @@ VMShakeEvent::VMShakeEvent(VMShakeEvent *ev) : Event(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 	concernedBlock = ev->concernedBlock;
 	eventType = ev->eventType;
+	force = ev->force;
 }
 
 VMShakeEvent::~VMShakeEvent() {

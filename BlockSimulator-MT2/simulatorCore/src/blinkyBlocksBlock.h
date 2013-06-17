@@ -25,6 +25,7 @@ typedef struct VMMessage_tt {
 } VMMessage_t;
 
 namespace BlinkyBlocks {
+
 enum NeighborDirection { Front=0, Back, Left, Right, Top, Bottom };
 
 class BlinkyBlocksBlockCode;
@@ -50,8 +51,7 @@ public:
 	void setPosition(const Vecteur &p);
 	inline P2PNetworkInterface *getInterface(NeighborDirection d) { return tabInterfaces[d]; }
 	void waitVMEnd();
-	NeighborDirection getDirection( P2PNetworkInterface*);
-	tcp::socket& getSocket() {if(socket.get() == NULL) {cout << "NULL" << endl; throw std::logic_error("socket pointer is NULL");} return *(socket.get());}
+	NeighborDirection getDirection(P2PNetworkInterface*);
 	VMMessage_t*  getBufferPtr() { return &buffer;}
 	
 	void sendMessageToVM(uint64_t size, uint64_t* message);
@@ -61,11 +61,16 @@ public:
 	void accel(int x, int y, int z);	
 	void shake(int f);
 	
+	void addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target);
+	void removeNeighbor(P2PNetworkInterface *ni);
+	
 protected:
 	boost::shared_ptr<tcp::socket> socket;
 	pid_t pid;
 	VMMessage_t buffer;
-	void readMessageHandler(const boost::system::error_code& error, std::size_t bytes_transferred);
+	
+	void readMessageHandler(const boost::system::error_code& error, std::size_t bytes_transferred);	
+	tcp::socket& getSocket() {return *(socket.get());}
 };
 
 }
