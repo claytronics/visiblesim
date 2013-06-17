@@ -64,6 +64,8 @@ public:
 	void addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target);
 	void removeNeighbor(P2PNetworkInterface *ni);
 	
+	void stop();
+	
 protected:
 	boost::shared_ptr<tcp::socket> socket;
 	pid_t pid;

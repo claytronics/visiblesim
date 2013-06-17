@@ -61,4 +61,11 @@ void World::unlock() {
 	mutex_gl.unlock();
 }
 
+void World::stopSimulation() {
+	map<int, BuildingBlock*>::iterator it;
+	for( it = buildingBlocksMap.begin() ; it != buildingBlocksMap.end() ; it++) {
+		it->second->stop();
+	}
+}
+
 } // BaseSimulator namespace

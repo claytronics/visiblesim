@@ -62,6 +62,7 @@ public:
 	virtual void tapBlock(int bId) {};
 	virtual void accelBlock(int bId, int x, int y, int z) {};
 	virtual void shakeBlock(int bId, int f) {};
+	void stopSimulation();
 };
 
 inline void deleteWorld() {

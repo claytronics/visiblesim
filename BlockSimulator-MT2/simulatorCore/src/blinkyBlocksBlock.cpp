@@ -151,4 +151,9 @@ NeighborDirection BlinkyBlocksBlock::getDirection(P2PNetworkInterface *given_int
 	cout << "Simulator: "<< blockId << " remove neighbor on " << getStringNeighborDirection(getDirection(ni)) << endl;
 	  getScheduler()->schedule(new VMRemoveNeighborEvent(getScheduler()->now(), this, getDirection(ni)));
   }
+  
+  void BlinkyBlocksBlock::stop() {
+	  cout << "Simulator: stop VM" << endl;
+	  getScheduler()->schedule(new VMStopEvent(getScheduler()->now(), this));
+  }
 }

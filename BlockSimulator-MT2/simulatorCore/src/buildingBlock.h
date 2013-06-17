@@ -63,6 +63,8 @@ public:
 	
 	virtual void addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target) {};
 	virtual void removeNeighbor(P2PNetworkInterface *ni) {};
+	
+	virtual void stop() {};
 };
 
 } // BaseSimulator namespace
