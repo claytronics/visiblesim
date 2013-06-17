@@ -175,7 +175,7 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 	for(int i=0; i<6; i++) {
 		P2PNetworkInterface *bbi = bb->getInterface(NeighborDirection(i));
 		if (bbi->connectedInterface) {
-			bb->removeNeighbor(bbi);
+			//bb->removeNeighbor(bbi); //Useless
 			bbi->connectedInterface->hostBlock->removeNeighbor(bbi->connectedInterface);
 			bbi->connectedInterface->connectedInterface=NULL;
 			bbi->connectedInterface=NULL;

@@ -21,24 +21,24 @@ using boost::asio::ip::tcp;
 //#define COLOR_ON_TAP_EXAMPLE
 #define NEIGHBOR_LIST_EXAMPLE
 
-#define VM_MESSAGE_SET_ID		1
-#define VM_MESSAGE_STOP			4
+#define VM_MESSAGE_SET_ID			1
+#define VM_MESSAGE_STOP				4
 #define VM_MESSAGE_ADD_NEIGHBOR		5
 #define VM_MESSAGE_REMOVE_NEIGHBOR	6
-#define VM_MESSAGE_TAP			7
+#define VM_MESSAGE_TAP				7
 #define VM_MESSAGE_SET_COLOR		8
 #define VM_MESSAGE_SEND_MESSAGE		9
 #define VM_MESSAGE_RECEIVE_MESSAGE	10
-#define VM_MESSAGE_ACCEL		11
-#define VM_MESSAGE_SHAKE		12
+#define VM_MESSAGE_ACCEL			11
+#define VM_MESSAGE_SHAKE			12
 
 typedef struct VMMessage_tt {
-        uint64_t size;
+    uint64_t size;
     uint64_t type;
 	uint64_t timestamp;
 	uint64_t sourcenode;
-        uint64_t param1;
-        uint64_t param2;
+    uint64_t param1;
+    uint64_t param2;
 	uint64_t param3;
 	uint64_t param4;
 	uint64_t param5;
@@ -101,7 +101,7 @@ int readMessageFromVM(tcp::socket &socket, VMMessage_t *buffer, int id) {
 		boost::asio::read(socket,boost::asio::buffer((void*)&buffer->size, sizeof(uint64_t)));
 		boost::asio::read(socket,boost::asio::buffer((void*)&buffer->type, buffer->size));
 		if (id != -1) {
-			cout << "VM " << id << " receive a message" << endl;
+			cout << "VM " << id << " receive a message (" << buffer->type <<")" << endl;
 		}
 		return 1;
 	} catch (std::exception& e) {
@@ -147,13 +147,13 @@ void vm_thread_function(void *data) {
 #ifdef SET_COLOR_EXAMPLE
 	out.size = 7*sizeof(uint64_t);
 	out.type = VM_MESSAGE_SET_COLOR;
-	out.param1 = 255; // red
+	out.param1 = 0;
 	out.param2 = 0;
-	out.param3 = 0;
+	out.param3 = 255; // blue
 	out.param4 = 0;
 	try {
 		boost::asio::write(socket, boost::asio::buffer((void*)&out,8*sizeof(uint64_t)));
-		cout << "VM " << id << " sent SET_COLOR(red)" <<  endl;
+		cout << "VM " << id << " sent SET_COLOR(blue)" <<  endl;
 	} catch (std::exception& e) {
 		cerr << "Connection to the Simulator lost" << endl;
 	}
@@ -187,38 +187,42 @@ void vm_thread_function(void *data) {
 			cout << "VM " << id << " sent SET_COLOR(after receiving a message)" <<  endl;
 		} catch (std::exception& e) {
 			cerr << "Connection to the Simulator lost" << endl;
-		} sleep(5);
+		} sleep(10);
 	} else {
-		// RECEIVE MESSAGE & SET COLOR
-		if(readMessageFromVM(socket, &in, id) && in.type == VM_MESSAGE_RECEIVE_MESSAGE) {
-			out.size = 7*sizeof(uint64_t);
-			out.type = VM_MESSAGE_SET_COLOR;
-			out.param1 = in.param2;
-			out.param2 = in.param3;
-			out.param3 = in.param4;
-			out.param4 = in.param5;
-			try {
-				boost::asio::write(socket, boost::asio::buffer((void*)&out,8*sizeof(uint64_t)));
-				cout << "VM " << id << " sent SET_COLOR(after receiving a message)" <<  endl;
-			} catch (std::exception& e) {
-				cerr << "Connection to the Simulator lost" << endl;
-			}
-			if (id != 5) {
-				// SEND MESSAGE ON RIGHT		
-				out.size = 8*sizeof(uint64_t);
-				out.type = VM_MESSAGE_SEND_MESSAGE;
-				out.param1 = 3; // face: right
-				out.param2 = in.param2;
-				out.param3 = in.param3; // green
-				out.param4 = in.param4;
-				out.param5 = in.param5;
+		while (true) {
+			// RECEIVE MESSAGE & SET COLOR
+			if(readMessageFromVM(socket, &in, id) == 0) {break;}
+			if(in.type == VM_MESSAGE_RECEIVE_MESSAGE) {
+				out.size = 7*sizeof(uint64_t);
+				out.type = VM_MESSAGE_SET_COLOR;
+				out.param1 = in.param2;
+				out.param2 = in.param3;
+				out.param3 = in.param4;
+				out.param4 = in.param5;
 				try {
-					boost::asio::write(socket, boost::asio::buffer((void*)&out,9*sizeof(uint64_t)));
+					boost::asio::write(socket, boost::asio::buffer((void*)&out,8*sizeof(uint64_t)));
 					cout << "VM " << id << " sent SET_COLOR(after receiving a message)" <<  endl;
 				} catch (std::exception& e) {
 					cerr << "Connection to the Simulator lost" << endl;
 				}
-			}		
+				if (id != 5) {
+					// SEND MESSAGE ON RIGHT		
+					out.size = 8*sizeof(uint64_t);
+					out.type = VM_MESSAGE_SEND_MESSAGE;
+					out.param1 = 3; // face: right
+					out.param2 = in.param2;
+					out.param3 = in.param3; // green
+					out.param4 = in.param4;
+					out.param5 = in.param5;
+					try {
+						boost::asio::write(socket, boost::asio::buffer((void*)&out,9*sizeof(uint64_t)));
+						cout << "VM " << id << " sent SET_COLOR(after receiving a message)" <<  endl;
+					} catch (std::exception& e) {
+						cerr << "Connection to the Simulator lost" << endl;
+					}
+				}
+				break;		
+			}
 		}
 	}
 #endif

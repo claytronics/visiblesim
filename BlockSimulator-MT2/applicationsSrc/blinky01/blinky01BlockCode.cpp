@@ -33,6 +33,7 @@ VMDataMessage::VMDataMessage(uint64_t src, uint64_t size, uint64_t* m):Message()
 		message = new uint64_t[size/sizeof(uint64_t)+1];
 		memcpy(message+1, m, size);
 		message[0] = size;
+		message[1] = VM_MESSAGE_RECEIVE_MESSAGE;
 		message[2] = src; 
 		switch (m[3]) {
 			case Front:
