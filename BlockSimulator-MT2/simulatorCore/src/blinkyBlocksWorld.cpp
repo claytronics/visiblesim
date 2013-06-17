@@ -204,6 +204,7 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 		if (*cit==bb->ptrGlBlock) tabGlBlocks.erase(cit);
 	}
 
+	if (selectedBlock == bb->ptrGlBlock) {selectedBlock = NULL;}
 	delete bb->ptrGlBlock;
 	delete bb;
 
