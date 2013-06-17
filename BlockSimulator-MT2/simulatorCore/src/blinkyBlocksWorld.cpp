@@ -409,4 +409,14 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*)getBlockById(bId);
 		bb->tap();
 	}
+	
+	void BlinkyBlocksWorld::accelBlock(int bId, int x, int y, int z) {
+		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*)getBlockById(bId);
+		bb->accel(x,y,z);
+	}
+	
+	void BlinkyBlocksWorld::shakeBlock(int bId, int f) {
+		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*)getBlockById(bId);
+		bb->shake(f);	
+	}
 } // BlinkyBlock namespace

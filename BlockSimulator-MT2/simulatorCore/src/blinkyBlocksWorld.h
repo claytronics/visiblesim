@@ -66,7 +66,8 @@ public:
 	virtual void setSelectedFace(int n);
 	virtual void menuChoice(int n);
 	void tapBlock(int bId);
-
+	void accelBlock(int bId, int x, int y, int z);
+	void shakeBlock(int bId, int f);
 	boost::asio::io_service& getIos() {return ios;}
 };
 

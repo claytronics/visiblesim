@@ -60,6 +60,8 @@ public:
 	virtual Camera *getCamera() { return NULL; };
 	virtual void menuChoice(int) {};
 	virtual void tapBlock(int bId) {};
+	virtual void accelBlock(int bId, int x, int y, int z) {};
+	virtual void shakeBlock(int bId, int f) {};
 };
 
 inline void deleteWorld() {

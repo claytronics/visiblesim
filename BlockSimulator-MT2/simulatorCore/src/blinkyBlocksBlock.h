@@ -58,6 +58,8 @@ public:
 	void readMessageFromVM();
 	
 	void tap();
+	void accel(int x, int y, int z);	
+	void shake(int f);
 	
 protected:
 	boost::shared_ptr<tcp::socket> socket;

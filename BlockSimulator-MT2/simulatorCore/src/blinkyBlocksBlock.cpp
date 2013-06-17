@@ -103,4 +103,12 @@ NeighborDirection BlinkyBlocksBlock::getDirection(P2PNetworkInterface *given_int
 	  getScheduler()->schedule(new VMTapEvent(getScheduler()->now(), this));
   }
   
+  void BlinkyBlocksBlock::accel(int x, int y, int z) {
+		getScheduler()->schedule(new VMAccelEvent(getScheduler()->now(), this, x, y, z));
+	}
+	
+	void BlinkyBlocksBlock::shake(int f) {
+		getScheduler()->schedule(new VMShakeEvent(getScheduler()->now(), this, f));
+	}
+  
 }
