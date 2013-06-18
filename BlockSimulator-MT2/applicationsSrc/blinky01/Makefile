@@ -30,9 +30,10 @@ CC = g++
 	
 all: $(OUT) blinkyThreadsManager VMEmulator
 
-autoinstall: $(OUT) blinkyThreadsManager VMEmulator
+autoinstall: $(OUT) blinkyThreadsManager VMEmulator tcp_trial
 	cp $(OUT) blinkyThreadsManager $(APPDIR)	
 	cp $(OUT) VMEmulator $(APPDIR)
+	cp $(OUT) tcp_trial $(APPDIR)
 
 $(APPDIR)/$(OUT): $(OUT)
 
@@ -48,13 +49,14 @@ $(OUT): $(SIMULATORLIB) $(OBJS)
 
 VMEmulator: VMEmulator.cpp
 	$(CC) $(CCFLAGS) $(INCLUDES) -o VMEmulator VMEmulator.cpp -L/opt/local/lib $(LIBS)
-
+	
+tcp_trial: tcp_trial.cpp
+	$(CC) $(CCFLAGS) $(INCLUDES) -o tcp_trial tcp_trial.cpp -L/opt/local/lib $(LIBS)
+	
 blinkyThreadsManager: blinkyThreadsManager.cpp
 	$(CC) $(CCFLAGS) $(INCLUDES) -o blinkyThreadsManager blinkyThreadsManager.cpp -L/opt/local/lib $(LIBS)
-
-
 
 -include $(DEPS)
 
 clean:
-	rm -f *~ $(OBJS) $(OUT) $(DEPS) VMEmulator
+	rm -f *~ $(OBJS) $(OUT) $(DEPS) VMEmulator tcp_trial

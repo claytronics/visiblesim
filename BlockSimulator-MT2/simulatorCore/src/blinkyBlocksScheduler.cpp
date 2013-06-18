@@ -39,12 +39,18 @@ namespace BlinkyBlocks {
     //schedulerMode = SCHEDULER_MODE_FASTEST;
     schedulerMode = SCHEDULER_MODE_REALTIME;
     schedulerThread = new thread(bind(&BlinkyBlocksScheduler::startPaused, this));
+    tcpListenerThread = NULL;
   }
 
   BlinkyBlocksScheduler::~BlinkyBlocksScheduler() {
     cout << "\033[1;31mBlinkyBlocksScheduler destructor\33[0m" << endl;
     delete sem_schedulerStart;
-    delete schedulerThread;
+    delete schedulerThread; 
+    /* sleep for a while, to be sure that the schedulerThread will be
+	 * killed before destroying all the events.
+	 */ 
+    usleep(2000);
+    if (tcpListenerThread != NULL) {delete tcpListenerThread; getWorld()->getIos().stop();}
   }
 
   void BlinkyBlocksScheduler::createScheduler() {
@@ -63,7 +69,7 @@ namespace BlinkyBlocks {
     cout << "\033[1;33mScheduler Mode :" << schedulerMode << "\033[0m" << endl;
 
     sem_schedulerStart->wait();
-    new boost::thread(async_listener_thread);
+    tcpListenerThread = new boost::thread(async_listener_thread);
     
     int systemStartTime, systemStopTime;
     multimap<uint64_t, EventPtr>::iterator first;

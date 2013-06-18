@@ -191,7 +191,7 @@ void vm_thread_function(void *data) {
 	} else {
 		while (true) {
 			// RECEIVE MESSAGE & SET COLOR
-			if(readMessageFromVM(socket, &in, id) == 0) {break;}
+			if(readMessageFromVM(socket, &in, id) == 0) {cout << "VM " << id << " break " << endl; break;}
 			if(in.type == VM_MESSAGE_RECEIVE_MESSAGE) {
 				out.size = 7*sizeof(uint64_t);
 				out.type = VM_MESSAGE_SET_COLOR;
@@ -247,20 +247,32 @@ void vm_thread_function(void *data) {
 	}
 #endif
 #ifdef NEIGHBOR_LIST_EXAMPLE
-	std::list<Neighbor> n; 
+	//std::list<Neighbor> n;
+	map<uint64_t, uint64_t> n;
 	while(true) {
 		if (!readMessageFromVM(socket, &in, id)) {break;}
 		if (in.type == VM_MESSAGE_ADD_NEIGHBOR) {
 			cout << "VM "<< id << " has a new neighbor: " << in.param1 << " on " << getStringDirection(in.param2) << " face" << endl;
-			n.push_back(Neighbor(in.param1, in.param2));
+			n.insert(Neighbor(in.param2, in.param1));
 		} else if (in.type == VM_MESSAGE_REMOVE_NEIGHBOR) {
-			cout << "VM " << id << " has no more neighbor on face " << in.param1 << endl;
+			cout << "VM " << id << " has no more neighbor on face " << getStringDirection(in.param1) << endl;
+			map<uint64_t, uint64_t>::iterator it;
+			it = n.find(in.param1);
 			//remove
+			n.erase(it);
 		}
-		// Display neighbor list		
+		// Display neighbor list
+		map<uint64_t, uint64_t>::iterator it;
+		stringstream ss;
+		ss << "VM "<< id << "'s neighbors: ";
+		for (it = n.begin(); it != n.end(); it++) {
+			 ss << it->second << "(" << getStringDirection(it->first) << "), ";
+		}
+		cout << ss.str() << endl;
 	}
 #endif
-	cout << "VMEmulator end" << endl;
+	socket.close();
+	cout << "VMEmulator "<< id << " end" << endl;
 
 }
 

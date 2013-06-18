@@ -32,6 +32,7 @@ protected:
 	boost::interprocess::interprocess_semaphore *sem_schedulerStart;
 	//boost::interprocess::interprocess_mutex mutex_schedule;
 	boost::thread *schedulerThread;
+	boost::thread *tcpListenerThread;
 	int schedulerMode;
 
 public:

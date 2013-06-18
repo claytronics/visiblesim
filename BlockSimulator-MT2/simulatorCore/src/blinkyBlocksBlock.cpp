@@ -34,14 +34,12 @@ BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, boost::shared_ptr<tcp::socket> s, 
 }
 
 BlinkyBlocksBlock::~BlinkyBlocksBlock() {
-	cout << "BlinkyBlocksBlock destructor" << endl;
+	cout << "BlinkyBlocksBlock destructor " << blockId << endl;
 	delete[] buffer.message;
-	//kill(pid, SIGTERM); -- seg fault
-	/*if(waitpid(pid, NULL, WNOHANG) == 0) {
-			cout << pid << " killed" <<endl;
-			//kill(pid, SIGINT); --seg fault ...
-			waitpid(pid, NULL, 0);
-	}*/
+	socket->close();
+	socket.reset();
+	kill(pid, SIGTERM);
+	waitpid(pid, NULL, 0);
 }
 
 void BlinkyBlocksBlock::waitVMEnd() {	
@@ -52,7 +50,6 @@ void BlinkyBlocksBlock::setPosition(const Vecteur &p) {
 	position=p;
 	getWorld()->updateGlData(this);
 }
-
 
 void BlinkyBlocksBlock::setColor(const Vecteur &c) {
 	color=c;
