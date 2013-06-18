@@ -10,7 +10,6 @@
 #include "buildingBlock.h"
 #include "scheduler.h"
 
-
 using namespace std;
 
 namespace BaseSimulator {
@@ -22,7 +21,6 @@ int BuildingBlock::nextId = 0;
 //          BuildingBlock  (class)
 //
 //===========================================================================================================
-
 
 BuildingBlock::BuildingBlock(int bId) {
 	cout << "BuildingBlock constructor (id:" << nextId << ")" << endl;

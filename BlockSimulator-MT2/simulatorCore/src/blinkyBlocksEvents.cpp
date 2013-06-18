@@ -172,41 +172,6 @@ const string VMTapEvent::getEventName() {
 
 //===========================================================================================================
 //
-//          VMReceiveMessageEvent  (class)
-//
-//===========================================================================================================
-/*
-VMReceiveMessageEvent::VMReceiveMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t se, uint64_t f, uint64_t si, uint64_t*  m):Event(t) {
-	EVENT_CONSTRUCTOR_INFO();
-	eventType = EVENT_ADD_NEIGHBOR;
-	concernedBlock = conBlock;
-	sender = se;
-	face = f;
-	size = si;
-	//copy message to do
-}
-
-VMReceiveMessageEvent::VMReceiveMessageEvent(VMReceiveMessageEvent *ev) : Event(ev) {
-	EVENT_CONSTRUCTOR_INFO();
-	concernedBlock = ev->concernedBlock;
-	eventType = ev->eventType;
-}
-
-VMReceiveMessageEvent::~VMReceiveMessageEvent() {
-	EVENT_DESTRUCTOR_INFO();
-}
-
-void VMReceiveMessageEvent::consume() {
-	EVENT_CONSUME_INFO();
-	concernedBlock->scheduleLocalEvent(EventPtr(new VMReceiveMessageEvent(this)));
-}
-
-const string VMReceiveMessageEvent::getEventName() {
-	return("VMReceiveMessage Event");
-} */
-
-//===========================================================================================================
-//
 //          VMAccelEvent  (class)
 //
 //===========================================================================================================

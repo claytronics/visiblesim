@@ -17,10 +17,10 @@ using namespace std;
 using namespace BlinkyBlocks;
 using boost::asio::ip::tcp;
 
-#define VM_MESSAGE_SET_ID				        1
+#define VM_MESSAGE_SET_ID						1
 #define VM_MESSAGE_STOP							4
 #define VM_MESSAGE_ADD_NEIGHBOR					5
-#define VM_MESSAGE_REMOVE_NEIGHBOR		        6
+#define VM_MESSAGE_REMOVE_NEIGHBOR				6
 #define VM_MESSAGE_TAP							7
 #define VM_MESSAGE_SET_COLOR					8
 #define VM_MESSAGE_SEND_MESSAGE					9
@@ -28,46 +28,61 @@ using boost::asio::ip::tcp;
 #define VM_MESSAGE_ACCEL						11
 #define VM_MESSAGE_SHAKE						12
 
-
-VMDataMessage::VMDataMessage(uint64_t src, uint64_t size, uint64_t* m):Message() {
-		message = new uint64_t[size/sizeof(uint64_t)+1];
-		memcpy(message+1, m, size);
-		message[0] = size;
-		message[1] = VM_MESSAGE_RECEIVE_MESSAGE;
-		message[2] = src; 
-		switch (m[3]) {
-			case Front:
-				message[4] = Back;
-			case Back:
-				message[4] = Front;
-				break;
-			case Left:
-				message[4] = Right;
-				break;
-			case Right:
-				message[4] = Left;
-				break;
-			case Top:
-				message[4] = Bottom;
-				break;
-			case Bottom:
-				message[4] = Top;
-				break;
-			default:
-				cerr << "*** ERROR *** : unknown facet" << endl;
-				break;
+string getStringMessage(uint64_t t) {
+	switch(t) {
+		case VM_MESSAGE_SET_COLOR:
+			return string("VM_MESSAGE_SET_COLOR");
+			break;
+		case VM_MESSAGE_SEND_MESSAGE:
+			return string("VM_MESSAGE_SEND_MESSAGE");
+			break;
+		default:
+			cerr << "Unknown received-message type" << endl;
+			return string("Unknown");
+			break;
 		}
-	}
-	
-	VMDataMessage::~VMDataMessage() {
-		delete[] message;
-	}
-	
-	unsigned int VMDataMessage::size() {
-		return message[0]+sizeof(uint64_t);
-	}
+}
 
-Blinky01BlockCode::Blinky01BlockCode(BlinkyBlocksBlock *host):BlinkyBlocksBlockCode(host) {
+VMDataMessage::VMDataMessage(uint64_t src, uint64_t size, uint64_t* m): Message() {
+	message = new uint64_t[size/sizeof(uint64_t)+1];
+	memcpy(message+1, m, size);
+	message[0] = size;
+	message[1] = VM_MESSAGE_RECEIVE_MESSAGE;
+	message[2] = src; 
+	switch (m[3]) {
+		case Front:
+			message[4] = Back;
+			break;
+		case Back:
+			message[4] = Front;
+			break;
+		case Left:
+			message[4] = Right;
+			break;
+		case Right:
+			message[4] = Left;
+			break;
+		case Top:
+			message[4] = Bottom;
+			break;
+		case Bottom:
+			message[4] = Top;
+			break;
+		default:
+			cerr << "*** ERROR *** : unknown facet" << endl;
+			break;
+	}
+}
+	
+VMDataMessage::~VMDataMessage() {
+	delete[] message;
+}
+	
+unsigned int VMDataMessage::size() {
+	return message[0] + sizeof(uint64_t);
+}
+
+Blinky01BlockCode::Blinky01BlockCode(BlinkyBlocksBlock *host): BlinkyBlocksBlockCode(host) {
 	cout << "Blinky01BlockCode constructor" << endl;
 	// Send the id to the block
 	BaseSimulator::getScheduler()->schedule(new VMSetIdEvent(BaseSimulator::getScheduler()->now(), (BlinkyBlocksBlock*)hostBlock));
@@ -85,39 +100,35 @@ void Blinky01BlockCode::startup() {
 }
 
 void Blinky01BlockCode::handleNewMessage() {
-		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
-		cout << "Scheduler: message size: " << bb->getBufferPtr()->size << endl;
-		cout << "Scheduler: type: " << bb->getBufferPtr()->message[0] << endl;
-		uint64_t* message = bb->getBufferPtr()->message;
-		uint64_t size = bb->getBufferPtr()->size;
-		
-		switch (message[0]) {
-			case VM_MESSAGE_SET_COLOR:			
+	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
+	cout << "Blinky01BlockCode: type: " << getStringMessage(bb->getBufferPtr()->message[0]) << " size: " << bb->getBufferPtr()->size << endl;
+	uint64_t* message = bb->getBufferPtr()->message;
+	uint64_t size = bb->getBufferPtr()->size;
+	switch (message[0]) {
+		case VM_MESSAGE_SET_COLOR:			
 			{
-				// <red> <blue> <green> <intensity>
-				//info << "blinky01BlockCode: " << hostBlock->blockId << " was asked to start transmitting to " << destId;
-				//getScheduler()->trace(info.str());
-				Vecteur color(message[3]/255.0, message[4]/255.0, message[5]/255.0, message[6]/255.0);
-				bb->setColor(color);
+			// <red> <blue> <green> <intensity>
+			Vecteur color(message[3]/255.0, message[4]/255.0, message[5]/255.0, message[6]/255.0);
+			bb->setColor(color);
 			}	
 			break;
-			case VM_MESSAGE_SEND_MESSAGE:
+		case VM_MESSAGE_SEND_MESSAGE:
 			{
-				// <face> <content...>
-				//info << "FlavioBlockCode " << hostBlock->blockId << " was asked to start transmitting to " << ;
-				//getScheduler()->trace(info.str());
-				P2PNetworkInterface *interface;
-				interface = bb->getInterface((NeighborDirection)message[3]);
-				if (interface == NULL) {cout << "no right neighbor" << endl;}
-				BaseSimulator::getScheduler()->schedule(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
+			// <face> <content...>
+			P2PNetworkInterface *interface;
+			interface = bb->getInterface((NeighborDirection)message[3]);
+			if (interface == NULL) {
+				cout << "no right neighbor" << endl;
+			}
+			BaseSimulator::getScheduler()->schedule(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
 					new VMDataMessage(hostBlock->blockId, size, message), interface));
 			}
 			break;
-			default:
-				cerr << "*** ERROR *** : unsupported message received from VM (" << message[0] <<")" << endl;
-				break;
-		}
+		default:
+			cerr << "*** ERROR *** : unsupported message received from VM (" << message[0] <<")" << endl;
+			break;
 	}
+}
 
 void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
@@ -152,9 +163,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[1] = VM_MESSAGE_ADD_NEIGHBOR;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 		message[3] = -1; // souce node
-		message[4] = (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->target; // target
-		message[5] = (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->face; // face
-		//cout << "Blinky01BlockCode: " << message[4] << " " << message[5] << " " << endl;
+		message[4] = (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->target;
+		message[5] = (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->face;
 		bb->sendMessageToVM(6*sizeof(uint64_t), message);
 		}
 		break;
@@ -165,7 +175,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[1] = VM_MESSAGE_REMOVE_NEIGHBOR;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 		message[3] = -1; // souce node
-		message[4] = (boost::static_pointer_cast<VMRemoveNeighborEvent>(pev))->face; // face
+		message[4] = (boost::static_pointer_cast<VMRemoveNeighborEvent>(pev))->face;
 		bb->sendMessageToVM(5*sizeof(uint64_t), message);
 		}
 		break;
@@ -192,9 +202,9 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[1] = VM_MESSAGE_ACCEL;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 		message[3] = -1; // souce node
-		message[4] = (boost::static_pointer_cast<VMAccelEvent>(pev))->x; // x
-		message[5] = (boost::static_pointer_cast<VMAccelEvent>(pev))->y;; // y
-		message[6] = (boost::static_pointer_cast<VMAccelEvent>(pev))->z;; // z
+		message[4] = (boost::static_pointer_cast<VMAccelEvent>(pev))->x;
+		message[5] = (boost::static_pointer_cast<VMAccelEvent>(pev))->y;
+		message[6] = (boost::static_pointer_cast<VMAccelEvent>(pev))->z;
 		bb->sendMessageToVM(7*sizeof(uint64_t), message);
 		}
 		break;
@@ -205,7 +215,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[1] = VM_MESSAGE_SET_ID;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 		message[3] = -1; // souce node
-		message[4] = (boost::static_pointer_cast<VMShakeEvent>(pev))->force; // force
+		message[4] = (boost::static_pointer_cast<VMShakeEvent>(pev))->force;
 		bb->sendMessageToVM(5*sizeof(uint64_t), message);
 		}
 		break;
@@ -218,5 +228,3 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 BlinkyBlocks::BlinkyBlocksBlockCode* Blinky01BlockCode::buildNewBlockCode(BlinkyBlocksBlock *host) {
 	return(new Blinky01BlockCode(host));
 }
-
-

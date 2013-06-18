@@ -46,6 +46,7 @@ public:
 	void printInfo() {
 		cout << "I'm a BlinkyBlocksScheduler" << endl;
 	}
+	
 	void start(int mode);
 
 	void waitForSchedulerEnd() {

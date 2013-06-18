@@ -18,9 +18,6 @@ using boost::asio::ip::tcp;
 
 typedef struct VMMessage_tt {
         uint64_t size;
-        //uint64_t type;
-        //uint64_t timestamp;
-        //uint64_t sourcenode;
         uint64_t *message;
 } VMMessage_t;
 
@@ -39,9 +36,7 @@ public:
 	Vecteur position; // position of the block;
 
 	BlinkyBlocksBlockCode *(*buildNewBlockCode)(BlinkyBlocksBlock*);
-
 	BlinkyBlocksBlock(int bId, boost::shared_ptr<tcp::socket> s, pid_t p, BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*));
-
 	~BlinkyBlocksBlock();
 
 	inline BlinkyBlocksGlBlock* getGlBlock() { return ptrGlBlock; };
@@ -50,29 +45,31 @@ public:
 	void setColor(int num);
 	void setPosition(const Vecteur &p);
 	inline P2PNetworkInterface *getInterface(NeighborDirection d) { return tabInterfaces[d]; }
-	void waitVMEnd();
 	NeighborDirection getDirection(P2PNetworkInterface*);
 	VMMessage_t*  getBufferPtr() { return &buffer;}
-	
+	/* wait for the termination of the associated VM program */
+	void waitVMEnd();
+	/* send and receive message from the associated VM program */
 	void sendMessageToVM(uint64_t size, uint64_t* message);
-	void readMessageFromVM();
-	
+	void readMessageFromVM();	
+	/* schedule the appropriate event for this action */
 	void tap();
 	void accel(int x, int y, int z);	
-	void shake(int f);
-	
+	void shake(int f);	
 	void addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target);
-	void removeNeighbor(P2PNetworkInterface *ni);
-	
+	void removeNeighbor(P2PNetworkInterface *ni);	
 	void stop();
 	
 protected:
-	boost::shared_ptr<tcp::socket> socket;
+	/* associated VM program pid */
 	pid_t pid;
+	/* socket connected to the associated VM program */
+	boost::shared_ptr<tcp::socket> socket;
+	/* buffer used to receive tcp message */
 	VMMessage_t buffer;
 	
 	void readMessageHandler(const boost::system::error_code& error, std::size_t bytes_transferred);	
-	tcp::socket& getSocket() {return *(socket.get());}
+	tcp::socket& getSocket() { return *(socket.get()); }
 };
 
 }

@@ -55,7 +55,9 @@ BlinkyBlocksWorld::~BlinkyBlocksWorld() {
 	delete [] gridPtrBlocks;
 	delete objBlock;
 	delete objBlockForPicking;
+	delete objRepere;
 	delete camera;
+	delete acceptor;
 }
 
 
@@ -81,13 +83,9 @@ void BlinkyBlocksWorld::addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlo
 	// Start the VM
 	pid_t VMPid = 0;
 	char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), NULL };
-	//char* cmd[] = {(char*)"xterm", (char*)"pwd", NULL };
 	VMPid = fork();	
 	if(VMPid < 0) {cerr << "Error when starting the VM" << endl;}
-    	if(VMPid == 0) {
-			execv(vmPath.c_str(), const_cast<char**>(cmd));
-			//execv("xterm", const_cast<char**>(cmd));
-			}
+    if(VMPid == 0) {execv(vmPath.c_str(), const_cast<char**>(cmd));}
 
 	// Wait for an incoming connection	
 	boost::shared_ptr<tcp::socket> socket(new tcp::socket(ios));	
@@ -350,13 +348,13 @@ void BlinkyBlocksWorld::updateGlData(BlinkyBlocksBlock*blc) {
 	}
 }
 
-void BlinkyBlocksWorld::createPopupMenu(int ix,int iy) {
+void BlinkyBlocksWorld::createPopupMenu(int ix, int iy) {
 	if (!GlutContext::popupMenu) {
 		GlutContext::popupMenu = new GlutPopupMenuWindow(NULL,0,0,200,75);
 		GlutContext::popupMenu->addButton(1,"../../simulatorCore/blinkyBlocksTextures/menu_add.tga");
 		GlutContext::popupMenu->addButton(2,"../../simulatorCore/blinkyBlocksTextures/menu_del.tga");
 	}
-	GlutContext::popupMenu->setCenterPosition(ix,GlutContext::screenHeight-iy);
+	GlutContext::popupMenu->setCenterPosition(ix, GlutContext::screenHeight - iy);
 	GlutContext::popupMenu->show(true);
 }
 

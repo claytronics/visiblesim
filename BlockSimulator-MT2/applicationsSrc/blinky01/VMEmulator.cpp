@@ -49,29 +49,29 @@ enum NeighborDirection {Front=0, Back, Left, Right, Top, Bottom };
 typedef pair<uint64_t, uint64_t> Neighbor;
 
 string getStringDirection(uint64_t d) {
-		switch(d) {
-			case Front:
-				return string("Front");
-				break;
-			case Back:
-				return string("Back");
-				break;
-			case Left:
-				return string("Left");
-				break;
-			case Right:
-				return string("Right");
-				break;
-			case Top:
-				return string("Top");
-				break;
-			case Bottom:
-				return string("Bottom");
-				break;
-			default:
-				cerr << "Unknown direction" << endl;
-				return string("Unknown");
-				break;
+	switch(d) {
+		case Front:
+			return string("Front");
+			break;
+		case Back:
+			return string("Back");
+			break;
+		case Left:
+			return string("Left");
+			break;
+		case Right:
+			return string("Right");
+			break;
+		case Top:
+			return string("Top");
+			break;
+		case Bottom:
+			return string("Bottom");
+			break;
+		default:
+			cerr << "Unknown direction" << endl;
+			return string("Unknown");
+			break;
 		}
 }
 

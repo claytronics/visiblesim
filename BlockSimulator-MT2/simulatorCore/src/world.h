@@ -31,6 +31,7 @@ protected:
 
 	World();
 	virtual ~World();
+	
 public:
 	static World* getWorld() {
 		assert(world != NULL);
@@ -40,7 +41,6 @@ public:
 		delete(world);
 		world=NULL;
 	}
-
 	void printInfo() {
 		cout << "I'm a World" << endl;
 	}
@@ -59,9 +59,11 @@ public:
 	virtual void createPopupMenu(int ix,int iy) {};
 	virtual Camera *getCamera() { return NULL; };
 	virtual void menuChoice(int) {};
+	/* Notify the bId block that these events happened */
 	virtual void tapBlock(int bId) {};
 	virtual void accelBlock(int bId, int x, int y, int z) {};
 	virtual void shakeBlock(int bId, int f) {};
+	/* Stop the block execution */
 	void stopSimulation();
 };
 

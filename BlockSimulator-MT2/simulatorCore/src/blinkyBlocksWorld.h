@@ -45,30 +45,30 @@ public:
 		assert(world != NULL);
 		return((BlinkyBlocksWorld*)world);
 	}
-
+	boost::asio::io_service& getIos() { return ios; }
 	void printInfo() {
 		cout << "I'm a BlinkyBlocksWorld" << endl;
 	}
 
-	virtual void addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlockCodeBuildingFunction)(BlinkyBlocksBlock*),const Vecteur &pos,const Vecteur &col);
+	virtual void addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlockCodeBuildingFunction)(BlinkyBlocksBlock*), const Vecteur &pos, const Vecteur &col);
 	void deleteBlock(BlinkyBlocksBlock *bb);
-	inline void setBlocksSize(float *siz) { blockSize[0]=siz[0];blockSize[1]=siz[1];blockSize[2]=siz[2];};
-	inline void setVmPath(string p) {vmPath = p;};
-	inline void setProgramPath(string p) {programPath = p;};
+	inline void setBlocksSize(float *siz) { blockSize[0] = siz[0]; blockSize[1] = siz[1]; blockSize[2] = siz[2]; };
+	inline void setVmPath(string p) { vmPath = p; };
+	inline void setProgramPath(string p) { programPath = p; };
 	void linkBlocks();
 	void loadTextures(const string &str);
 	virtual void glDraw();
 	virtual void glDrawId();
 	virtual void glDrawIdByMaterial();
 	virtual void updateGlData(BlinkyBlocksBlock*blc);
-	virtual void createPopupMenu(int ix,int iy);
+	virtual void createPopupMenu(int ix, int iy);
 	inline virtual Camera *getCamera() { return camera; };
 	virtual void setSelectedFace(int n);
 	virtual void menuChoice(int n);
+	/* Send a message to the VM associated to bId block depending on the handled event */
 	void tapBlock(int bId);
 	void accelBlock(int bId, int x, int y, int z);
 	void shakeBlock(int bId, int f);
-	boost::asio::io_service& getIos() {return ios;}
 };
 
 inline void createWorld(int slx,int sly,int slz, int p, int argc, char *argv[]) {
