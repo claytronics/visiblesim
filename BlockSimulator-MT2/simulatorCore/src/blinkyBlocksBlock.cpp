@@ -36,7 +36,7 @@ BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, boost::shared_ptr<tcp::socket> s, 
 BlinkyBlocksBlock::~BlinkyBlocksBlock() {
 	cout << "BlinkyBlocksBlock destructor " << blockId << endl;
 	delete[] buffer.message;
-	delete[] tabInterfaces;
+	//delete[] tabInterfaces;
 	socket->cancel();
 	socket->close();
 	socket.reset();
