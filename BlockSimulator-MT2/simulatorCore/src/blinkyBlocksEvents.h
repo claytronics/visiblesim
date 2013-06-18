@@ -29,6 +29,7 @@ public:
 	~VMSetIdEvent();
 	void consume();
 	const virtual string getEventName();
+	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 //===========================================================================================================
@@ -46,6 +47,7 @@ public:
 	~VMStopEvent();
 	void consume();
 	const virtual string getEventName();
+	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 //===========================================================================================================
@@ -65,6 +67,7 @@ public:
 	~VMAddNeighborEvent();
 	void consume();
 	const virtual string getEventName();
+	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 //===========================================================================================================
@@ -83,6 +86,7 @@ public:
 	~VMRemoveNeighborEvent();
 	void consume();
 	const virtual string getEventName();
+	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 //===========================================================================================================
@@ -100,6 +104,7 @@ public:
 	~VMTapEvent();
 	void consume();
 	const virtual string getEventName();
+	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 
@@ -143,6 +148,7 @@ public:
 	~VMAccelEvent();
 	void consume();
 	const virtual string getEventName();
+	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 //===========================================================================================================
@@ -161,6 +167,7 @@ public:
 	~VMShakeEvent();
 	void consume();
 	const virtual string getEventName();
+	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 } // BlinkyBlocks namespace

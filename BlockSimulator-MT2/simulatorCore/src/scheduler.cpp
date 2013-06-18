@@ -52,7 +52,7 @@ bool Scheduler::schedule(Event *ev) {
 	//MODIF NICO : cette ligne me spam trop l'affichage^^
 	//~ trace(info.str());
 
-//	lock();
+	//lock();
 
 	if (pev->date < Scheduler::currentDate) {
 		cout << "ERROR : An event cannot be schedule in the past !\n";
@@ -74,22 +74,31 @@ bool Scheduler::schedule(Event *ev) {
 
 	if (largestEventsMapSize < eventsMapSize) largestEventsMapSize = eventsMapSize;
 
-//	unlock();
+	//unlock();
 
 	return(true);
 }
 
 void Scheduler::removeEventsToBlock(BuildingBlock *bb) {
+	//lock();
 	multimap<uint64_t,EventPtr>::iterator im = eventsMap.begin();
 	BuildingBlock *cb=NULL;
+	cout << bb << endl;
 	while (im!=eventsMap.end()) {
 		cb=(*im).second->getConcernedBlock();
+		cout << cb << endl;
 		if (cb==bb) {
 			multimap<uint64_t,EventPtr>::iterator im2 = im;
-			im--;
-			eventsMap.erase(im2);
+			if(im != eventsMap.begin()) {
+				im--;
+				eventsMap.erase(im2);
+			} else {
+				eventsMap.erase(im2);
+				im = eventsMap.begin();
+			}
 		} else im++;
 	}
+	//unlock();
 }
 
 uint64_t Scheduler::now() {
@@ -102,7 +111,7 @@ void Scheduler::trace(string message) {
 	cout << fixed << (double)(currentDate)/1000000 << " " << message << endl;
 	mutex_trace.unlock();
 }
-/*
+
 void Scheduler::lock() {
 	mutex_schedule.lock();
 }
@@ -110,5 +119,5 @@ void Scheduler::lock() {
 void Scheduler::unlock() {
 	mutex_schedule.unlock();
 }
-*/
+
 } // BaseSimulator namespace

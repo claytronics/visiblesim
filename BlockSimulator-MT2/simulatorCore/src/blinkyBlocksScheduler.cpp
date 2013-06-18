@@ -91,13 +91,14 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 		case SCHEDULER_MODE_REALTIME:
 			cout << "Realtime mode scheduler\n";
 			mustStop = false;
-			while(!mustStop || !eventsMap.empty()) {  
+			while(!mustStop || !eventsMap.empty()) {
 				systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
 				systemCurrentTimeMax = systemCurrentTime - systemStartTime;
 				if(!eventsMap.empty())	{
 					first=eventsMap.begin();
 					pev = (*first).second;
 					while (!eventsMap.empty() && pev->date <= systemCurrentTimeMax) {
+						lock();
 						first=eventsMap.begin();
 						pev = (*first).second;
 						if (pev->eventType == EVENT_END_SIMULATION) {
@@ -116,6 +117,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 						//ev = *(listeEvenements.begin());
 						//first=eventsMap.begin();
 						//pev = (*first).second;
+						unlock();
 					}
 					systemCurrentTime = systemCurrentTimeMax;
 					if (!eventsMap.empty()) {
