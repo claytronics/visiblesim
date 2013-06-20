@@ -178,5 +178,13 @@ void BlinkyBlocksScheduler::readIncomingMessages() {
 	getWorld()->getIos().reset();
 }
 
+void BlinkyBlocksScheduler::lock() {
+	mutex_schedule.lock();
+}
+
+void BlinkyBlocksScheduler::unlock() {
+	mutex_schedule.unlock();
+}
+
 
 } // BlinkyBlocks namespace
