@@ -75,6 +75,7 @@ NeighborDirection BlinkyBlocksBlock::getDirection(P2PNetworkInterface *given_int
 }
 
 void BlinkyBlocksBlock::readMessageHandler(const boost::system::error_code& error, std::size_t bytes_transferred) {
+	cout << "handler called" << endl;
 	if(error) {
 		cerr << "an error occurred while receiving a tcp message from VM " << blockId << " (socket closed ?) " <<endl;
 		return;

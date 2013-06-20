@@ -50,6 +50,8 @@ public:
 	void waitForSchedulerEnd() {
 		schedulerThread->join();
 	}
+	
+	void readIncomingMessages();
 };
 
 inline void createScheduler() {

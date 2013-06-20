@@ -55,7 +55,8 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	cout << "\033[1;33mScheduler Mode :" << schedulerMode << "\033[0m" << endl;
 	
 	sem_schedulerStart->wait();
-
+	readIncomingMessages();
+	//BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
 	int systemStartTime, systemStopTime;
 	multimap<uint64_t, EventPtr>::iterator first;
 	EventPtr pev;
@@ -79,6 +80,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 				systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
 				systemCurrentTimeMax = systemCurrentTime - systemStartTime;
 				//lock();
+				//readIncomingMessages();
 				if(!eventsMap.empty())	{
 					first=eventsMap.begin();
 					pev = (*first).second;
@@ -102,10 +104,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 						//ev = *(listeEvenements.begin());
 						//first=eventsMap.begin();
 						//pev = (*first).second;
-						cout << "poll" << endl;
-						getWorld()->getIos().poll();
-						// BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
-						cout << "endpoll" << endl;
+						readIncomingMessages();
 					}
 					systemCurrentTime = systemCurrentTimeMax;
 					if (!eventsMap.empty()) {
@@ -143,6 +142,13 @@ void BlinkyBlocksScheduler::start(int mode) {
 	BlinkyBlocksScheduler* sbs = (BlinkyBlocksScheduler*)scheduler;
 	sbs->schedulerMode = mode;
 	sbs->sem_schedulerStart->post();
+}
+
+void BlinkyBlocksScheduler::readIncomingMessages() {
+	cout << "poll" << endl;
+	getWorld()->getIos().poll();
+	getWorld()->getIos().reset();
+	cout << "endpoll" << endl;
 }
 
 
