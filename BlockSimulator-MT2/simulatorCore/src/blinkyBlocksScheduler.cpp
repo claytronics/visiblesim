@@ -19,41 +19,24 @@ using boost::asio::ip::tcp;
 
 namespace BlinkyBlocks {
 
-void async_listener_thread() {
-	for (;;) {
-		try {
-			getWorld()->getIos().run();
-			break;
-		} catch (std::exception& e) {
-			cout << "listener thread exeception" << endl;
-			break;
-		}
-	}
-	BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
-	//BaseSimulator::getScheduler()->scheduleLock(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
-	cout << "No more connected VM" << endl;
-}
-
 BlinkyBlocksScheduler::BlinkyBlocksScheduler() {
 	cout << "BlinkyBlocksScheduler constructor" << endl;
 	sem_schedulerStart = new boost::interprocess::interprocess_semaphore(0);
 	//schedulerMode = SCHEDULER_MODE_FASTEST;
 	schedulerMode = SCHEDULER_MODE_REALTIME;
 	schedulerThread = new thread(bind(&BlinkyBlocksScheduler::startPaused, this));
-	tcpListenerThread = NULL;
 }
 
 BlinkyBlocksScheduler::~BlinkyBlocksScheduler() {
 	cout << "\033[1;31mBlinkyBlocksScheduler destructor\33[0m" << endl;
 	delete sem_schedulerStart;
+	// Peut-être necessaire, a tester ?
+	getWorld()->getIos().stop();
 	delete schedulerThread; 
 	/* sleep for a while, to be sure that the schedulerThread will be
 	* killed before destroying all the events.
 	*/ 
-	usleep(2000);
-	if (tcpListenerThread != NULL) {
-		delete tcpListenerThread; getWorld()->getIos().stop();
-	}
+	usleep(3000);
 }
 
 void BlinkyBlocksScheduler::createScheduler() {
@@ -72,7 +55,6 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	cout << "\033[1;33mScheduler Mode :" << schedulerMode << "\033[0m" << endl;
 	
 	sem_schedulerStart->wait();
-	tcpListenerThread = new boost::thread(async_listener_thread);
 
 	int systemStartTime, systemStopTime;
 	multimap<uint64_t, EventPtr>::iterator first;
@@ -120,6 +102,10 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 						//ev = *(listeEvenements.begin());
 						//first=eventsMap.begin();
 						//pev = (*first).second;
+						cout << "poll" << endl;
+						getWorld()->getIos().poll();
+						// BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
+						cout << "endpoll" << endl;
 					}
 					systemCurrentTime = systemCurrentTimeMax;
 					if (!eventsMap.empty()) {
