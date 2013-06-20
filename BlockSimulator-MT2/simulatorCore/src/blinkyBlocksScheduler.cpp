@@ -76,6 +76,34 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 		case SCHEDULER_MODE_REALTIME:
 			cout << "Realtime mode scheduler\n";
 			mustStop = false;
+			while (!mustStop) {
+				systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
+				systemCurrentTimeMax = systemCurrentTime - systemStartTime;
+				readIncomingMessages();
+				while (!eventsMap.empty())	{
+						//lock();
+						first=eventsMap.begin();
+						pev = (*first).second;
+						if(pev->date > systemCurrentTimeMax) { break;}
+						if (pev->eventType == EVENT_END_SIMULATION) {
+							cout << "end simulation" << endl;
+							mustStop = true;
+						}
+						currentDate = pev->date;
+						pev->consume();
+						eventsMap.erase(first);
+						eventsMapSize--;
+						readIncomingMessages();
+						//unlock();
+				}
+				systemCurrentTime = systemCurrentTimeMax;
+#ifdef WIN32
+				Sleep(5);
+#else
+				usleep(5000);
+#endif
+			}
+			/*
 			while(!mustStop || !eventsMap.empty()) {
 				systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
 				systemCurrentTimeMax = systemCurrentTime - systemStartTime;
@@ -118,7 +146,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 						#endif
 					}
 				}
-			}
+			} */
 			break;
 		default:
 			cout << "ERROR : Scheduler mode not recognized !!" << endl;
@@ -145,10 +173,8 @@ void BlinkyBlocksScheduler::start(int mode) {
 }
 
 void BlinkyBlocksScheduler::readIncomingMessages() {
-	cout << "poll" << endl;
 	getWorld()->getIos().poll();
 	getWorld()->getIos().reset();
-	cout << "endpoll" << endl;
 }
 
 
