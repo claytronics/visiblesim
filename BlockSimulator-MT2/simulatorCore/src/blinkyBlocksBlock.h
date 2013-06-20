@@ -49,9 +49,13 @@ public:
 	VMMessage_t*  getBufferPtr() { return &buffer;}
 	/* wait for the termination of the associated VM program */
 	void waitVMEnd();
+	/* kill the associated VM program */
+	void killVM();
+	/* close the socket associated to the VM program */
+	void closeSocket();
 	/* send and receive message from the associated VM program */
 	void sendMessageToVM(uint64_t size, uint64_t* message);
-	void readMessageFromVM();	
+	void readMessageFromVM();
 	/* schedule the appropriate event for this action */
 	void tap();
 	void accel(int x, int y, int z);	

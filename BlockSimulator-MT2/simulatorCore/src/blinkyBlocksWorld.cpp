@@ -186,11 +186,11 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 	iz = int(bb->position.pt[2]);
 	setGridPtr(ix,iy,iz,NULL);
 	// remove the block from the lists
-	buildingBlocksMap.erase(bb->blockId);
+	//buildingBlocksMap.erase(bb->blockId);
 
 	// remove event from the list
-	getScheduler()->removeEventsToBlock(bb);
-	//bb->state = Removed;
+	//getScheduler()->removeEventsToBlock(bb);
+	bb->state = Removed;
 
 	// remove the associated glBlock
 	std::vector<GlBlock*>::iterator cit=tabGlBlocks.begin();
@@ -204,7 +204,9 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 
 	if (selectedBlock == bb->ptrGlBlock) {selectedBlock = NULL;}
 	delete bb->ptrGlBlock;
-	delete bb;
+	bb->closeSocket();
+	bb->killVM();
+	//delete bb;
 
 	linkBlocks();
 }
@@ -344,7 +346,6 @@ void BlinkyBlocksWorld::updateGlData(BlinkyBlocksBlock*blc) {
 	BlinkyBlocksGlBlock *glblc = blc->getGlBlock();
 	if (glblc) {
 		lock();
-
 		Vecteur pos(blockSize[0]*blc->position[0],blockSize[1]*blc->position[1],blockSize[2]*blc->position[2]);
 		glblc->setPosition(pos);
 		glblc->setColor(blc->color);

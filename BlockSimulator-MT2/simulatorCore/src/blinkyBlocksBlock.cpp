@@ -36,16 +36,28 @@ BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, boost::shared_ptr<tcp::socket> s, 
 BlinkyBlocksBlock::~BlinkyBlocksBlock() {
 	cout << "BlinkyBlocksBlock destructor " << blockId << endl;
 	//delete[] tabInterfaces;
-	socket->cancel();
-	socket->close();
-	socket.reset();
-	delete[] buffer.message;
-	kill(pid, SIGTERM);
-	waitpid(pid, NULL, 0);
+	if (state == Alive)  {
+		closeSocket();
+		killVM();
+	}
 }
 
 void BlinkyBlocksBlock::waitVMEnd() {	
 	waitpid(pid, NULL, 0);
+}
+
+void BlinkyBlocksBlock::killVM() {
+	kill(pid, SIGTERM);
+	waitVMEnd();
+}
+
+void BlinkyBlocksBlock::closeSocket() {
+	if (socket != NULL) {
+		socket->cancel();
+		socket->close();
+		socket.reset();
+	}
+	delete[] buffer.message;
 }
 
 void BlinkyBlocksBlock::setPosition(const Vecteur &p) {
