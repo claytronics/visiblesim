@@ -112,12 +112,13 @@ void Scheduler::trace(string message) {
 	mutex_trace.unlock();
 }
 
+/*
 void Scheduler::lock() {
-	mutex_schedule.lock();
+	//mutex_schedule.lock();
 }
 
 void Scheduler::unlock() {
-	mutex_schedule.unlock();
-}
+	//mutex_schedule.unlock();
+}*/
 
 } // BaseSimulator namespace

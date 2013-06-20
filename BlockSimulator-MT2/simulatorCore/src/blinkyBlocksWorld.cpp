@@ -190,7 +190,7 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 
 	// remove event from the list
 	getScheduler()->removeEventsToBlock(bb);
-	//getScheduler()->schedule(new CodeStartEvent(getScheduler()->now(), blinkyBlock));
+	//bb->state = Removed;
 
 	// remove the associated glBlock
 	std::vector<GlBlock*>::iterator cit=tabGlBlocks.begin();

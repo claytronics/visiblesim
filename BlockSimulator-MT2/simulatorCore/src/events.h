@@ -67,21 +67,38 @@ public:
 	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return NULL; };
 };
 
+class BlockEvent : public Event {
+	
+protected:
+	BaseSimulator::BuildingBlock *concernedBlock;
+	BlockEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock);
+	BlockEvent(BlockEvent *ev);
+	virtual ~BlockEvent();
+	virtual const string getEventName();
+	
+public:
+	BaseSimulator::BuildingBlock* getConcernedBlock() {return concernedBlock;};
+	virtual void consumeBlockEvent() = 0;
+	void consume() {
+		if (concernedBlock->state == BaseSimulator::Alive) {
+			this->consumeBlockEvent();
+		}
+	};
+};
+
 //===========================================================================================================
 //
 //          CodeStartEvent  (class)
 //
 //===========================================================================================================
 
-class CodeStartEvent : public Event {
+class CodeStartEvent : public BlockEvent {
 public:
-	BaseSimulator::BuildingBlock *concernedBlock;
 
 	CodeStartEvent(uint64_t, BaseSimulator::BuildingBlock *conBlock);
 	~CodeStartEvent();
-	void consume();
+	void consumeBlockEvent();
 	const virtual string getEventName();
-	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 //===========================================================================================================
@@ -105,15 +122,13 @@ public:
 //
 //===========================================================================================================
 
-class ProcessLocalEvent : public Event {
+class ProcessLocalEvent : public BlockEvent {
 public:
-	BaseSimulator::BuildingBlock *concernedBlock;
 
 	ProcessLocalEvent(uint64_t, BaseSimulator::BuildingBlock *conBlock);
 	~ProcessLocalEvent();
-	void consume();
+	void consumeBlockEvent();
 	const virtual string getEventName();
-	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 //===========================================================================================================

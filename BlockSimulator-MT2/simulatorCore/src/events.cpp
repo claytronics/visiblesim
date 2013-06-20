@@ -28,6 +28,7 @@ Event::Event(uint64_t t) {
 	nextId++;
 	nbLivingEvents++;
 	date = t;
+	eventType = EVENT_GENERIC;
 	EVENT_CONSTRUCTOR_INFO();
 }
 
@@ -36,6 +37,7 @@ Event::Event(Event *ev) {
 	nextId++;
 	nbLivingEvents++;
 	date = ev->date;
+	eventType = ev->eventType;
 	EVENT_CONSTRUCTOR_INFO();
 }
 
@@ -58,20 +60,45 @@ unsigned int Event::getNbLivingEvents() {
 
 //===========================================================================================================
 //
+//          BlockEvent  (class)
+//
+//===========================================================================================================
+
+BlockEvent::BlockEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock) : Event(t) {
+	EVENT_CONSTRUCTOR_INFO();
+	concernedBlock = conBlock;
+	eventType = BLOCKEVENT_GENERIC;
+}
+
+BlockEvent::BlockEvent(BlockEvent *ev) : Event(ev) {	
+	EVENT_CONSTRUCTOR_INFO();
+	concernedBlock = ev->concernedBlock;
+	cout << "concernedBlock on "<< ev->eventType << "("<< concernedBlock->blockId << ")" << endl;
+}
+
+BlockEvent::~BlockEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+const string BlockEvent::getEventName() {
+	return("Generic BlockEvent");
+}
+
+//===========================================================================================================
+//
 //          CodeStartEvent  (class)
 //
 //===========================================================================================================
 
-CodeStartEvent::CodeStartEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock):Event(t) {
+CodeStartEvent::CodeStartEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_CODE_START;
-	concernedBlock = conBlock;
 }
 CodeStartEvent::~CodeStartEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void CodeStartEvent::consume() {
+void CodeStartEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
 	//MODIF NICO
 	concernedBlock->blockCode->startup();
@@ -88,7 +115,7 @@ const string CodeStartEvent::getEventName() {
 //
 //===========================================================================================================
 
-CodeEndSimulationEvent::CodeEndSimulationEvent(uint64_t t):Event(t) {
+CodeEndSimulationEvent::CodeEndSimulationEvent(uint64_t t): Event(t) {
 	eventType = EVENT_END_SIMULATION;
 	EVENT_CONSTRUCTOR_INFO();
 }
@@ -112,16 +139,15 @@ const string CodeEndSimulationEvent::getEventName() {
 //
 //===========================================================================================================
 
-ProcessLocalEvent::ProcessLocalEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock):Event(t) {
+ProcessLocalEvent::ProcessLocalEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_PROCESS_LOCAL_EVENT;
-	concernedBlock = conBlock;
 }
 ProcessLocalEvent::~ProcessLocalEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void ProcessLocalEvent::consume() {
+void ProcessLocalEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
 	concernedBlock->processLocalEvent();
 }
@@ -222,7 +248,6 @@ const string NetworkInterfaceReceiveEvent::getEventName() {
 NetworkInterfaceEnqueueOutgoingEvent::NetworkInterfaceEnqueueOutgoingEvent(uint64_t t, Message *mes, P2PNetworkInterface *ni):Event(t) {
 	eventType = EVENT_NI_ENQUEUE_OUTGOING_MESSAGE;
 	message = MessagePtr(mes);
-
 	sourceInterface = ni;
 	EVENT_CONSTRUCTOR_INFO();
 }
@@ -234,7 +259,6 @@ NetworkInterfaceEnqueueOutgoingEvent::~NetworkInterfaceEnqueueOutgoingEvent() {
 
 void NetworkInterfaceEnqueueOutgoingEvent::consume() {
 	EVENT_CONSUME_INFO();
-
 	sourceInterface->addToOutgoingBuffer(message);
 }
 

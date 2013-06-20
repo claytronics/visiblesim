@@ -33,6 +33,8 @@ class BlockCode;
 //
 //===========================================================================================================
 
+enum State {Stop = 0, Removed = 1, Alive = 2};
+
 class BuildingBlock {
 protected:
 	static int nextId;
@@ -45,6 +47,7 @@ protected:
 public:
 	int blockId;
 	BlockCode *blockCode;
+	State state;
 
 	BuildingBlock(int bId);
 	virtual ~BuildingBlock();

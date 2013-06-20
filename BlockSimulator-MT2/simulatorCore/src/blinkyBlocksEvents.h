@@ -20,16 +20,14 @@ namespace BlinkyBlocks {
 //
 //===========================================================================================================
 
-class VMSetIdEvent : public Event {
+class VMSetIdEvent : public BlockEvent {
 public:
-	BlinkyBlocksBlock *concernedBlock;
 
 	VMSetIdEvent(uint64_t, BlinkyBlocksBlock *conBlock);
 	VMSetIdEvent(VMSetIdEvent *ev);
 	~VMSetIdEvent();
-	void consume();
+	void consumeBlockEvent();
 	const virtual string getEventName();
-	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 //===========================================================================================================
@@ -38,16 +36,14 @@ public:
 //
 //===========================================================================================================
 
-class VMStopEvent : public Event {
+class VMStopEvent : public BlockEvent {
 public:
-	BlinkyBlocksBlock *concernedBlock;
 
 	VMStopEvent(uint64_t, BlinkyBlocksBlock *conBlock);
 	VMStopEvent(VMStopEvent *ev);
 	~VMStopEvent();
-	void consume();
+	void consumeBlockEvent();
 	const virtual string getEventName();
-	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 //===========================================================================================================
@@ -56,18 +52,16 @@ public:
 //
 //===========================================================================================================
 
-class VMAddNeighborEvent : public Event {
+class VMAddNeighborEvent : public BlockEvent {
 public:
-	BlinkyBlocksBlock *concernedBlock;
 	uint64_t face;
 	uint64_t target;
 	
 	VMAddNeighborEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint64_t f, uint64_t ta);
 	VMAddNeighborEvent(VMAddNeighborEvent *ev);
 	~VMAddNeighborEvent();
-	void consume();
+	void consumeBlockEvent();
 	const virtual string getEventName();
-	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 //===========================================================================================================
@@ -76,17 +70,15 @@ public:
 //
 //===========================================================================================================
 
-class VMRemoveNeighborEvent : public Event {
+class VMRemoveNeighborEvent : public BlockEvent {
 public:
-	BlinkyBlocksBlock *concernedBlock;
 	uint64_t face;
 	
 	VMRemoveNeighborEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint64_t f);
 	VMRemoveNeighborEvent(VMRemoveNeighborEvent *ev);
 	~VMRemoveNeighborEvent();
-	void consume();
+	void consumeBlockEvent();
 	const virtual string getEventName();
-	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 //===========================================================================================================
@@ -95,16 +87,14 @@ public:
 //
 //===========================================================================================================
 
-class VMTapEvent : public Event {
+class VMTapEvent : public BlockEvent {
 public:
-	BlinkyBlocksBlock *concernedBlock;
 
 	VMTapEvent(uint64_t, BlinkyBlocksBlock *conBlock);
 	VMTapEvent(VMTapEvent *ev);
 	~VMTapEvent();
-	void consume();
+	void consumeBlockEvent();
 	const virtual string getEventName();
-	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 
@@ -136,9 +126,8 @@ public:
 //
 //===========================================================================================================
 
-class VMAccelEvent : public Event {
+class VMAccelEvent : public BlockEvent {
 public:
-	BlinkyBlocksBlock *concernedBlock;
 	uint64_t x;
 	uint64_t y;
 	uint64_t z;
@@ -146,9 +135,8 @@ public:
 	VMAccelEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint64_t xx, uint64_t yy, uint64_t zz);
 	VMAccelEvent(VMAccelEvent *ev);
 	~VMAccelEvent();
-	void consume();
+	void consumeBlockEvent();
 	const virtual string getEventName();
-	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 //===========================================================================================================
@@ -157,17 +145,15 @@ public:
 //
 //===========================================================================================================
 
-class VMShakeEvent : public Event {
+class VMShakeEvent : public BlockEvent {
 public:
-	BlinkyBlocksBlock *concernedBlock;
 	uint64_t force;
 	
 	VMShakeEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint64_t f);
 	VMShakeEvent(VMShakeEvent *ev);
 	~VMShakeEvent();
-	void consume();
+	void consumeBlockEvent();
 	const virtual string getEventName();
-	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return concernedBlock; };
 };
 
 } // BlinkyBlocks namespace

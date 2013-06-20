@@ -122,6 +122,8 @@ void Blinky01BlockCode::handleNewMessage() {
 			}
 			BaseSimulator::getScheduler()->schedule(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
 					new VMDataMessage(hostBlock->blockId, size, message), interface));
+					/*BaseSimulator::getScheduler()->scheduleLock(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
+					new VMDataMessage(hostBlock->blockId, size, message), interface));*/
 			}
 			break;
 		default:
@@ -132,7 +134,7 @@ void Blinky01BlockCode::handleNewMessage() {
 
 void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
-	cout << "Blinky01BlockCode: " << pev->getEventName() << endl;
+	cout << "Blinky01BlockCode: " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
 	switch (pev->eventType) {
 	case EVENT_SET_ID:
 		{

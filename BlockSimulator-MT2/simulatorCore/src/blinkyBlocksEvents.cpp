@@ -15,23 +15,20 @@ namespace BlinkyBlocks {
 //
 //===========================================================================================================
 
-VMSetIdEvent::VMSetIdEvent(uint64_t t, BlinkyBlocksBlock *conBlock):Event(t) {
+VMSetIdEvent::VMSetIdEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_SET_ID;
-	concernedBlock = conBlock;
 }
 
-VMSetIdEvent::VMSetIdEvent(VMSetIdEvent *ev) : Event(ev) {
+VMSetIdEvent::VMSetIdEvent(VMSetIdEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
-	concernedBlock = ev->concernedBlock;
-	eventType = ev->eventType;
 }
 
 VMSetIdEvent::~VMSetIdEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMSetIdEvent::consume() {
+void VMSetIdEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
 	concernedBlock->scheduleLocalEvent(EventPtr(new VMSetIdEvent(this)));
 }
@@ -46,23 +43,20 @@ const string VMSetIdEvent::getEventName() {
 //
 //===========================================================================================================
 
-VMStopEvent::VMStopEvent(uint64_t t, BlinkyBlocksBlock *conBlock):Event(t) {
+VMStopEvent::VMStopEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_STOP;
-	concernedBlock = conBlock;
 }
 
-VMStopEvent::VMStopEvent(VMStopEvent *ev) : Event(ev) {
+VMStopEvent::VMStopEvent(VMStopEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
-	concernedBlock = ev->concernedBlock;
-	eventType = ev->eventType;
 }
 
 VMStopEvent::~VMStopEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMStopEvent::consume() {
+void VMStopEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
 	concernedBlock->scheduleLocalEvent(EventPtr(new VMStopEvent(this)));
 }
@@ -77,18 +71,15 @@ const string VMStopEvent::getEventName() {
 //
 //===========================================================================================================
 
-VMAddNeighborEvent::VMAddNeighborEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t f, uint64_t ta):Event(t) {
+VMAddNeighborEvent::VMAddNeighborEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t f, uint64_t ta): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_ADD_NEIGHBOR;
-	concernedBlock = conBlock;
 	face = f;
 	target = ta;
 }
 
-VMAddNeighborEvent::VMAddNeighborEvent(VMAddNeighborEvent *ev) : Event(ev) {
+VMAddNeighborEvent::VMAddNeighborEvent(VMAddNeighborEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
-	concernedBlock = ev->concernedBlock;
-	eventType = ev->eventType;
 	face = ev->face;
 	target = ev->target;
 }
@@ -97,7 +88,7 @@ VMAddNeighborEvent::~VMAddNeighborEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMAddNeighborEvent::consume() {
+void VMAddNeighborEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
 	concernedBlock->scheduleLocalEvent(EventPtr(new VMAddNeighborEvent(this)));
 }
@@ -112,17 +103,14 @@ const string VMAddNeighborEvent::getEventName() {
 //
 //===========================================================================================================
 
-VMRemoveNeighborEvent::VMRemoveNeighborEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t f):Event(t) {
+VMRemoveNeighborEvent::VMRemoveNeighborEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t f): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_REMOVE_NEIGHBOR;
-	concernedBlock = conBlock;
 	face = f;
 }
 
-VMRemoveNeighborEvent::VMRemoveNeighborEvent(VMRemoveNeighborEvent *ev) : Event(ev) {
+VMRemoveNeighborEvent::VMRemoveNeighborEvent(VMRemoveNeighborEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
-	concernedBlock = ev->concernedBlock;
-	eventType = ev->eventType;
 	face = ev->face;
 }
 
@@ -130,7 +118,7 @@ VMRemoveNeighborEvent::~VMRemoveNeighborEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMRemoveNeighborEvent::consume() {
+void VMRemoveNeighborEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
 	concernedBlock->scheduleLocalEvent(EventPtr(new VMRemoveNeighborEvent(this)));
 }
@@ -145,23 +133,20 @@ const string VMRemoveNeighborEvent::getEventName() {
 //
 //===========================================================================================================
 
-VMTapEvent::VMTapEvent(uint64_t t, BlinkyBlocksBlock *conBlock):Event(t) {
+VMTapEvent::VMTapEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_TAP;
-	concernedBlock = conBlock;
 }
 
-VMTapEvent::VMTapEvent(VMTapEvent *ev) : Event(ev) {
+VMTapEvent::VMTapEvent(VMTapEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
-	concernedBlock = ev->concernedBlock;
-	eventType = ev->eventType;
 }
 
 VMTapEvent::~VMTapEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMTapEvent::consume() {
+void VMTapEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
 	concernedBlock->scheduleLocalEvent(EventPtr(new VMTapEvent(this)));
 }
@@ -176,19 +161,16 @@ const string VMTapEvent::getEventName() {
 //
 //===========================================================================================================
 
-VMAccelEvent::VMAccelEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t xx, uint64_t yy, uint64_t zz):Event(t) {
+VMAccelEvent::VMAccelEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t xx, uint64_t yy, uint64_t zz): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_ACCEL;
-	concernedBlock = conBlock;
 	x = xx;
 	y = yy;
 	z = zz;
 }
 
-VMAccelEvent::VMAccelEvent(VMAccelEvent *ev) : Event(ev) {
+VMAccelEvent::VMAccelEvent(VMAccelEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
-	concernedBlock = ev->concernedBlock;
-	eventType = ev->eventType;
 	x = ev->x;
 	y = ev->y;
 	z = ev->z;
@@ -198,7 +180,7 @@ VMAccelEvent::~VMAccelEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMAccelEvent::consume() {
+void VMAccelEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
 	concernedBlock->scheduleLocalEvent(EventPtr(new VMAccelEvent(this)));
 }
@@ -213,17 +195,14 @@ const string VMAccelEvent::getEventName() {
 //
 //===========================================================================================================
 
-VMShakeEvent::VMShakeEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t f):Event(t) {
+VMShakeEvent::VMShakeEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t f): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_SHAKE;
-	concernedBlock = conBlock;
 	force = f;
 }
 
-VMShakeEvent::VMShakeEvent(VMShakeEvent *ev) : Event(ev) {
+VMShakeEvent::VMShakeEvent(VMShakeEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
-	concernedBlock = ev->concernedBlock;
-	eventType = ev->eventType;
 	force = ev->force;
 }
 
@@ -231,7 +210,7 @@ VMShakeEvent::~VMShakeEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMShakeEvent::consume() {
+void VMShakeEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
 	concernedBlock->scheduleLocalEvent(EventPtr(new VMShakeEvent(this)));
 }

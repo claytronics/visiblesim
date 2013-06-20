@@ -228,7 +228,7 @@ void vm_thread_function(void *data) {
 #endif
 #ifdef COLOR_ON_TAP_EXAMPLE
 	while(true) {
-		if (!readMessageFromVM(socket, &in, id)) {break;}
+		if (!readMessageFromVM(socket, &in, id)) {cout << "out" << endl; break;}
 		if (in.type == VM_MESSAGE_TAP) {
 			out.size = 7*sizeof(uint64_t);
 			out.type = VM_MESSAGE_SET_COLOR;

@@ -31,6 +31,7 @@ BuildingBlock::BuildingBlock(int bId) {
 		blockId = bId;
 	}
 	P2PNetworkInterfaceNextLocalId = 0;
+	state = Alive;
 }
 
 BuildingBlock::~BuildingBlock() {

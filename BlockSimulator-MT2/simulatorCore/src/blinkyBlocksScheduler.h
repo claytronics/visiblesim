@@ -30,7 +30,6 @@ protected:
 	void* startPaused(/*void *param */);
 	
 	boost::interprocess::interprocess_semaphore *sem_schedulerStart;
-	//boost::interprocess::interprocess_mutex mutex_schedule;
 	boost::thread *schedulerThread;
 	boost::thread *tcpListenerThread;
 	int schedulerMode;
@@ -52,16 +51,6 @@ public:
 	void waitForSchedulerEnd() {
 		schedulerThread->join();
 	}
-	
-	/*
-	void lock() {
-		mutex_schedule.lock();
-	}
-
-	void unlock() {
-		mutex_schedule.unlock();
-	}*/
-
 };
 
 inline void createScheduler() {

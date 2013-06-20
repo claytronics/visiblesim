@@ -26,9 +26,11 @@ void async_listener_thread() {
 			break;
 		} catch (std::exception& e) {
 			cout << "listener thread exeception" << endl;
+			break;
 		}
 	}
 	BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
+	//BaseSimulator::getScheduler()->scheduleLock(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
 	cout << "No more connected VM" << endl;
 }
 
@@ -94,15 +96,16 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 			while(!mustStop || !eventsMap.empty()) {
 				systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
 				systemCurrentTimeMax = systemCurrentTime - systemStartTime;
+				//lock();
 				if(!eventsMap.empty())	{
 					first=eventsMap.begin();
 					pev = (*first).second;
 					while (!eventsMap.empty() && pev->date <= systemCurrentTimeMax) {
-						lock();
 						first=eventsMap.begin();
 						pev = (*first).second;
 						if (pev->eventType == EVENT_END_SIMULATION) {
 							mustStop = true;
+							cout << "END EVENT" << endl;
 						}
 						// traitement du mouvement des objets physiques
 						//Physics::update(ev->heureEvenement);
@@ -117,7 +120,6 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 						//ev = *(listeEvenements.begin());
 						//first=eventsMap.begin();
 						//pev = (*first).second;
-						unlock();
 					}
 					systemCurrentTime = systemCurrentTimeMax;
 					if (!eventsMap.empty()) {
@@ -156,5 +158,6 @@ void BlinkyBlocksScheduler::start(int mode) {
 	sbs->schedulerMode = mode;
 	sbs->sem_schedulerStart->post();
 }
+
 
 } // BlinkyBlocks namespace
