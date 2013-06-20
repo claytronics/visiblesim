@@ -80,11 +80,12 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 				systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
 				systemCurrentTimeMax = systemCurrentTime - systemStartTime;
 				readIncomingMessages();
-				while (!eventsMap.empty())	{
-						//lock();
+				do {
+						lock();
+						if (eventsMap.empty()) { unlock(); break;}
 						first=eventsMap.begin();
 						pev = (*first).second;
-						if(pev->date > systemCurrentTimeMax) { break;}
+						if(pev->date > systemCurrentTimeMax) {break;}
 						if (pev->eventType == EVENT_END_SIMULATION) {
 							cout << "end simulation" << endl;
 							mustStop = true;
@@ -94,8 +95,8 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 						eventsMap.erase(first);
 						eventsMapSize--;
 						readIncomingMessages();
-						//unlock();
-				}
+						unlock();
+				} while (true);
 				systemCurrentTime = systemCurrentTimeMax;
 #ifdef WIN32
 				Sleep(5);

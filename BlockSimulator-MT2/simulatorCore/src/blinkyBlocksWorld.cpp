@@ -445,6 +445,7 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 	void BlinkyBlocksWorld::tapBlock(int bId) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*)getBlockById(bId);
 		bb->tap();
+		cout << "BlinkyBlocksWorld: block "<< bId << " tap scheduled" << endl;
 	}
 	
 	void BlinkyBlocksWorld::accelBlock(int bId, int x, int y, int z) {

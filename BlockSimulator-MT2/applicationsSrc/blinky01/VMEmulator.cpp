@@ -18,9 +18,9 @@ using boost::asio::ip::tcp;
 
 //#define SET_COLOR_EXAMPLE
 //#define COLOR_SPREADING_EXAMPLE
-//#define COLOR_ON_TAP_EXAMPLE
+#define COLOR_ON_TAP_EXAMPLE
 //#define NEIGHBOR_LIST_EXAMPLE
-#define MESSAGE_ANALYSER
+//#define MESSAGE_ANALYSER
 
 #define VM_MESSAGE_SET_ID			1
 #define VM_MESSAGE_STOP				4
