@@ -432,3 +432,13 @@ int GlutPopupMenuWindow::mouseFunc(int button,int state,int mx,int my) {
 	}
 	return n;
 }
+
+void GlutPopupMenuWindow::activate(int id,bool value) {
+	std::vector <GlutWindow*>::const_iterator cb=children.begin();
+	while (cb!=children.end() && (*cb)->id!=id) {
+		cb++;
+	}
+	if (cb!=children.end()) {
+		((GlutButton*)(*cb))->activate(value);
+	}
+}

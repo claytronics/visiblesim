@@ -215,6 +215,7 @@ void BlinkyBlocksWorld::glDraw() {
 			gray[]={0.6,0.6,0.6,1.0};
 
 	glPushMatrix();
+	glTranslatef(0.5*blockSize[0],0.5*blockSize[1],0);
 	glDisable(GL_TEXTURE_2D);
 	vector <GlBlock*>::iterator ic=tabGlBlocks.begin();
 	lock();
@@ -303,6 +304,7 @@ void BlinkyBlocksWorld::glDraw() {
 
 void BlinkyBlocksWorld::glDrawId() {
 	glPushMatrix();
+	glTranslatef(0.5*blockSize[0],0.5*blockSize[1],0);
 	glDisable(GL_TEXTURE_2D);
 	vector <GlBlock*>::iterator ic=tabGlBlocks.begin();
 	int n=1;
@@ -317,6 +319,8 @@ void BlinkyBlocksWorld::glDrawId() {
 
 void BlinkyBlocksWorld::glDrawIdByMaterial() {
 	glPushMatrix();
+	glTranslatef(0.5*blockSize[0],0.5*blockSize[1],0);
+
 	glDisable(GL_TEXTURE_2D);
 	vector <GlBlock*>::iterator ic=tabGlBlocks.begin();
 	int n=1;
@@ -350,11 +354,38 @@ void BlinkyBlocksWorld::updateGlData(BlinkyBlocksBlock*blc) {
 
 void BlinkyBlocksWorld::createPopupMenu(int ix, int iy) {
 	if (!GlutContext::popupMenu) {
-		GlutContext::popupMenu = new GlutPopupMenuWindow(NULL,0,0,200,75);
+		GlutContext::popupMenu = new GlutPopupMenuWindow(NULL,0,0,200,180);
 		GlutContext::popupMenu->addButton(1,"../../simulatorCore/blinkyBlocksTextures/menu_add.tga");
 		GlutContext::popupMenu->addButton(2,"../../simulatorCore/blinkyBlocksTextures/menu_del.tga");
+		GlutContext::popupMenu->addButton(3,"../../simulatorCore/blinkyBlocksTextures/menu_stop.tga");
+		GlutContext::popupMenu->addButton(4,"../../simulatorCore/blinkyBlocksTextures/menu_save.tga");
+		GlutContext::popupMenu->addButton(5,"../../simulatorCore/blinkyBlocksTextures/menu_cancel.tga");
 	}
-	GlutContext::popupMenu->setCenterPosition(ix, GlutContext::screenHeight - iy);
+	// verify if add is possible for this face
+	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(tabGlBlocks[numSelectedBlock]->blockId);
+	bool valid=true;
+	switch (numSelectedFace) {
+		case Left :
+			valid=(bb->position[0]>0 && getGridPtr(int(bb->position[0])-1,int(bb->position[1]),int(bb->position[2]))==NULL);
+			break;
+		case Right :
+			valid=(bb->position[0]<gridSize[0]-1 && getGridPtr(int(bb->position[0])+1,int(bb->position[1]),int(bb->position[2]))==NULL);
+		break;
+		case Front :
+			valid=(bb->position[1]>0 && getGridPtr(int(bb->position[0]),int(bb->position[1])-1,int(bb->position[2]))==NULL);
+			break;
+		case Back :
+			valid=(bb->position[1]<gridSize[1]-1 && getGridPtr(int(bb->position[0]),int(bb->position[1])+1,int(bb->position[2]))==NULL);
+		break;
+		case Bottom :
+			valid=(bb->position[2]>0 && getGridPtr(int(bb->position[0]),int(bb->position[1]),int(bb->position[2])-1)==NULL);
+			break;
+		case Top :
+			valid=(bb->position[2]<gridSize[2]-1 && getGridPtr(int(bb->position[0]),int(bb->position[1]),int(bb->position[2])+1)==NULL);
+		break;
+	}
+	GlutContext::popupMenu->activate(1,valid);
+	GlutContext::popupMenu->setCenterPosition(ix,GlutContext::screenHeight-iy);
 	GlutContext::popupMenu->show(true);
 }
 
@@ -384,7 +415,6 @@ void BlinkyBlocksWorld::menuChoice(int n) {
 					pos.pt[2]++;
 				break;
 			}
-			cout << "pos = " << pos << endl;
 			addBlock(-1, bb->buildNewBlockCode,pos,bb->color);
 			linkBlocks();
 		} break;

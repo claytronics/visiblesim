@@ -29,6 +29,7 @@ class GlutContext {
     static GlutPopupWindow *popup;
     static GlutPopupMenuWindow *popupMenu;
 	static int screenWidth, screenHeight;
+	static bool fullScreenMode;
 //	bool showLinks;
 
 	static void init(int argc, char **argv);

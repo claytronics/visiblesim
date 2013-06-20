@@ -23,13 +23,13 @@ using namespace BaseSimulator;
 class GlutWindow {
 
 protected :
-	GLuint id;
 	vector<GlutWindow*> children;
 	GLuint idTexture;
 
 	void addChild(GlutWindow *child);
 	void bindTexture();
   public :
+	GLuint id;
 	GLint x,y,w,h;
 	GlutWindow(GlutWindow *parent,GLuint pid,GLint px,GLint py,GLint pw,GLint ph,const char *titreTexture);
 	virtual ~GlutWindow();
@@ -97,6 +97,7 @@ public :
 	void addButton(int id,const char *titre);
 	int mouseFunc(int button,int state,int x,int y);
 	void glDraw();
+	void activate(int n,bool value);
 };
 
 #define ID_SW_BUTTON_OPEN	1001

@@ -20,6 +20,7 @@ int GlutContext::screenWidth = 1024;
 int GlutContext::screenHeight = 800;
 int GlutContext::keyboardModifier = 0;
 //bool GlutContext::showLinks=false;
+bool GlutContext::fullScreenMode=false;
 GlutSlidingMainWindow *GlutContext::mainWindow=NULL;
 GlutPopupWindow *GlutContext::popup=NULL;
 GlutPopupMenuWindow *GlutContext::popupMenu=NULL;
@@ -221,6 +222,16 @@ void GlutContext::keyboardFunc(unsigned char c, int x, int y)
 		  }
 	  }
 	  break;
+	  case 'w' : case 'W' :
+          fullScreenMode = !fullScreenMode;
+          if (fullScreenMode) {
+        	  glutFullScreen();
+          } else {
+              glutReshapeWindow(1024, 800);
+              glutPositionWindow(0,0);
+          }
+  break;
+
     }
 
   glutPostRedisplay();
