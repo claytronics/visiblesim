@@ -85,7 +85,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 						if (eventsMap.empty()) { unlock(); break;}
 						first=eventsMap.begin();
 						pev = (*first).second;
-						if(pev->date > systemCurrentTimeMax) {break;}
+						if(pev->date > systemCurrentTimeMax) { unlock(); break;}
 						if (pev->eventType == EVENT_END_SIMULATION) {
 							cout << "end simulation" << endl;
 							mustStop = true;
