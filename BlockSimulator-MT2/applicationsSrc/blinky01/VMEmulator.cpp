@@ -18,8 +18,9 @@ using boost::asio::ip::tcp;
 
 //#define SET_COLOR_EXAMPLE
 //#define COLOR_SPREADING_EXAMPLE
-#define COLOR_ON_TAP_EXAMPLE
+//#define COLOR_ON_TAP_EXAMPLE
 //#define NEIGHBOR_LIST_EXAMPLE
+#define MESSAGE_ANALYSER
 
 #define VM_MESSAGE_SET_ID			1
 #define VM_MESSAGE_STOP				4
@@ -45,8 +46,46 @@ typedef struct VMMessage_tt {
 } VMMessage_t;
 
 enum NeighborDirection {Front=0, Back, Left, Right, Top, Bottom };
-
 typedef pair<uint64_t, uint64_t> Neighbor;
+
+string getStringMessage(uint64_t t) {
+	switch(t) {
+		case VM_MESSAGE_SET_ID:
+			return string("VM_MESSAGE_SET_ID");
+			break;
+		case VM_MESSAGE_STOP:
+			return string("VM_MESSAGE_STOP");
+			break;
+		case VM_MESSAGE_ADD_NEIGHBOR:
+			return string("VM_MESSAGE_ADD_NEIGHBOR");
+			break;
+		case VM_MESSAGE_REMOVE_NEIGHBOR:
+			return string("VM_MESSAGE_REMOVE_NEIGHBOR");
+			break;
+		case VM_MESSAGE_TAP:
+			return string("VM_MESSAGE_TAP");
+			break;
+		case VM_MESSAGE_SET_COLOR:
+			return string("VM_MESSAGE_SET_COLOR");
+			break;
+		case VM_MESSAGE_SEND_MESSAGE:
+			return string("VM_MESSAGE_SEND_MESSAGE");
+			break;
+		case VM_MESSAGE_RECEIVE_MESSAGE:
+			return string("VM_MESSAGE_RECEIVE_MESSAGE");
+			break;
+		case VM_MESSAGE_ACCEL:
+			return string("VM_MESSAGE_ACCEL");
+			break;
+		case VM_MESSAGE_SHAKE:
+			return string("VM_MESSAGE_SHAKE");
+			break;
+		default:
+			cerr << "Unknown Message" << endl;
+			return string("Unknown");
+			break;
+		}
+}
 
 string getStringDirection(uint64_t d) {
 	switch(d) {
@@ -101,7 +140,7 @@ int readMessageFromVM(tcp::socket &socket, VMMessage_t *buffer, int id) {
 		boost::asio::read(socket,boost::asio::buffer((void*)&buffer->size, sizeof(uint64_t)));
 		boost::asio::read(socket,boost::asio::buffer((void*)&buffer->type, buffer->size));
 		if (id != -1) {
-			cout << "VM " << id << " receive a message (" << buffer->type <<")" << endl;
+			cout << "VM " << id << " receive a message (" << getStringMessage(buffer->type) <<")" << endl;
 		}
 		return 1;
 	} catch (std::exception& e) {
@@ -269,6 +308,11 @@ void vm_thread_function(void *data) {
 			 ss << it->second << "(" << getStringDirection(it->first) << "), ";
 		}
 		cout << ss.str() << endl;
+	}
+#endif
+#ifdef MESSAGE_ANALYSER
+	while(true) {
+		if (!readMessageFromVM(socket, &in, id)) break;
 	}
 #endif
 	socket.close();

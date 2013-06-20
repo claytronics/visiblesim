@@ -73,7 +73,6 @@ BlockEvent::BlockEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock) : Eve
 BlockEvent::BlockEvent(BlockEvent *ev) : Event(ev) {	
 	EVENT_CONSTRUCTOR_INFO();
 	concernedBlock = ev->concernedBlock;
-	cout << "concernedBlock on "<< ev->eventType << "("<< concernedBlock->blockId << ")" << endl;
 }
 
 BlockEvent::~BlockEvent() {

@@ -423,6 +423,10 @@ void BlinkyBlocksWorld::menuChoice(int n) {
 			BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(tabGlBlocks[numSelectedBlock]->blockId);
 			deleteBlock(bb);
 		} break;
+		case 3 : {
+			BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(tabGlBlocks[numSelectedBlock]->blockId);
+			bb->stop();
+		} break;
 	}
 }
 

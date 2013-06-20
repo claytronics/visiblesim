@@ -67,6 +67,12 @@ public:
 	virtual BaseSimulator::BuildingBlock* getConcernedBlock() { return NULL; };
 };
 
+//===========================================================================================================
+//
+//          BlockEvent  (class)
+//
+//===========================================================================================================
+
 class BlockEvent : public Event {
 	
 protected:

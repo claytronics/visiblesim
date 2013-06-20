@@ -176,7 +176,6 @@ void BlinkyBlocksBlock::stop() {
 	cout << "Simulator: stop VM" << endl;
 	getScheduler()->schedule(new VMStopEvent(getScheduler()->now(), this));
 	//getScheduler()->scheduleLock(new VMStopEvent(getScheduler()->now(), this));
-	state = Stop;
 }
 
 }

@@ -156,6 +156,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[2] = BaseSimulator::getScheduler()->now();
 		message[3] = -1; // souce node
 		bb->sendMessageToVM(4*sizeof(uint64_t), message);
+		bb->state = Stop;
 		}
 		break;
 	case EVENT_ADD_NEIGHBOR:
