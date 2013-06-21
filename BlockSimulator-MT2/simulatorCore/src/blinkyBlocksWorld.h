@@ -33,13 +33,14 @@ protected:
 	tcp::acceptor *acceptor;
 	string vmPath;
 	string programPath;
+	bool debugging;
 
-	BlinkyBlocksWorld(int slx,int sly,int slz,int p, int argc, char *argv[]);
+	BlinkyBlocksWorld(int slx,int sly,int slz,int p, string vP, string pP, bool d, int argc, char *argv[]);
 	virtual ~BlinkyBlocksWorld();
 	inline BlinkyBlocksBlock* getGridPtr(int ix,int iy,int iz) { return gridPtrBlocks[ix+(iy+iz*gridSize[1])*gridSize[0]]; };
 	inline void setGridPtr(int ix,int iy,int iz,BlinkyBlocksBlock *ptr) { gridPtrBlocks[ix+(iy+iz*gridSize[1])*gridSize[0]]=ptr; };
 public:
-	static void createWorld(int slx,int sly,int slz, int p, int argc, char *argv[]);
+	static void createWorld(int slx,int sly,int slz, int p, string vP, string pP, bool d, int argc, char *argv[]);
 	static void deleteWorld();
 	static BlinkyBlocksWorld* getWorld() {
 		assert(world != NULL);
@@ -71,8 +72,8 @@ public:
 	void shakeBlock(int bId, int f);
 };
 
-inline void createWorld(int slx,int sly,int slz, int p, int argc, char *argv[]) {
-	BlinkyBlocksWorld::createWorld(slx,sly,slz, p, argc,argv);
+inline void createWorld(int slx,int sly,int slz, int p, string vP, string pP, bool d, int argc, char *argv[]) {
+	BlinkyBlocksWorld::createWorld(slx,sly,slz, p, vP, pP, d, argc,argv);
 }
 
 inline void deleteWorld() {

@@ -7,6 +7,7 @@
 
 #include <iostream>
 #include "blinkyBlocksSimulator.h"
+#include <string.h>
 
 using namespace std;
 
@@ -16,7 +17,12 @@ BlinkyBlocksBlockCode*(* BlinkyBlocksSimulator::buildNewBlockCode)(BlinkyBlocksB
 
 BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) : BaseSimulator::Simulator(argc, argv) {
 	cout << "\033[1;34m" << "BlinkyBlocksSimulator constructor" << "\033[0m" << endl;
+	
 	int port = 34000; // default port (if not defined in xml file)
+	string vmPath;
+	string programPath;
+	bool debugging = false;
+	
 	int currentID = 1;
 	BlinkyBlocksWorld *world = NULL;
 	buildNewBlockCode = blinkyBlocksBlockCodeBuildingFunction;
@@ -24,7 +30,32 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 	createScheduler();
 	
 	/* reading the xml file */
-	TiXmlNode *node = xmlDoc->FirstChild("world");
+		/* VM part */	
+	TiXmlNode *node = xmlDoc->FirstChild("vm");
+	if (node) {		
+		TiXmlElement* vmElement = node->ToElement();
+		const char *attr = vmElement->Attribute("serverport");
+		if (attr) {
+			port = atoi(attr);
+		}
+		attr = vmElement->Attribute("vmPath");
+		if (attr) {
+			vmPath = string(attr);
+		}	
+		attr = vmElement->Attribute("programPath");
+		if (attr) {
+			programPath = string(attr);
+		}
+		attr = vmElement->Attribute("debugging");
+		if (attr) {
+			if (strcmp(attr, "True") == 0) {
+					debugging = true;
+			}
+		}
+		cout << "server port : " << port << endl;
+	}
+	
+	node = xmlDoc->FirstChild("world");
 	if (node) {
 		TiXmlElement* worldElement = node->ToElement();
 		string str = worldElement->Attribute("gridsize");
@@ -34,12 +65,7 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 		int ly = atoi(str.substr(pos1+1,pos2-pos1-1).c_str());
 		int lz = atoi(str.substr(pos2+1,str.length()-pos1-1).c_str());
 		cout << "grid size : " << lx << " x " << ly << " x " << lz << endl;
-		const char *attr = worldElement->Attribute("serverport");
-		if (attr) {
-			port = atoi(attr);
-		}
-		cout << "server port : " << port << endl;
-		createWorld(lx,ly,lz,port,argc,argv);
+		createWorld(lx, ly, lz, port, vmPath, programPath, debugging, argc, argv);
 		world = getWorld();
 		world->loadTextures("../../simulatorCore/blinkyBlocksTextures");
 	} else {
@@ -139,16 +165,7 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 			cout << "blocksize =" << siz[0] <<"," << siz[1] <<"," << siz[2]<< endl;
 			world->setBlocksSize(siz);
 		}
-		attr = element->Attribute("vmPath");
-		if (attr) {
-			string vmPath(attr);
-			world->setVmPath(vmPath);
-		}	
-		attr = element->Attribute("programPath");
-		if (attr) {
-			string programPath(attr);
-			world->setProgramPath(programPath);
-		}
+
 		/* Reading a blinkyblock */
 		cout << "default color :" << defaultColor << endl;
 		nodeBlock = nodeBlock->FirstChild("block");

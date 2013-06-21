@@ -15,7 +15,7 @@ using namespace std;
 
 namespace BlinkyBlocks {
 
-BlinkyBlocksWorld::BlinkyBlocksWorld(int slx,int sly,int slz, int p, int argc, char *argv[]):World(), ios() {
+BlinkyBlocksWorld::BlinkyBlocksWorld(int slx,int sly,int slz, int p, string vP, string pP, bool d, int argc, char *argv[]):World(), ios() {
 	cout << "\033[1;31mBlinkyBlocksWorld constructor\033[0m" << endl;
 	gridSize[0]=slx;
 	gridSize[1]=sly;
@@ -46,6 +46,9 @@ BlinkyBlocksWorld::BlinkyBlocksWorld(int slx,int sly,int slz, int p, int argc, c
 	numSelectedFace=0;
 	numSelectedBlock=0;
 	port = p;
+	vmPath = vP;
+	programPath = pP;
+	debugging = d;
 	acceptor =  new tcp::acceptor(ios, tcp::endpoint(tcp::v4(), port));
 }
 
@@ -61,8 +64,8 @@ BlinkyBlocksWorld::~BlinkyBlocksWorld() {
 }
 
 
-void BlinkyBlocksWorld::createWorld(int slx,int sly,int slz, int p, int argc, char *argv[]) {
-	world = new BlinkyBlocksWorld(slx,sly,slz, p, argc,argv);
+void BlinkyBlocksWorld::createWorld(int slx,int sly,int slz, int p, string vP, string pP, bool d, int argc, char *argv[]) {
+	world = new BlinkyBlocksWorld(slx,sly,slz, p, vP, pP, d, argc,argv);
 }
 
 void BlinkyBlocksWorld::deleteWorld() {
@@ -82,10 +85,19 @@ void BlinkyBlocksWorld::addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlo
 
 	// Start the VM
 	pid_t VMPid = 0;
-	char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), NULL };
 	VMPid = fork();	
 	if(VMPid < 0) {cerr << "Error when starting the VM" << endl;}
-    if(VMPid == 0) {execv(vmPath.c_str(), const_cast<char**>(cmd));}
+    if(VMPid == 0) {
+		if (debugging) {
+			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), "-S", NULL };
+			execv(vmPath.c_str(), const_cast<char**>(cmd));
+			cout << "debugging mode!" << endl;
+		} else {
+			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), NULL };
+			cout << "no debugging mode!" << endl;			
+			execv(vmPath.c_str(), const_cast<char**>(cmd));
+		}
+	}
 
 	// Wait for an incoming connection	
 	boost::shared_ptr<tcp::socket> socket(new tcp::socket(ios));	
