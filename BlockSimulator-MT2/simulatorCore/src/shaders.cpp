@@ -1,4 +1,5 @@
 #include "shaders.h"
+#include "trace.h"
 
 GLuint depth_tex,id_fb,color_rb;
 bool useShaders=true;
@@ -41,12 +42,12 @@ GLhandleARB loadShader(char *titreVP,char *titreFP) {
 // loading the Vertex Program source
 	code = lectureCodeShader(titreVP);
 	if (!code) {
-		cerr << "error: " << titreVP << " not found."<< endl;
+		ERRPUT << "error: " << titreVP << " not found."<< endl;
 		exit(-1);
 	} 
 	glShaderSourceARB(VShader, 1, (const GLcharARB**) &code, NULL);
 // Compile the Vertex program
-	cout << "Compilation of the Vertex Program" << endl;
+	OUTPUT << "Compilation of the Vertex Program" << endl;
 	glCompileShaderARB(VShader);
 
 	shaderCompilationStatus(VShader);
@@ -55,12 +56,12 @@ GLhandleARB loadShader(char *titreVP,char *titreFP) {
 // loading the Fragment Program source
 	code = lectureCodeShader(titreFP);
 	if (!code) {
-		cerr << "error: " << titreFP << " not found."<< endl;
+		ERRPUT << "error: " << titreFP << " not found."<< endl;
 		exit(-1);
 	} 
 	glShaderSourceARB(FShader, 1, (const GLcharARB**) &code, NULL);
 // Compile the Fragment program
-	cout << "Compilation of the Fragment Program" << endl;
+	OUTPUT << "Compilation of the Fragment Program" << endl;
 	glCompileShaderARB(FShader);
 
 	shaderCompilationStatus(FShader);
@@ -80,7 +81,7 @@ GLhandleARB loadShader(char *titreVP,char *titreFP) {
 }
 
 void initShaders() {
-  cout << "initShaders" << endl;
+  OUTPUT << "initShaders" << endl;
   glewInit();
 
   glClearColor (0.6f, 0.6f, 0.6f, 1.0f);	// Black Background
@@ -96,15 +97,15 @@ void initShaders() {
 
   locTex = glGetUniformLocationARB(shadersProgram, "tex");
   if (locTex==-1) {
-	  cerr << "erreur affectation : tex\n";
+	  ERRPUT << "erreur affectation : tex\n";
   }
   locShadowMap = glGetUniformLocationARB(shadersProgram, "shadowMap");
   if (locShadowMap ==-1) {
-	  cerr << "erreur affectation : shadowMap\n";
+	  ERRPUT << "erreur affectation : shadowMap\n";
   }
   locTextureEnable = glGetUniformLocationARB(shadersProgram, "textureEnable");
   if (locTextureEnable  ==-1) {
-	  cerr << "erreur affectation : textureEnable\n";
+	  ERRPUT << "erreur affectation : textureEnable\n";
   }
 
   // texture pour le shadow mapping  
@@ -130,7 +131,7 @@ void initShaders() {
 
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0);
 
-  cout << "Shaders initialized." << endl;
+  OUTPUT << "Shaders initialized." << endl;
 }
 
 void shadowedRenderingStep1(Camera *camera) {
@@ -257,9 +258,9 @@ GLint shaderCompilationStatus(GLhandleARB shader) {
 /* initialisation du contenu */
 		memset(log, '\0', logsize + 1);
 		glGetInfoLogARB(shader, logsize, &logsize, log);
-		cout << "Impossible de compiler le program :\n" << log  <<endl;
+		OUTPUT << "Impossible de compiler le program :\n" << log  <<endl;
 	} else {
-		cout << "compilation OK" << endl;
+		OUTPUT << "compilation OK" << endl;
 	}
 	return compile_status;
 }

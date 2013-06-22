@@ -12,6 +12,7 @@
 #include "blinkyBlocksWorld.h"
 #include "buildingBlock.h"
 #include "blockCode.h"
+#include "trace.h"
 
 using namespace std;
 using namespace boost;
@@ -20,7 +21,7 @@ using boost::asio::ip::tcp;
 namespace BlinkyBlocks {
 
 BlinkyBlocksScheduler::BlinkyBlocksScheduler() {
-	cout << "BlinkyBlocksScheduler constructor" << endl;
+	OUTPUT << "BlinkyBlocksScheduler constructor" << endl;
 	sem_schedulerStart = new boost::interprocess::interprocess_semaphore(0);
 	//schedulerMode = SCHEDULER_MODE_FASTEST;
 	schedulerMode = SCHEDULER_MODE_REALTIME;
@@ -28,15 +29,16 @@ BlinkyBlocksScheduler::BlinkyBlocksScheduler() {
 }
 
 BlinkyBlocksScheduler::~BlinkyBlocksScheduler() {
-	cout << "\033[1;31mBlinkyBlocksScheduler destructor\33[0m" << endl;
+	OUTPUT << "\033[1;31mBlinkyBlocksScheduler destructor\33[0m" << endl;
 	delete sem_schedulerStart;
 	// Peut-être necessaire, a tester ?
 	getWorld()->getIos().stop();
-	delete schedulerThread; 
+	schedulerThread->yield();
+	delete schedulerThread;
 	/* sleep for a while, to be sure that the schedulerThread will be
 	* killed before destroying all the events.
 	*/ 
-	usleep(3000);
+	usleep(5000);
 }
 
 void BlinkyBlocksScheduler::createScheduler() {
@@ -48,11 +50,12 @@ void BlinkyBlocksScheduler::deleteScheduler() {
 }
 
 void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
+	
 	bool mustStop;
 	uint64_t systemCurrentTime, systemCurrentTimeMax;
 
 	usleep(1000000);
-	cout << "\033[1;33mScheduler Mode :" << schedulerMode << "\033[0m" << endl;
+	OUTPUT << "\033[1;33mScheduler Mode :" << schedulerMode << "\033[0m" << endl;
 	
 	sem_schedulerStart->wait();
 	readIncomingMessages();
@@ -61,7 +64,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	multimap<uint64_t, EventPtr>::iterator first;
 	EventPtr pev;
 	systemStartTime = (glutGet(GLUT_ELAPSED_TIME))*1000;
-	cout << "\033[1;33m" << "Scheduler : start order received " << systemStartTime << "\033[0m" << endl;
+	OUTPUT << "\033[1;33m" << "Scheduler : start order received " << systemStartTime << "\033[0m" << endl;
 
 	switch (schedulerMode) {
 		case SCHEDULER_MODE_FASTEST:
@@ -74,7 +77,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 			}
 			break;
 		case SCHEDULER_MODE_REALTIME:
-			cout << "Realtime mode scheduler\n";
+			OUTPUT << "Realtime mode scheduler\n";
 			mustStop = false;
 			while (!mustStop) {
 				systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
@@ -87,7 +90,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 						pev = (*first).second;
 						if(pev->date > systemCurrentTimeMax) { unlock(); break;}
 						if (pev->eventType == EVENT_END_SIMULATION) {
-							cout << "end simulation" << endl;
+							OUTPUT << "end simulation" << endl;
 							mustStop = true;
 						}
 						currentDate = pev->date;
@@ -118,7 +121,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 						pev = (*first).second;
 						if (pev->eventType == EVENT_END_SIMULATION) {
 							mustStop = true;
-							cout << "END EVENT" << endl;
+							OUTPUT << "END EVENT" << endl;
 						}
 						// traitement du mouvement des objets physiques
 						//Physics::update(ev->heureEvenement);
@@ -150,20 +153,20 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 			} */
 			break;
 		default:
-			cout << "ERROR : Scheduler mode not recognized !!" << endl;
+			OUTPUT << "ERROR : Scheduler mode not recognized !!" << endl;
 	}
 	systemStopTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
-	cout << "\033[1;33m" << "Scheduler end : " << systemStopTime << "\033[0m" << endl;
+	OUTPUT << "\033[1;33m" << "Scheduler end : " << systemStopTime << "\033[0m" << endl;
 	pev.reset();
-	cout << "end time : " << currentDate << endl;
-	cout << "real time elapsed : " << ((double)(systemStopTime-systemStartTime))/1000000 << endl;
-	//	cout << "Nombre d'événements restants en mémoire : " << Evenement::nbEvenements << endl;
-	//	cout << "Nombre de messages restants en mémoire : " << Message::nbMessages << endl;
-	cout << "Maximum sized reached by the events list : " << largestEventsMapSize << endl;
-	cout << "Size of the events list at the end : " << eventsMap.size() << endl;
-	cout << "Number of events processed : " << Event::getNextId() << endl;
-	cout << "Events(s) left in memory before destroying Scheduler : " << Event::getNbLivingEvents() << endl;
-	cout << "Message(s) left in memory before destroying Scheduler : " << Message::getNbMessages() << endl;
+	OUTPUT << "end time : " << currentDate << endl;
+	OUTPUT << "real time elapsed : " << ((double)(systemStopTime-systemStartTime))/1000000 << endl;
+	//	OUTPUT << "Nombre d'événements restants en mémoire : " << Evenement::nbEvenements << endl;
+	//	OUTPUT << "Nombre de messages restants en mémoire : " << Message::nbMessages << endl;
+	OUTPUT << "Maximum sized reached by the events list : " << largestEventsMapSize << endl;
+	OUTPUT << "Size of the events list at the end : " << eventsMap.size() << endl;
+	OUTPUT << "Number of events processed : " << Event::getNextId() << endl;
+	OUTPUT << "Events(s) left in memory before destroying Scheduler : " << Event::getNbLivingEvents() << endl;
+	OUTPUT << "Message(s) left in memory before destroying Scheduler : " << Message::getNbMessages() << endl;
 	return(NULL);
 }
 

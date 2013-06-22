@@ -12,6 +12,7 @@
 #include "blinkyBlocksSimulator.h"
 #include "blinkyBlocksEvents.h"
 #include <sys/wait.h>
+#include "trace.h"
 
 using namespace std;
 
@@ -22,7 +23,7 @@ static const GLfloat tabColors[12][4]={{1.0,0.0,0.0,1.0},{1.0,0.647058824,0.0,1.
 
 
 BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, boost::shared_ptr<tcp::socket> s, pid_t p, BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) : BaseSimulator::BuildingBlock(bId) {
-	cout << "BlinkyBlocksBlock constructor" << endl;
+	OUTPUT << "BlinkyBlocksBlock constructor" << endl;
 	buildNewBlockCode = blinkyBlocksBlockCodeBuildingFunction;
 	socket = s;
 	pid = p;
@@ -34,7 +35,7 @@ BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, boost::shared_ptr<tcp::socket> s, 
 }
 
 BlinkyBlocksBlock::~BlinkyBlocksBlock() {
-	cout << "BlinkyBlocksBlock destructor " << blockId << endl;
+	OUTPUT << "BlinkyBlocksBlock destructor " << blockId << endl;
 	//delete[] tabInterfaces;
 	if (state == Alive)  {
 		closeSocket();
@@ -87,9 +88,9 @@ NeighborDirection BlinkyBlocksBlock::getDirection(P2PNetworkInterface *given_int
 }
 
 void BlinkyBlocksBlock::readMessageHandler(const boost::system::error_code& error, std::size_t bytes_transferred) {
-	cout << "handler called" << endl;
+	OUTPUT << "handler called" << endl;
 	if(error) {
-		cerr << "an error occurred while receiving a tcp message from VM " << blockId << " (socket closed ?) " <<endl;
+		ERRPUT << "an error occurred while receiving a tcp message from VM " << blockId << " (socket closed ?) " <<endl;
 		return;
 	}
     delete[] buffer.message;
@@ -97,7 +98,7 @@ void BlinkyBlocksBlock::readMessageHandler(const boost::system::error_code& erro
     try {
 		boost::asio::read(getSocket(),boost::asio::buffer((void*)buffer.message, buffer.size) );
 	} catch (std::exception& e) {
-		cerr << "connection to the VM "<< blockId << " lost" << endl;
+		ERRPUT << "connection to the VM "<< blockId << " lost" << endl;
 	}
     ((BlinkyBlocksBlockCode*)blockCode)->handleNewMessage();
     this->readMessageFromVM();
@@ -105,7 +106,7 @@ void BlinkyBlocksBlock::readMessageHandler(const boost::system::error_code& erro
   
 void BlinkyBlocksBlock::readMessageFromVM() {
 	if (socket == NULL) {
-		cerr << "the simulator is not connected to the VM "<< blockId << endl;
+		ERRPUT << "the simulator is not connected to the VM "<< blockId << endl;
 		return;
 	}
 	try {
@@ -114,26 +115,26 @@ void BlinkyBlocksBlock::readMessageFromVM() {
 		boost::bind(&BlinkyBlocksBlock::readMessageHandler, this, boost::asio::placeholders::error,
 		boost::asio::placeholders::bytes_transferred));
 	} catch (std::exception& e) {
-		cerr << "connection to the VM "<< blockId << " lost" << endl;
+		ERRPUT << "connection to the VM "<< blockId << " lost" << endl;
 	}
 }
   
 void BlinkyBlocksBlock::sendMessageToVM(uint64_t size, uint64_t* message){
 	if (socket == NULL) {
-		cerr << "the simulator is not connected to the VM "<< blockId << endl;
+		ERRPUT << "the simulator is not connected to the VM "<< blockId << endl;
 		return;
 	}
 	try {
 		boost::asio::write(getSocket(), boost::asio::buffer((void*)message,size));
 	} catch (std::exception& e) {
-		cerr << "connection to the VM "<< blockId << " lost" << endl;
+		ERRPUT << "connection to the VM "<< blockId << " lost" << endl;
 	}
 }
   
 void BlinkyBlocksBlock::tap() {
 	//getScheduler()->schedule(new VMTapEvent(getScheduler()->now(), this));
 	getScheduler()->scheduleLock(new VMTapEvent(getScheduler()->now(), this));
-	cout << "tap scheduled" << endl;
+	OUTPUT << "tap scheduled" << endl;
 }
   
 void BlinkyBlocksBlock::accel(int x, int y, int z) {
@@ -174,19 +175,19 @@ string getStringNeighborDirection(uint64_t d) {
 } 
   
 void BlinkyBlocksBlock::addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target) {
-	cout << "Simulator: "<< blockId << " add neighbor " << target->blockId << " on " << getStringNeighborDirection(getDirection(ni)) << endl;
+	OUTPUT << "Simulator: "<< blockId << " add neighbor " << target->blockId << " on " << getStringNeighborDirection(getDirection(ni)) << endl;
 	//getScheduler()->schedule(new VMAddNeighborEvent(getScheduler()->now(), this, getDirection(ni), target->blockId));
 	getScheduler()->scheduleLock(new VMAddNeighborEvent(getScheduler()->now(), this, getDirection(ni), target->blockId));
 }
 
 void BlinkyBlocksBlock::removeNeighbor(P2PNetworkInterface *ni) {
-	cout << "Simulator: "<< blockId << " remove neighbor on " << getStringNeighborDirection(getDirection(ni)) << endl;
+	OUTPUT << "Simulator: "<< blockId << " remove neighbor on " << getStringNeighborDirection(getDirection(ni)) << endl;
 	//getScheduler()->schedule(new VMRemoveNeighborEvent(getScheduler()->now(), this, getDirection(ni)));
 	getScheduler()->scheduleLock(new VMRemoveNeighborEvent(getScheduler()->now(), this, getDirection(ni)));
 }
   
 void BlinkyBlocksBlock::stop() {
-	cout << "Simulator: stop VM" << endl;
+	OUTPUT << "Simulator: stop VM" << endl;
 	//getScheduler()->schedule(new VMStopEvent(getScheduler()->now(), this));
 	getScheduler()->scheduleLock(new VMStopEvent(getScheduler()->now(), this));
 }

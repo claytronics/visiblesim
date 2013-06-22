@@ -9,6 +9,7 @@
 #include "world.h"
 #include "buildingBlock.h"
 #include "scheduler.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -23,7 +24,7 @@ int BuildingBlock::nextId = 0;
 //===========================================================================================================
 
 BuildingBlock::BuildingBlock(int bId) {
-	cout << "BuildingBlock constructor (id:" << nextId << ")" << endl;
+	OUTPUT << "BuildingBlock constructor (id:" << nextId << ")" << endl;
 	if (bId < 0) {
 		blockId = nextId;
 		nextId++;
@@ -35,7 +36,7 @@ BuildingBlock::BuildingBlock(int bId) {
 }
 
 BuildingBlock::~BuildingBlock() {
-	cout << "BuildingBlock destructor" << endl;
+	OUTPUT << "BuildingBlock destructor" << endl;
 }
 
 unsigned int BuildingBlock::getNextP2PInterfaceLocalId() {
@@ -50,14 +51,14 @@ bool BuildingBlock::addP2PNetworkInterfaceAndConnectTo(BuildingBlock *destBlock)
 	ni2 = NULL;
 	if (!getP2PNetworkInterfaceByBlockRef(destBlock)) {
 		// creation of the new network interface
-		cout << "adding a new interface to block " << destBlock->blockId << endl;
+		OUTPUT << "adding a new interface to block " << destBlock->blockId << endl;
 		ni1 = new P2PNetworkInterface(this);
 		P2PNetworkInterfaceList.push_back(ni1);
 	}
 
 	if (!destBlock->getP2PNetworkInterfaceByBlockRef(this)) {
 		// creation of the new network interface
-		cout << "adding a new interface to block " << this->blockId << endl;
+		OUTPUT << "adding a new interface to block " << this->blockId << endl;
 		ni2 = new P2PNetworkInterface(destBlock);
 		destBlock->P2PNetworkInterfaceList.push_back(ni2);
 	}
@@ -66,7 +67,7 @@ bool BuildingBlock::addP2PNetworkInterfaceAndConnectTo(BuildingBlock *destBlock)
 		ni1->connect(ni2);
 		return (true);
 	} else {
-		cout << "*** ERROR *** could not connect the new interfaces" << endl;
+		OUTPUT << "*** ERROR *** could not connect the new interfaces" << endl;
 	}
 	return false;
 }

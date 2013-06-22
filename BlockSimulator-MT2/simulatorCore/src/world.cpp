@@ -7,6 +7,7 @@
 
 #include <stdlib.h>
 #include "world.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -17,12 +18,12 @@ map<int, BuildingBlock*>World::buildingBlocksMap;
 vector <GlBlock*>World::tabGlBlocks;
 
 World::World() {
-	cout << "World constructor" << endl;
+	OUTPUT << "World constructor" << endl;
 	selectedBlock = NULL;
 	if (world == NULL) {
 		world = this;
 	} else {
-		cerr << "\033[1;31m" << "Only one World instance can be created, aborting !" << "\033[0m" << endl;
+		ERRPUT << "\033[1;31m" << "Only one World instance can be created, aborting !" << "\033[0m" << endl;
 		exit(EXIT_FAILURE);
 	}
 }
@@ -40,7 +41,7 @@ World::~World() {
 		delete *cit;
 		cit++;
 	}
-	cout << "World destructor" << endl;
+	OUTPUT << "World destructor" << endl;
 }
 
 BuildingBlock* World::getBlockById(int bId) {

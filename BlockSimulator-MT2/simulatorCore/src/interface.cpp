@@ -6,6 +6,7 @@
  */
 
 #include "interface.h"
+#include "trace.h"
 
 GlutWindow::GlutWindow(GlutWindow *parent,GLuint pid,GLint px,GLint py,GLint pw,GLint ph,const char *titreTexture)
 :id(pid) {
@@ -240,9 +241,9 @@ int GlutButton::mouseFunc(int button,int state,int mx,int my) {
 GLuint GlutWindow::loadTexture(const char *titre,int &tw,int &th) {
 	unsigned char *image;
 	GLuint id=0;
-	cout << "loading " << titre << endl;
+	OUTPUT << "loading " << titre << endl;
 	if (!(image=lectureTarga(titre,tw,th))) {
-		cerr << "Error : can't open " << titre << endl;
+		ERRPUT << "Error : can't open " << titre << endl;
 	} else {
 		glGenTextures(1,&id);
 		glBindTexture(GL_TEXTURE_2D,id);
@@ -284,7 +285,7 @@ unsigned char *GlutWindow::lectureTarga(const char *titre, int& width, int& heig
 
 	int commentOffset = int( (unsigned char)*pData );
 	if( memcmp( pData + 1, DEF_targaHeaderContent, DEF_targaHeaderLength - 1 ) != 0 )
-	{ cerr << "Format non reconnu : " << titre << endl;
+	{ ERRPUT << "Format non reconnu : " << titre << endl;
 	  return 0;
     }
 	unsigned char smallArray[ 2 ];

@@ -12,6 +12,7 @@ using namespace std;
 
 #include "scheduler.h"
 #include "network.h"
+#include "trace.h"
 
 unsigned int Message::nextId = 0;
 unsigned int Message::nbMessages = 0;
@@ -54,7 +55,7 @@ string Message::getMessageName() {
 
 P2PNetworkInterface::P2PNetworkInterface(BaseSimulator::BuildingBlock *b) {
 #ifndef NDEBUG
-	cout << "P2PNetworkInterface constructor" << endl;
+	OUTPUT << "P2PNetworkInterface constructor" << endl;
 #endif
 	hostBlock = b;
 //	localId = block->getNextP2PInterfaceLocalId();
@@ -68,7 +69,7 @@ P2PNetworkInterface::P2PNetworkInterface(BaseSimulator::BuildingBlock *b) {
 
 P2PNetworkInterface::~P2PNetworkInterface() {
 #ifndef NDEBUG
-	cout << "P2PNetworkInterface destructor" << endl;
+	OUTPUT << "P2PNetworkInterface destructor" << endl;
 #endif
 }
 
@@ -128,7 +129,7 @@ void P2PNetworkInterface::connect(P2PNetworkInterface *ni) {
 	if (ni) { // Connection
 		if (ni->connectedInterface != this) {
 			if (ni->connectedInterface != NULL) {
-				cout << "ERROR : connecting to an already connected P2PNetwork interface" << endl;
+				OUTPUT << "ERROR : connecting to an already connected P2PNetwork interface" << endl;
 				ni->connectedInterface->hostBlock->removeNeighbor(ni->connectedInterface);
 				ni->hostBlock->removeNeighbor(ni);
 			}

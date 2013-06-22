@@ -16,6 +16,7 @@
 #include <boost/bind.hpp>
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
+#include "trace.h"
 
 using namespace boost;
 using boost::asio::ip::udp;
@@ -43,7 +44,7 @@ public:
 	}
 
 	void printInfo() {
-		cout << "I'm a BlinkyBlocksScheduler" << endl;
+		OUTPUT << "I'm a BlinkyBlocksScheduler" << endl;
 	}
 	
 	void start(int mode);

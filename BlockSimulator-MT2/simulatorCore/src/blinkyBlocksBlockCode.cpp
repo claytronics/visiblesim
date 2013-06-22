@@ -7,17 +7,18 @@
 
 #include <iostream>
 #include "blinkyBlocksBlockCode.h"
+#include "trace.h"
 
 using namespace std;
 
 namespace BlinkyBlocks {
 
 BlinkyBlocksBlockCode::BlinkyBlocksBlockCode(BlinkyBlocksBlock *host):BlockCode(host) {
-	cout << "BlinkyBlocksBlockCode constructor" << endl;
+	OUTPUT << "BlinkyBlocksBlockCode constructor" << endl;
 }
 
 BlinkyBlocksBlockCode::~BlinkyBlocksBlockCode() {
-	cout << "BlinkyBlocksBlockCode destructor" << endl;
+	OUTPUT << "BlinkyBlocksBlockCode destructor" << endl;
 }
 /*
 BlinkyBlocksBlockCode* BlinkyBlocksBlockCode::buildNewBlockCode(BlinkyBlocksBlock *host) {

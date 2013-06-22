@@ -9,6 +9,7 @@
 #include <stdlib.h>
 #include "assert.h"
 #include "scheduler.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -17,17 +18,17 @@ namespace BaseSimulator {
 Scheduler *Scheduler::scheduler=NULL;
 
 Scheduler::Scheduler() {
-	cout << "Scheduler constructor" << endl;
+	OUTPUT << "Scheduler constructor" << endl;
 
 	if (sizeof(uint64_t) != 8) {
-		cerr << "\033[1;31m" << "ERROR : Scheduler requires 8bytes integer that are not available on this computer" << "\033[0m" << endl;
+		ERRPUT << "\033[1;31m" << "ERROR : Scheduler requires 8bytes integer that are not available on this computer" << "\033[0m" << endl;
 		exit(EXIT_FAILURE);
 	}
 
 	if (scheduler == NULL) {
 		scheduler = this;
 	} else {
-		cerr << "\033[1;31m" << "Only one Scheduler instance can be created, aborting !" << "\033[0m" << endl;
+		ERRPUT << "\033[1;31m" << "Only one Scheduler instance can be created, aborting !" << "\033[0m" << endl;
 		exit(EXIT_FAILURE);
 	}
 
@@ -39,7 +40,7 @@ Scheduler::Scheduler() {
 }
 
 Scheduler::~Scheduler() {
-	cout << "Scheduler destructor" << endl;
+	OUTPUT << "Scheduler destructor" << endl;
 }
 
 bool Scheduler::schedule(Event *ev) {
@@ -55,17 +56,17 @@ bool Scheduler::schedule(Event *ev) {
 	//lock();
 
 	if (pev->date < Scheduler::currentDate) {
-		cout << "ERROR : An event cannot be schedule in the past !\n";
-	    cout << "current time : " << Scheduler::currentDate << endl;
-	    cout << "ev->eventDate : " << pev->date << endl;
-	    cout << "ev->getEventName() : " << pev->getEventName() << endl;
+		OUTPUT << "ERROR : An event cannot be schedule in the past !\n";
+	    OUTPUT << "current time : " << Scheduler::currentDate << endl;
+	    OUTPUT << "ev->eventDate : " << pev->date << endl;
+	    OUTPUT << "ev->getEventName() : " << pev->getEventName() << endl;
 	    return(false);
 	}
 
 	if (pev->date > maximumDate) {
-		cout << "WARNING : An event should not be schedule beyond the end of simulation date !\n";
-		cout << "pev->date : " << pev->date << endl;
-		cout << "maximumDate : " << maximumDate << endl;
+		OUTPUT << "WARNING : An event should not be schedule beyond the end of simulation date !\n";
+		OUTPUT << "pev->date : " << pev->date << endl;
+		OUTPUT << "maximumDate : " << maximumDate << endl;
 	    return(false);
 	}
 	eventsMap.insert(pair<uint64_t, EventPtr>(pev->date,pev));
@@ -83,10 +84,10 @@ void Scheduler::removeEventsToBlock(BuildingBlock *bb) {
 	//lock();
 	multimap<uint64_t,EventPtr>::iterator im = eventsMap.begin();
 	BuildingBlock *cb=NULL;
-	cout << bb << endl;
+	OUTPUT << bb << endl;
 	while (im!=eventsMap.end()) {
 		cb=(*im).second->getConcernedBlock();
-		cout << cb << endl;
+		OUTPUT << cb << endl;
 		if (cb==bb) {
 			multimap<uint64_t,EventPtr>::iterator im2 = im;
 			if(im != eventsMap.begin()) {
@@ -107,8 +108,8 @@ uint64_t Scheduler::now() {
 
 void Scheduler::trace(string message) {
 	mutex_trace.lock();
-	cout.precision(6);
-	cout << fixed << (double)(currentDate)/1000000 << " " << message << endl;
+	OUTPUT.precision(6);
+	OUTPUT << fixed << (double)(currentDate)/1000000 << " " << message << endl;
 	mutex_trace.unlock();
 }
 

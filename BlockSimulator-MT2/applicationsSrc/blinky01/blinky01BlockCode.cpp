@@ -12,6 +12,7 @@
 #include "network.h"
 #include <boost/asio.hpp> 
 #include "blinkyBlocksEvents.h"
+#include "trace.h"
 
 using namespace std;
 using namespace BlinkyBlocks;
@@ -37,7 +38,7 @@ string getStringMessage(uint64_t t) {
 			return string("VM_MESSAGE_SEND_MESSAGE");
 			break;
 		default:
-			cerr << "Unknown received-message type" << endl;
+			ERRPUT << "Unknown received-message type" << endl;
 			return string("Unknown");
 			break;
 		}
@@ -69,7 +70,7 @@ VMDataMessage::VMDataMessage(uint64_t src, uint64_t size, uint64_t* m): Message(
 			message[4] = Top;
 			break;
 		default:
-			cerr << "*** ERROR *** : unknown facet" << endl;
+			ERRPUT << "*** ERROR *** : unknown facet" << endl;
 			break;
 	}
 }
@@ -83,13 +84,13 @@ unsigned int VMDataMessage::size() {
 }
 
 Blinky01BlockCode::Blinky01BlockCode(BlinkyBlocksBlock *host): BlinkyBlocksBlockCode(host) {
-	cout << "Blinky01BlockCode constructor" << endl;
+	OUTPUT << "Blinky01BlockCode constructor" << endl;
 	// Send the id to the block
 	BaseSimulator::getScheduler()->schedule(new VMSetIdEvent(BaseSimulator::getScheduler()->now(), (BlinkyBlocksBlock*)hostBlock));
 }
 
 Blinky01BlockCode::~Blinky01BlockCode() {
-	cout << "Blinky01BlockCode destructor" << endl;
+	OUTPUT << "Blinky01BlockCode destructor" << endl;
 }
 
 void Blinky01BlockCode::startup() {
@@ -101,7 +102,7 @@ void Blinky01BlockCode::startup() {
 
 void Blinky01BlockCode::handleNewMessage() {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
-	cout << "Blinky01BlockCode: type: " << getStringMessage(bb->getBufferPtr()->message[0]) << " size: " << bb->getBufferPtr()->size << endl;
+	OUTPUT << "Blinky01BlockCode: type: " << getStringMessage(bb->getBufferPtr()->message[0]) << " size: " << bb->getBufferPtr()->size << endl;
 	uint64_t* message = bb->getBufferPtr()->message;
 	uint64_t size = bb->getBufferPtr()->size;
 	switch (message[0]) {
@@ -118,7 +119,7 @@ void Blinky01BlockCode::handleNewMessage() {
 			P2PNetworkInterface *interface;
 			interface = bb->getInterface((NeighborDirection)message[3]);
 			if (interface == NULL) {
-				cout << "no right neighbor" << endl;
+				OUTPUT << "no right neighbor" << endl;
 			}
 			BaseSimulator::getScheduler()->schedule(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
 					new VMDataMessage(hostBlock->blockId, size, message), interface));
@@ -127,14 +128,14 @@ void Blinky01BlockCode::handleNewMessage() {
 			}
 			break;
 		default:
-			cerr << "*** ERROR *** : unsupported message received from VM (" << message[0] <<")" << endl;
+			ERRPUT << "*** ERROR *** : unsupported message received from VM (" << message[0] <<")" << endl;
 			break;
 	}
 }
 
 void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
-	cout << "Blinky01BlockCode: " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
+	OUTPUT << "Blinky01BlockCode: " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
 	switch (pev->eventType) {
 	case EVENT_SET_ID:
 		{
@@ -145,7 +146,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[3] = -1; // souce node
 		message[4] = hostBlock->blockId;
 		bb->sendMessageToVM(5*sizeof(uint64_t), message);
-		cout << "ID sent to the VM " << hostBlock->blockId << endl;
+		OUTPUT << "ID sent to the VM " << hostBlock->blockId << endl;
 		}
 		break;
 	case EVENT_STOP:
@@ -223,7 +224,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		}
 		break;
 	default:
-		cerr << "*** ERROR *** : unknown local event" << endl;
+		ERRPUT << "*** ERROR *** : unknown local event" << endl;
 		break;
 	}
 }

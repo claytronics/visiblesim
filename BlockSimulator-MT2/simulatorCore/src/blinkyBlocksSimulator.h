@@ -12,6 +12,7 @@
 #include "blinkyBlocksBlockCode.h"
 #include "blinkyBlocksScheduler.h"
 #include "blinkyBlocksWorld.h"
+#include "trace.h"
 
 
 using namespace std;
@@ -34,7 +35,7 @@ public:
 		return((BlinkyBlocksSimulator*)simulator);
 	}
 
-	void printInfo() { cout << "I'm a BlinkyBlocksSimulator" << endl; }
+	void printInfo() { OUTPUT << "I'm a BlinkyBlocksSimulator" << endl; }
 };
 
 inline void createSimulator(int argc, char *argv[], BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) {

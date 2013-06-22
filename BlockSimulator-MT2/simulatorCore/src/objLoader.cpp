@@ -10,6 +10,7 @@
 /////////////////////////////////////////////////////////////////////////////
 
 #include "objLoader.h"
+#include "trace.h"
 //#define DEBUG	1
 
 using namespace std;
@@ -64,7 +65,7 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
 #endif
 	ifstream fin(txt);
 	if (!fin.is_open()) {
-		cerr << "File error : " << txt << endl;
+		ERRPUT << "File error : " << txt << endl;
 		exit(EXIT_FAILURE);
 	}
 
@@ -81,7 +82,7 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
 	Sommet S1,S2,S3;
 	do {
 #ifdef DEBUG
-		cout << "Début de lecture" << endl;
+		OUTPUT << "Début de lecture" << endl;
 #endif
 	// headline
     do {
@@ -91,7 +92,7 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
 		  switch (ligne[0]) {
 #ifdef DEBUG
 		  	case '#' : // comment
-		  		cout << ligne << endl;
+		  		OUTPUT << ligne << endl;
         	break;
 #endif
 		  	case ' ' : break;
@@ -115,13 +116,13 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
     				case ' ' : break;
 #ifdef DEBUG
     				case '#' :
-    					cout << ligne << endl;
+    					OUTPUT << ligne << endl;
     				break; // comment
 #endif
     				case 'g' :
     					extraire(ligne+2,nom,63); // object name
 #ifdef DEBUG
-    					cout << "object : " << nom << endl;
+    					OUTPUT << "object : " << nom << endl;
 #endif
     					g_trouve = true;
     				break;
@@ -139,19 +140,19 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
     				break;
 #ifdef DEBUG
     				default :
-    					cout << "code '" << ligne[0] << " unknown :" << ligne << endl;
+    					OUTPUT << "code '" << ligne[0] << " unknown :" << ligne << endl;
 #endif
     			}
     		}
     	} while (!fin.eof() && !g_trouve);
 #ifdef DEBUG
-    	cout <<"Fin de lecture des coordonnées"<< endl;
+    	OUTPUT <<"Fin de lecture des coordonnées"<< endl;
 #endif
 
     	if (g_trouve) {
     		objCourant = new ObjData(nom);
 #ifdef DEBUG
-    		cout << "new object :" << nom << endl;
+    		OUTPUT << "new object :" << nom << endl;
 #endif
     		tabObj.push_back(objCourant);
     		objCourant->objMtl = NULL;
@@ -163,7 +164,7 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
     				switch (ligne[0]) {
     					case '#' :
 #ifdef DEBUG
-    						cout << ligne<< endl;
+    						OUTPUT << ligne<< endl;
 #endif
     						g_trouve = true;
     					break; // comment and end of faces
@@ -185,12 +186,12 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
     						numeroPoint(str_pt2,numVert[1],numNorm[1],numTex[1]);
     						numeroPoint(str_pt3,numVert[2],numNorm[2],numTex[2]);
 #ifdef DEBUG
-    						cout << "Face : (" << numVert[0] << "," << numNorm[0] << "," << numTex[0] << ")";
-    						cout << "(" << numVert[1] << "," << numNorm[1] << "," << numTex[1] << ")";
-    						cout << "(" << numVert[2] << "," << numNorm[2] << "," << numTex[2] << ")" << endl;
+    						OUTPUT << "Face : (" << numVert[0] << "," << numNorm[0] << "," << numTex[0] << ")";
+    						OUTPUT << "(" << numVert[1] << "," << numNorm[1] << "," << numTex[1] << ")";
+    						OUTPUT << "(" << numVert[2] << "," << numNorm[2] << "," << numTex[2] << ")" << endl;
 #endif
     						if (numTex[0]==0 || numTex[1]==0 || numTex[2]==0) {
-    							cerr << "No texture coordiantes for this objcet : " << objCourant->nomOriginal << endl;
+    							ERRPUT << "No texture coordiantes for this objcet : " << objCourant->nomOriginal << endl;
     							system("PAUSE");
     						}
     						S1.set(tabVertex[numVert[0]-1].v,tabNormal[numNorm[0]-1].v,tabTexture[numTex[0]-1].v);
@@ -201,7 +202,7 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
     					case 'u' : // usemtl 09_-_Default
     						if (strncmp(ligne,"usemtl",6)==0) {
 #ifdef DEBUG
-    							cout << ligne << endl;
+    							OUTPUT << ligne << endl;
 #endif
     							extraire(ligne+7,str_pt1,64);
     							Mtl *ptrMtl = mtls->getMtlByName(str_pt1);
@@ -213,7 +214,7 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
     								sprintf(objCourant->nom,"%s_%s",objCourant->nomOriginal,ptrMtl->name);
 #endif
 #ifdef DEBUG
-    								cout << "associe l'objet " << objCourant->nom << endl;
+    								OUTPUT << "associe l'objet " << objCourant->nom << endl;
 #endif
     							} else { // on fait un objet par texture
     								// recherche si l'objet existe !
@@ -225,7 +226,7 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
     								if (po!=tabObj.end()) {
     									objCourant = (*po);
 #ifdef DEBUG
-    									cout << "complete l'objet " << objCourant->nom << endl;
+    									OUTPUT << "complete l'objet " << objCourant->nom << endl;
 #endif
     								} else {
     									char nom2[128];
@@ -243,18 +244,18 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
     									sprintf(objCourant->nom,"%s_%s",objCourant->nomOriginal,ptrMtl->name);
 #endif
 #ifdef DEBUG
-					  					cout << "nouvel objet :" << objCourant->nom << endl;
+					  					OUTPUT << "nouvel objet :" << objCourant->nom << endl;
 #endif
     								}
     							}
     						}
     					break;
     					case 's' : // gestion des groupes de lissage
-    						cerr << "Smoothing groups not managed !" << endl;
+    						ERRPUT << "Smoothing groups not managed !" << endl;
     					break;
 #ifdef DEBUG
     					default :
-    						cout << "symbole '" << ligne[0] << " inconnu de :" << ligne << endl;
+    						OUTPUT << "symbole '" << ligne[0] << " inconnu de :" << ligne << endl;
 #endif
     				}
     			}
@@ -268,7 +269,7 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
     tabTexture.clear();
 	tabNormal.clear();
 #ifdef DEBUG
-    cout << "fin de la lecture" << endl;
+    OUTPUT << "fin de la lecture" << endl;
 #endif
 	} while (!fin.eof());
 	createVertexArrays();
@@ -277,7 +278,7 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
 	// find 'lighted' texture
 	ptrMtlLighted = mtls->getMtlByName("lighted");
 	if (!ptrMtlLighted) {
-		cerr << "No 'lighted' texture" << endl;
+		ERRPUT << "No 'lighted' texture" << endl;
 		ptrMtlLighted = mtls->getMtlById(1);
 	}
 }
@@ -419,7 +420,7 @@ void ObjData::addFace(Sommet &ptr1,Sommet &ptr2,Sommet &ptr3) {
 	idS[2] = addVertex(ptr3);
 
 	tabFaces.push_back(new FaceTri(idS[0],idS[1],idS[2]));
-	//cout << num++ << endl;
+	//OUTPUT << num++ << endl;
 }
 
 GLuint ObjData::addVertex(const Sommet &s) {
@@ -497,7 +498,7 @@ MtlLib::MtlLib(const char *rep,const char *titre) {
 #else
 		sprintf(erreur,"File error : '%s'",txt);
 #endif
-		cerr << erreur << endl;
+		ERRPUT << erreur << endl;
 		perror("MtlLib");
 		exit(EXIT_FAILURE);
 	}
@@ -513,7 +514,7 @@ MtlLib::MtlLib(const char *rep,const char *titre) {
 			switch (ligne[i]) {
 				case '#' : // commentaire
 #ifdef DEBUG
-				cout << ligne << endl;
+				OUTPUT << ligne << endl;
 #endif
 				break;
 				case ' ' : break;
@@ -541,7 +542,7 @@ MtlLib::MtlLib(const char *rep,const char *titre) {
 						sscanf(ligne+i+2,"%f %f %f",&currentMtl->Ka[0],&currentMtl->Ka[1],&currentMtl->Ka[2]);
 #endif
 						currentMtl->Ka[3]=1.0;
-               //cout << "Ka :" << currentMtl->Ka.v[0] << "," << currentMtl->Ka.v[1] << "," << currentMtl->Ka.v[2] << endl;
+               //OUTPUT << "Ka :" << currentMtl->Ka.v[0] << "," << currentMtl->Ka.v[1] << "," << currentMtl->Ka.v[2] << endl;
 					} else if (ligne[i+1]=='d') { // Kd
 #ifdef WIN32
 						sscanf_s(ligne+i+2,"%f %f %f",&currentMtl->Kd[0],&currentMtl->Kd[1],&currentMtl->Kd[2]);
@@ -549,7 +550,7 @@ MtlLib::MtlLib(const char *rep,const char *titre) {
 						sscanf(ligne+i+2,"%f %f %f",&currentMtl->Kd[0],&currentMtl->Kd[1],&currentMtl->Kd[2]);
 #endif
 						currentMtl->Kd[3]=1.0;
-               //cout << "Kd :" << currentMtl->Kd.v[0] << "," << currentMtl->Kd.v[1] << "," << currentMtl->Kd.v[2] << endl;
+               //OUTPUT << "Kd :" << currentMtl->Kd.v[0] << "," << currentMtl->Kd.v[1] << "," << currentMtl->Kd.v[2] << endl;
 					} else if (ligne[i+1]=='s') { // Ks
 #ifdef WIN32
 						sscanf_s(ligne+i+2,"%f %f %f",&currentMtl->Ks[0],&currentMtl->Ks[1],&currentMtl->Ks[2]);
@@ -557,7 +558,7 @@ MtlLib::MtlLib(const char *rep,const char *titre) {
 						sscanf(ligne+i+2,"%f %f %f",&currentMtl->Ks[0],&currentMtl->Ks[1],&currentMtl->Ks[2]);
 #endif
 						currentMtl->Ks[3]=1.0;
-               //cout << "Ks :" << currentMtl->Ks.v[0] << "," << currentMtl->Ks.v[1] << "," << currentMtl->Ks.v[2] << endl;
+               //OUTPUT << "Ks :" << currentMtl->Ks.v[0] << "," << currentMtl->Ks.v[1] << "," << currentMtl->Ks.v[2] << endl;
 					} else if (ligne[i+1]=='e') { // Ke
 #ifdef WIN32
 						sscanf_s(ligne+i+2,"%f %f %f",&currentMtl->Ke[0],&currentMtl->Ke[1],&currentMtl->Ke[2]);
@@ -565,7 +566,7 @@ MtlLib::MtlLib(const char *rep,const char *titre) {
 						sscanf(ligne+i+2,"%f %f %f",&currentMtl->Ke[0],&currentMtl->Ke[1],&currentMtl->Ke[2]);
 #endif
 						currentMtl->Ke[3]=1.0;
-               //cout << "Ke :" << currentMtl->Ke.v[0] << "," << currentMtl->Ke.v[1] << "," << currentMtl->Ke.v[2] << endl;
+               //OUTPUT << "Ke :" << currentMtl->Ke.v[0] << "," << currentMtl->Ke.v[1] << "," << currentMtl->Ke.v[2] << endl;
 					}
 				break;
 				case 'N' :
@@ -583,7 +584,7 @@ MtlLib::MtlLib(const char *rep,const char *titre) {
 						}
 						currentMtl->Ns*=2.55f;
 					}
-		  //cout << "Ns :" << currentMtl->Ns << endl;
+		  //OUTPUT << "Ns :" << currentMtl->Ns << endl;
 					break;
 				case 'm' : //	void setAmbientAndDiffuseColor(GLfloat *color);
 					if (strncmp(ligne+i,"map_Kd",6)==0) {
@@ -602,13 +603,13 @@ MtlLib::MtlLib(const char *rep,const char *titre) {
 						currentMtl->Kd[1]=1.;
 						currentMtl->Kd[2]=1.;
 						currentMtl->Kd[3]=1.;
-//						cout << currentMtl->mapKd << "," << strlen(rep)+str.length()+2-pos << endl;
+//						OUTPUT << currentMtl->mapKd << "," << strlen(rep)+str.length()+2-pos << endl;
 						//strncpy(currentMtl->mapKd,ligne+pos+1,lng);
 #endif
 					}
 				break;
 #ifdef DEBUG
-				default : cout << "Inconnu : " << ligne << endl;
+				default : OUTPUT << "Inconnu : " << ligne << endl;
 #endif
 			}
 		}

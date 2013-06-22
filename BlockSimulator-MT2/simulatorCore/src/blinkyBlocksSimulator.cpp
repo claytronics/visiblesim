@@ -8,6 +8,7 @@
 #include <iostream>
 #include "blinkyBlocksSimulator.h"
 #include <string.h>
+#include "trace.h"
 
 using namespace std;
 
@@ -16,7 +17,7 @@ namespace BlinkyBlocks {
 BlinkyBlocksBlockCode*(* BlinkyBlocksSimulator::buildNewBlockCode)(BlinkyBlocksBlock*)=NULL;
 
 BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) : BaseSimulator::Simulator(argc, argv) {
-	cout << "\033[1;34m" << "BlinkyBlocksSimulator constructor" << "\033[0m" << endl;
+	OUTPUT << "\033[1;34m" << "BlinkyBlocksSimulator constructor" << "\033[0m" << endl;
 	
 	int port = 34000; // default port (if not defined in xml file)
 	string vmPath;
@@ -52,7 +53,7 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 					debugging = true;
 			}
 		}
-		cout << "server port : " << port << endl;
+		OUTPUT << "server port : " << port << endl;
 	}
 	
 	node = xmlDoc->FirstChild("world");
@@ -64,12 +65,12 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 		int lx = atoi(str.substr(0,pos1).c_str());
 		int ly = atoi(str.substr(pos1+1,pos2-pos1-1).c_str());
 		int lz = atoi(str.substr(pos2+1,str.length()-pos1-1).c_str());
-		cout << "grid size : " << lx << " x " << ly << " x " << lz << endl;
+		OUTPUT << "grid size : " << lx << " x " << ly << " x " << lz << endl;
 		createWorld(lx, ly, lz, port, vmPath, programPath, debugging, argc, argv);
 		world = getWorld();
 		world->loadTextures("../../simulatorCore/blinkyBlocksTextures");
 	} else {
-		cerr << "ERROR : NO world in XML file" << endl;
+		ERRPUT << "ERROR : NO world in XML file" << endl;
 		exit(1);
 	}
 
@@ -162,12 +163,12 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 			siz[0] = atof(str.substr(0,pos1).c_str());
 			siz[1] = atof(str.substr(pos1+1,pos2-pos1-1).c_str());
 			siz[2] = atof(str.substr(pos2+1,str.length()-pos1-1).c_str());
-			cout << "blocksize =" << siz[0] <<"," << siz[1] <<"," << siz[2]<< endl;
+			OUTPUT << "blocksize =" << siz[0] <<"," << siz[1] <<"," << siz[2]<< endl;
 			world->setBlocksSize(siz);
 		}
 
 		/* Reading a blinkyblock */
-		cout << "default color :" << defaultColor << endl;
+		OUTPUT << "default color :" << defaultColor << endl;
 		nodeBlock = nodeBlock->FirstChild("block");
 		Vecteur color,position;
 		while (nodeBlock) {
@@ -181,7 +182,7 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 				color.pt[0] = atof(str.substr(0,pos1).c_str())/255.0;
 				color.pt[1] = atof(str.substr(pos1+1,pos2-pos1-1).c_str())/255.0;
 				color.pt[2] = atof(str.substr(pos2+1,str.length()-pos1-1).c_str())/255.0;
-				cout << "color :" << color << endl;
+				OUTPUT << "color :" << color << endl;
 			}
 			attr = element->Attribute("position");
 			if (attr) {
@@ -191,20 +192,20 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 				position.pt[0] = atoi(str.substr(0,pos1).c_str());
 				position.pt[1] = atoi(str.substr(pos1+1,pos2-pos1-1).c_str());
 				position.pt[2] = atoi(str.substr(pos2+1,str.length()-pos1-1).c_str());
-				cout << "position : " << position << endl;
+				OUTPUT << "position : " << position << endl;
 			}
 			world->addBlock(currentID++, BlinkyBlocksSimulator::buildNewBlockCode, position, color);
 			nodeBlock = nodeBlock->NextSibling("block");
 		} // end while (nodeBlock)
 	} else { // end if(nodeBlock)
-		cerr << "no Block List" << endl;
+		ERRPUT << "no Block List" << endl;
 	}
 	world->linkBlocks();
 	GlutContext::mainLoop();
 }
 
 BlinkyBlocksSimulator::~BlinkyBlocksSimulator() {
-	cout << "\033[1;34m" << "BlinkyBlocksSimulator destructor" << "\033[0m" <<endl;
+	OUTPUT << "\033[1;34m" << "BlinkyBlocksSimulator destructor" << "\033[0m" <<endl;
 }
 
 void BlinkyBlocksSimulator::createSimulator(int argc, char *argv[], BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) {

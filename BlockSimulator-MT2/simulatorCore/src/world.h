@@ -15,6 +15,7 @@
 #include "assert.h"
 #include "buildingBlock.h"
 #include "glBlock.h"
+#include "trace.h"
 
 using namespace std;
 
@@ -42,7 +43,7 @@ public:
 		world=NULL;
 	}
 	void printInfo() {
-		cout << "I'm a World" << endl;
+		OUTPUT << "I'm a World" << endl;
 	}
 	virtual BuildingBlock* getBlockById(int bId);
 

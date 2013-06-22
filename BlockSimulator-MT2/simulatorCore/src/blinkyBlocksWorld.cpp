@@ -6,17 +6,19 @@
  */
 
 #include <iostream>
+#include <string> 
 #include <stdlib.h>
 #include "blinkyBlocksWorld.h"
 #include "blinkyBlocksBlock.h"
 #include "blinkyBlocksEvents.h"
+#include "trace.h"
 
 using namespace std;
 
 namespace BlinkyBlocks {
 
 BlinkyBlocksWorld::BlinkyBlocksWorld(int slx,int sly,int slz, int p, string vP, string pP, bool d, int argc, char *argv[]):World(), ios() {
-	cout << "\033[1;31mBlinkyBlocksWorld constructor\033[0m" << endl;
+	OUTPUT << "\033[1;31mBlinkyBlocksWorld constructor\033[0m" << endl;
 	gridSize[0]=slx;
 	gridSize[1]=sly;
 	gridSize[2]=slz;
@@ -53,7 +55,7 @@ BlinkyBlocksWorld::BlinkyBlocksWorld(int slx,int sly,int slz, int p, string vP, 
 }
 
 BlinkyBlocksWorld::~BlinkyBlocksWorld() {
-	cout << "BlinkyBlocksWorld destructor" << endl;
+	OUTPUT << "BlinkyBlocksWorld destructor" << endl;
 	/*	block linked are deleted by world::~world() */
 	delete [] gridPtrBlocks;
 	delete objBlock;
@@ -86,15 +88,21 @@ void BlinkyBlocksWorld::addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlo
 	// Start the VM
 	pid_t VMPid = 0;
 	VMPid = fork();	
-	if(VMPid < 0) {cerr << "Error when starting the VM" << endl;}
+	if(VMPid < 0) {ERRPUT << "Error when starting the VM" << endl;}
     if(VMPid == 0) {
+		stringstream output;
+		output << "VM" << blockId << ".log";
+		int fd = open(output.str().c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+		dup2(fd, 1);
+		dup2(fd, 2);
+		close(fd);
 		if (debugging) {
-			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), "-S", NULL };
+			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-S", NULL };
 			execv(vmPath.c_str(), const_cast<char**>(cmd));
-			cout << "debugging mode!" << endl;
+			OUTPUT << "debugging mode!" << endl;
 		} else {
 			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), NULL };
-			cout << "no debugging mode!" << endl;			
+			OUTPUT << "no debugging mode!" << endl;			
 			execv(vmPath.c_str(), const_cast<char**>(cmd));
 		}
 	}
@@ -102,7 +110,7 @@ void BlinkyBlocksWorld::addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlo
 	// Wait for an incoming connection	
 	boost::shared_ptr<tcp::socket> socket(new tcp::socket(ios));	
 	acceptor->accept(*(socket.get()));
-	cout << "VM "<< blockId << " connected" << endl;
+	OUTPUT << "VM "<< blockId << " connected" << endl;
 
 	BlinkyBlocksBlock *blinkyBlock = new BlinkyBlocksBlock(blockId, socket, VMPid, blinkyBlockCodeBuildingFunction);
 	buildingBlocksMap.insert(std::pair<int,BaseSimulator::BuildingBlock*>(blinkyBlock->blockId, (BaseSimulator::BuildingBlock*)blinkyBlock));
@@ -124,7 +132,7 @@ void BlinkyBlocksWorld::addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlo
 		iz>=0 && iz<gridSize[2]) {
 		setGridPtr(ix,iy,iz,blinkyBlock);
 	} else {
-		cerr << "ERROR : BLOCK #" << blockId << " out of the grid !!!!!" << endl;
+		ERRPUT << "ERROR : BLOCK #" << blockId << " out of the grid !!!!!" << endl;
 		exit(1);
 	}
 }
@@ -139,37 +147,37 @@ void BlinkyBlocksWorld::linkBlocks() {
 				if (ptrBlock) {
 					if (iz<gridSize[2]-1 && getGridPtr(ix,iy,iz+1)) {
 						(ptrBlock)->getInterface(Top)->connect(getGridPtr(ix,iy,iz+1)->getInterface(Bottom));
-						cout << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix,iy,iz+1)->blockId << endl;
+						OUTPUT << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix,iy,iz+1)->blockId << endl;
 					} else {
 						(ptrBlock)->getInterface(Top)->connect(NULL);
 					}
 					if (iy<gridSize[1]-1 && getGridPtr(ix,iy+1,iz)) {
 						(ptrBlock)->getInterface(Right)->connect(getGridPtr(ix,iy+1,iz)->getInterface(Left));
-						cout << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix,iy+1,iz)->blockId << endl;
+						OUTPUT << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix,iy+1,iz)->blockId << endl;
 					} else {
 						(ptrBlock)->getInterface(Right)->connect(NULL);
 					}
 					if (ix<gridSize[0]-1 && getGridPtr(ix+1,iy,iz)) {
 						(ptrBlock)->getInterface(Front)->connect(getGridPtr(ix+1,iy,iz)->getInterface(Back));
-						cout << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix+1,iy,iz)->blockId << endl;
+						OUTPUT << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix+1,iy,iz)->blockId << endl;
 					} else {
 						(ptrBlock)->getInterface(Front)->connect(NULL);
 					}
 					if (iy>0 && getGridPtr(ix,iy-1,iz)) {
 						(ptrBlock)->getInterface(Left)->connect(getGridPtr(ix,iy-1,iz)->getInterface(Right));
-						cout << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix,iy-1,iz)->blockId << endl;
+						OUTPUT << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix,iy-1,iz)->blockId << endl;
 					} else {
 						(ptrBlock)->getInterface(Left)->connect(NULL);
 					}
 					if (iz>0 && getGridPtr(ix,iy,iz-1)) {
 						(ptrBlock)->getInterface(Bottom)->connect(getGridPtr(ix,iy,iz-1)->getInterface(Top));
-						cout << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix,iy,iz-1)->blockId << endl;
+						OUTPUT << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix,iy,iz-1)->blockId << endl;
 					} else {
 						(ptrBlock)->getInterface(Bottom)->connect(NULL);
 					}
 					if (ix>0 && getGridPtr(ix-1,iy,iz)) {
 						(ptrBlock)->getInterface(Back)->connect(getGridPtr(ix-1,iy,iz)->getInterface(Front));
-						cout << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix-1,iy,iz)->blockId << endl;
+						OUTPUT << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix-1,iy,iz)->blockId << endl;
 					} else {
 						(ptrBlock)->getInterface(Back)->connect(NULL);
 					}
@@ -406,7 +414,7 @@ void BlinkyBlocksWorld::menuChoice(int n) {
 	switch (n) {
 		case 1 : {
 			BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(tabGlBlocks[numSelectedBlock]->blockId);
-			cout << "ADD block link to : " << bb->blockId << "     num Face : " << numSelectedFace << endl;
+			OUTPUT << "ADD block link to : " << bb->blockId << "     num Face : " << numSelectedFace << endl;
 			Vecteur pos=bb->position;
 			switch (numSelectedFace) {
 				case Left :
@@ -432,7 +440,7 @@ void BlinkyBlocksWorld::menuChoice(int n) {
 			linkBlocks();
 		} break;
 		case 2 : {
-			cout << "DEL num block : " << tabGlBlocks[numSelectedBlock]->blockId << endl;
+			OUTPUT << "DEL num block : " << tabGlBlocks[numSelectedBlock]->blockId << endl;
 			BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(tabGlBlocks[numSelectedBlock]->blockId);
 			deleteBlock(bb);
 		} break;
@@ -457,7 +465,7 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 	void BlinkyBlocksWorld::tapBlock(int bId) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*)getBlockById(bId);
 		bb->tap();
-		cout << "BlinkyBlocksWorld: block "<< bId << " tap scheduled" << endl;
+		OUTPUT << "BlinkyBlocksWorld: block "<< bId << " tap scheduled" << endl;
 	}
 	
 	void BlinkyBlocksWorld::accelBlock(int bId, int x, int y, int z) {

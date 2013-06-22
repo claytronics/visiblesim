@@ -9,12 +9,16 @@
 #include "blinkyBlocksSimulator.h"
 #include "blinkyBlocksBlockCode.h"
 #include "blinky01BlockCode.h"
+#include <trace.h> 
 
 using namespace std;
 using namespace BlinkyBlocks;
 
 int main(int argc, char **argv) {
-	cout << "\033[1;33m" << "Starting Blinky Blocks simulation (main) ..." << "\033[0m" << endl;
+	
+
+
+	OUTPUT << "\033[1;33m" << "Starting Blinky Blocks simulation (main) ..." << "\033[0m" << endl;
 
 	createSimulator(argc, argv, Blinky01BlockCode::buildNewBlockCode);
 
@@ -32,8 +36,6 @@ int main(int argc, char **argv) {
 	//getScheduler()->waitForSchedulerEnd();
 
 	deleteSimulator();
-
-	cout << "\033[1;33m" << "end (main)" << "\033[0m" << endl;
-
+	OUTPUT << "\033[1;33m" << "end (main)" << "\033[0m" << endl;
 	return(0);
 }

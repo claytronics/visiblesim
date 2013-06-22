@@ -31,6 +31,7 @@ protected:
 	TiXmlNode* xmlWorldNode;
 
 	Simulator(int argc, char *argv[]);
+	
 	virtual ~Simulator();
 
 public:
@@ -38,10 +39,9 @@ public:
 		assert(simulator != NULL);
 		return(simulator);
 	}
-
+	
 	virtual void printInfo() { cout << "I'm a Simulator" << endl; }
 };
-
 } // Simulator namespace
 
 #endif /* SIMULATOR_H_ */

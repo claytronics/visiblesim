@@ -9,6 +9,7 @@
 #include "world.h"
 #include "scheduler.h"
 #include "events.h"
+#include "trace.h"
 
 //===========================================================================================================
 //
@@ -26,11 +27,11 @@ GlutPopupWindow *GlutContext::popup=NULL;
 GlutPopupMenuWindow *GlutContext::popupMenu=NULL;
 
 void GlutContext::init(int argc, char **argv) {
-	cout << "Avant glutInit()" << endl;
+	OUTPUT << "Avant glutInit()" << endl;
 	glutInit(&argc,argv);
-	cout << "Après glutInit()" << endl;
+	OUTPUT << "Après glutInit()" << endl;
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE,GLUT_ACTION_CONTINUE_EXECUTION);
-	cout << "Après glutSetOption()" << endl;
+	OUTPUT << "Après glutSetOption()" << endl;
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
 
 	// creation of a new graphic window
