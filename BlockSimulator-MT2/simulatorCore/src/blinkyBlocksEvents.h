@@ -156,6 +156,25 @@ public:
 	const virtual string getEventName();
 };
 
+//===========================================================================================================
+//
+//          VMDebugMessageEvent  (class)
+//
+//===========================================================================================================
+
+class VMDebugMessageEvent : public BlockEvent {
+
+public:
+	MessagePtr message;
+	
+	VMDebugMessageEvent(uint64_t, BlinkyBlocksBlock *conBlock, Message *mes);
+	VMDebugMessageEvent(VMDebugMessageEvent *ev);
+	~VMDebugMessageEvent();
+	void consumeBlockEvent();
+	const virtual string getEventName();
+};
+
+
 } // BlinkyBlocks namespace
 
 

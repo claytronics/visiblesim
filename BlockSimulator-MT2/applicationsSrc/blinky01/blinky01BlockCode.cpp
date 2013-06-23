@@ -13,6 +13,7 @@
 #include <boost/asio.hpp> 
 #include "blinkyBlocksEvents.h"
 #include "trace.h"
+#include "blinkyBlocksDebugger.h"
 
 using namespace std;
 using namespace BlinkyBlocks;
@@ -28,6 +29,7 @@ using boost::asio::ip::tcp;
 #define VM_MESSAGE_RECEIVE_MESSAGE				10
 #define VM_MESSAGE_ACCEL						11
 #define VM_MESSAGE_SHAKE						12
+#define VM_MESSAGE_DEBUG						13
 
 string getStringMessage(uint64_t t) {
 	switch(t) {
@@ -36,6 +38,9 @@ string getStringMessage(uint64_t t) {
 			break;
 		case VM_MESSAGE_SEND_MESSAGE:
 			return string("VM_MESSAGE_SEND_MESSAGE");
+			break;
+		case VM_MESSAGE_DEBUG:
+			return string("VM_MESSAGE_DEBUG");
 			break;
 		default:
 			ERRPUT << "Unknown received-message type" << endl;
@@ -126,6 +131,9 @@ void Blinky01BlockCode::handleNewMessage() {
 					/*BaseSimulator::getScheduler()->scheduleLock(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
 					new VMDataMessage(hostBlock->blockId, size, message), interface));*/
 			}
+			break;
+		case VM_MESSAGE_DEBUG:
+			// debug message handler
 			break;
 		default:
 			ERRPUT << "*** ERROR *** : unsupported message received from VM (" << message[0] <<")" << endl;
@@ -222,6 +230,10 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[4] = (boost::static_pointer_cast<VMShakeEvent>(pev))->force;
 		bb->sendMessageToVM(5*sizeof(uint64_t), message);
 		}
+		break;
+	case EVENT_DEBUG_MESSAGE:
+		// forward the debugging message
+		
 		break;
 	default:
 		ERRPUT << "*** ERROR *** : unknown local event" << endl;

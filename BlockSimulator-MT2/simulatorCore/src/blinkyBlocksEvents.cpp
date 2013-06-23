@@ -219,4 +219,34 @@ const string VMShakeEvent::getEventName() {
 	return("VMShake Event");
 }
 
+//===========================================================================================================
+//
+//          VMDebugMessageEvent  (class)
+//
+//===========================================================================================================
+
+VMDebugMessageEvent::VMDebugMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, Message *mes): BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_DEBUG_MESSAGE;
+	message = MessagePtr(mes);
+}
+
+VMDebugMessageEvent::VMDebugMessageEvent(VMDebugMessageEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+	message.reset();
+}
+
+VMDebugMessageEvent::~VMDebugMessageEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void VMDebugMessageEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMDebugMessageEvent(this)));
+}
+
+const string VMDebugMessageEvent::getEventName() {
+	return("VMDebugMessage Event");
+}
+
 } // BlinkyBlocks namespace

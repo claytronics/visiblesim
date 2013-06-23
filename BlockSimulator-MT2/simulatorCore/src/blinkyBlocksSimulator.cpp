@@ -9,6 +9,7 @@
 #include "blinkyBlocksSimulator.h"
 #include <string.h>
 #include "trace.h"
+#include "blinkyBlocksDebugger.h"
 
 using namespace std;
 
@@ -51,6 +52,7 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 		if (attr) {
 			if (strcmp(attr, "True") == 0) {
 					debugging = true;
+					init();
 			}
 		}
 		OUTPUT << "server port : " << port << endl;

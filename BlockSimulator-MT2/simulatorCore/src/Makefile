@@ -10,7 +10,7 @@ multiCoresEvents.cpp
 MULTICORES_OBJS = $(MULTICORES_SRCS:.cpp=.o) $(BASESIMULATOR_OBJS)
 MULTICORES_DEPS = $(MULTICORES_SRCS:.cpp=.depends) $(BASESIMULATOR_DEPS)
 
-BLINKYBLOCKS_SRCS = blinkyBlocksSimulator.cpp blinkyBlocksBlock.cpp blinkyBlocksBlockCode.cpp blinkyBlocksScheduler.cpp blinkyBlocksWorld.cpp blinkyBlocksGlBlock.cpp blinkyBlocksEvents.cpp
+BLINKYBLOCKS_SRCS = blinkyBlocksSimulator.cpp blinkyBlocksBlock.cpp blinkyBlocksBlockCode.cpp blinkyBlocksScheduler.cpp blinkyBlocksWorld.cpp blinkyBlocksGlBlock.cpp blinkyBlocksEvents.cpp blinkyBlocksDebugger.cpp
 BLINKYBLOCKS_OBJS = $(BLINKYBLOCKS_SRCS:.cpp=.o) $(BASESIMULATOR_OBJS)
 BLINKYBLOCKS_DEPS = $(BLINKYBLOCKS_SRCS:.cpp=.depends) $(BASESIMULATOR_DEPS)
 

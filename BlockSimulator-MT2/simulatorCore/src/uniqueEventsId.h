@@ -32,4 +32,6 @@
 #define EVENT_ACCEL							1055
 #define EVENT_SHAKE							1056
 
+#define EVENT_DEBUG_MESSAGE					1057
+
 #endif /* UNIQUEEVENTSID_H_ */
