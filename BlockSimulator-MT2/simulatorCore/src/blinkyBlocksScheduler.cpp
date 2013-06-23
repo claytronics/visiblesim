@@ -33,12 +33,13 @@ BlinkyBlocksScheduler::~BlinkyBlocksScheduler() {
 	delete sem_schedulerStart;
 	// Peut-être necessaire, a tester ?
 	getWorld()->getIos().stop();
-	schedulerThread->yield();
+	getScheduler()->scheduleLock(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
+	schedulerThread->join();
 	delete schedulerThread;
 	/* sleep for a while, to be sure that the schedulerThread will be
 	* killed before destroying all the events.
 	*/ 
-	usleep(5000);
+	//usleep(5000);
 }
 
 void BlinkyBlocksScheduler::createScheduler() {
@@ -82,8 +83,10 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 			while (!mustStop) {
 				systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
 				systemCurrentTimeMax = systemCurrentTime - systemStartTime;
+				lock();
 				readIncomingMessages();
-				do {
+				unlock();
+				while (true) {
 						lock();
 						if (eventsMap.empty()) { unlock(); break;}
 						first=eventsMap.begin();
@@ -99,7 +102,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 						eventsMapSize--;
 						readIncomingMessages();
 						unlock();
-				} while (true);
+				}
 				systemCurrentTime = systemCurrentTimeMax;
 #ifdef WIN32
 				Sleep(5);

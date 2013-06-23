@@ -221,7 +221,6 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 		}
 		if (*cit==bb->ptrGlBlock) tabGlBlocks.erase(cit);
 	}
-
 	if (selectedBlock == bb->ptrGlBlock) {selectedBlock = NULL;}
 	delete bb->ptrGlBlock;
 	bb->closeSocket();
@@ -465,7 +464,6 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 	void BlinkyBlocksWorld::tapBlock(int bId) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*)getBlockById(bId);
 		bb->tap();
-		OUTPUT << "BlinkyBlocksWorld: block "<< bId << " tap scheduled" << endl;
 	}
 	
 	void BlinkyBlocksWorld::accelBlock(int bId, int x, int y, int z) {
