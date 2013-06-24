@@ -13,6 +13,7 @@
 #include "buildingBlock.h"
 #include "blockCode.h"
 #include "trace.h"
+#include "blinkyBlocksEvents.h"
 
 using namespace std;
 using namespace boost;
@@ -33,7 +34,7 @@ BlinkyBlocksScheduler::~BlinkyBlocksScheduler() {
 	delete sem_schedulerStart;
 	// Peut-être necessaire, a tester ?
 	getWorld()->getIos().stop();
-	getScheduler()->scheduleLock(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
+	getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
 	schedulerThread->join();
 	delete schedulerThread;
 	/* sleep for a while, to be sure that the schedulerThread will be
@@ -59,7 +60,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	OUTPUT << "\033[1;33mScheduler Mode :" << schedulerMode << "\033[0m" << endl;
 	
 	sem_schedulerStart->wait();
-	readIncomingMessages();
+	readVMMessages();
 	//BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
 	int systemStartTime, systemStopTime;
 	multimap<uint64_t, EventPtr>::iterator first;
@@ -70,12 +71,34 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	switch (schedulerMode) {
 		case SCHEDULER_MODE_FASTEST:
 			while ( (!eventsMap.empty() ) && currentDate < maximumDate) {
+				/*while (!undefinedBlocksSetIsEmpty()) {
+					waitForOneVMMessage();
+				} */
 				first=eventsMap.begin();
 				pev = (*first).second;
 				pev->consume();
 				eventsMap.erase(first);
 				eventsMapSize--;
 			}
+			
+		/*		    while ( (!eventsMap.empty() || !undefinedBlocksSetIsEmpty()) && currentDate < maximumDate) {
+
+	    	while (!undefinedBlocksSetIsEmpty()) {
+	    		waitForVMMessage();
+	    	}
+
+	    	if (!eventsMap.empty()) {
+	    		first=eventsMap.begin();
+	    		pev = (*first).second;
+	    		currentDate = pev->date;
+// 		   		lock();
+				pev->consume();
+//    			unlock();
+				eventsMap.erase(first);
+				eventsMapSize--;
+	    	}
+	    }*/
+			
 			break;
 		case SCHEDULER_MODE_REALTIME:
 			OUTPUT << "Realtime mode scheduler\n";
@@ -83,9 +106,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 			while (!mustStop) {
 				systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
 				systemCurrentTimeMax = systemCurrentTime - systemStartTime;
-				lock();
-				readIncomingMessages();
-				unlock();
+				readVMMessages();
 				while (true) {
 						lock();
 						if (eventsMap.empty()) { unlock(); break;}
@@ -97,11 +118,15 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 							mustStop = true;
 						}
 						currentDate = pev->date;
+						unlock();
+						// may call schedule(), which contains lock();
 						pev->consume();
+						lock();
 						eventsMap.erase(first);
 						eventsMapSize--;
-						readIncomingMessages();
 						unlock();
+						// may call schedule(), which contains lock();
+						readVMMessages();
 				}
 				systemCurrentTime = systemCurrentTimeMax;
 #ifdef WIN32
@@ -177,20 +202,37 @@ void BlinkyBlocksScheduler::start(int mode) {
 	BlinkyBlocksScheduler* sbs = (BlinkyBlocksScheduler*)scheduler;
 	sbs->schedulerMode = mode;
 	sbs->sem_schedulerStart->post();
+	//sem_schedulerStart->post();
 }
 
-void BlinkyBlocksScheduler::readIncomingMessages() {
+void BlinkyBlocksScheduler::readVMMessages() {
 	getWorld()->getIos().poll();
 	getWorld()->getIos().reset();
 }
 
+void BlinkyBlocksScheduler::waitForOneVMMessage() {
+	getWorld()->getIos().run_one();
+	getWorld()->getIos().reset();
+}
+
+/*
 void BlinkyBlocksScheduler::lock() {
 	mutex_schedule.lock();
 }
 
 void BlinkyBlocksScheduler::unlock() {
 	mutex_schedule.unlock();
+} */
+
+void BlinkyBlocksScheduler::pauseSimulation(int timestamp) {
+	getScheduler()->schedule(new VMDebugPauseSimEvent(timestamp));
 }
 
+void BlinkyBlocksScheduler::unPauseSimulation() {
+	BlinkyBlocksScheduler* sbs = (BlinkyBlocksScheduler*)scheduler;
+	sbs->sem_schedulerStart->post();
+	//sem_schedulerStart->post();
+	OUTPUT << "unpause sim" << endl;
+}
 
 } // BlinkyBlocks namespace

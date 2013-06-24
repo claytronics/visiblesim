@@ -30,12 +30,13 @@ protected:
 	virtual ~BlinkyBlocksScheduler();
 	void* startPaused(/*void *param */);
 	
-	boost::interprocess::interprocess_semaphore *sem_schedulerStart;
-	boost::interprocess::interprocess_mutex mutex_schedule;
+	//boost::interprocess::interprocess_mutex mutex_schedule;
 	boost::thread *schedulerThread;
 	int schedulerMode;
 
 public:
+
+	boost::interprocess::interprocess_semaphore *sem_schedulerStart;
 	static void createScheduler();
 	static void deleteScheduler();
 	static BlinkyBlocksScheduler* getScheduler() {
@@ -53,11 +54,14 @@ public:
 		schedulerThread->join();
 	}
 	
-	void readIncomingMessages();
+	void readVMMessages();
+	void waitForOneVMMessage();
 	
-	void lock();
-	void unlock();
-	bool scheduleLock(Event *ev) {lock(); bool ret = schedule(ev); unlock(); return ret;};
+	//void lock();
+	//void unlock();
+	//bool scheduleLock(Event *ev) {lock(); bool ret = schedule(ev); unlock(); return ret;};
+	void pauseSimulation(int timestamp);
+	void unPauseSimulation();
 };
 
 inline void createScheduler() {

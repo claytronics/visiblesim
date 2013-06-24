@@ -14,6 +14,7 @@
 #include "blinkyBlocksBlock.h"
 #include "objLoader.h"
 #include <boost/asio.hpp>
+#include "trace.h"
 
 namespace BlinkyBlocks {
 
@@ -47,8 +48,13 @@ public:
 		return((BlinkyBlocksWorld*)world);
 	}
 	boost::asio::io_service& getIos() { return ios; }
+	
 	void printInfo() {
-		cout << "I'm a BlinkyBlocksWorld" << endl;
+		OUTPUT << "I'm a BlinkyBlocksWorld" << endl;
+	}
+
+	virtual BlinkyBlocksBlock* getBlockById(int bId) {
+		return((BlinkyBlocksBlock*)World::getBlockById(bId));
 	}
 
 	virtual void addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlockCodeBuildingFunction)(BlinkyBlocksBlock*), const Vecteur &pos, const Vecteur &col);

@@ -31,7 +31,7 @@ protected:
 	uint64_t maximumDate;
 	multimap<uint64_t,EventPtr> eventsMap;
 	int eventsMapSize, largestEventsMapSize;
-	//boost::interprocess::interprocess_mutex mutex_schedule;
+	boost::interprocess::interprocess_mutex mutex_schedule;
 	boost::interprocess::interprocess_mutex mutex_trace;
 
 	Scheduler();
@@ -58,8 +58,11 @@ public:
 	virtual void trace(string message);
 	void removeEventsToBlock(BuildingBlock *bb);
 
-	//void lock();
-	//void unlock();
+	void lock();
+	void unlock();
+	
+	//virtual void pauseSimulation(int timestamp) {};
+	//virtual void unPauseSimulation() {};
 
 	virtual void start(int) {};
 };

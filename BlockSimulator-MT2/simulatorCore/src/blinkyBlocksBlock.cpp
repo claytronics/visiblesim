@@ -132,19 +132,19 @@ void BlinkyBlocksBlock::sendMessageToVM(uint64_t size, uint64_t* message){
 }
   
 void BlinkyBlocksBlock::tap() {
-	//getScheduler()->schedule(new VMTapEvent(getScheduler()->now(), this));
-	getScheduler()->scheduleLock(new VMTapEvent(getScheduler()->now(), this));
+	getScheduler()->schedule(new VMTapEvent(getScheduler()->now(), this));
+	//getScheduler()->scheduleLock(new VMTapEvent(getScheduler()->now(), this));
 	OUTPUT << "tap scheduled" << endl;
 }
   
 void BlinkyBlocksBlock::accel(int x, int y, int z) {
-	//getScheduler()->schedule(new VMAccelEvent(getScheduler()->now(), this, x, y, z));
-	getScheduler()->scheduleLock(new VMAccelEvent(getScheduler()->now(), this, x, y, z));
+	getScheduler()->schedule(new VMAccelEvent(getScheduler()->now(), this, x, y, z));
+	//getScheduler()->scheduleLock(new VMAccelEvent(getScheduler()->now(), this, x, y, z));
 }
 	
 void BlinkyBlocksBlock::shake(int f) {
-	//getScheduler()->schedule(new VMShakeEvent(getScheduler()->now(), this, f));
-	getScheduler()->scheduleLock(new VMShakeEvent(getScheduler()->now(), this, f));
+	getScheduler()->schedule(new VMShakeEvent(getScheduler()->now(), this, f));
+	//getScheduler()->scheduleLock(new VMShakeEvent(getScheduler()->now(), this, f));
 }
 	
 string getStringNeighborDirection(uint64_t d) {
@@ -176,20 +176,20 @@ string getStringNeighborDirection(uint64_t d) {
   
 void BlinkyBlocksBlock::addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target) {
 	OUTPUT << "Simulator: "<< blockId << " add neighbor " << target->blockId << " on " << getStringNeighborDirection(getDirection(ni)) << endl;
-	//getScheduler()->schedule(new VMAddNeighborEvent(getScheduler()->now(), this, getDirection(ni), target->blockId));
-	getScheduler()->scheduleLock(new VMAddNeighborEvent(getScheduler()->now(), this, getDirection(ni), target->blockId));
+	getScheduler()->schedule(new VMAddNeighborEvent(getScheduler()->now(), this, getDirection(ni), target->blockId));
+	//getScheduler()->scheduleLock(new VMAddNeighborEvent(getScheduler()->now(), this, getDirection(ni), target->blockId));
 }
 
 void BlinkyBlocksBlock::removeNeighbor(P2PNetworkInterface *ni) {
 	OUTPUT << "Simulator: "<< blockId << " remove neighbor on " << getStringNeighborDirection(getDirection(ni)) << endl;
-	//getScheduler()->schedule(new VMRemoveNeighborEvent(getScheduler()->now(), this, getDirection(ni)));
-	getScheduler()->scheduleLock(new VMRemoveNeighborEvent(getScheduler()->now(), this, getDirection(ni)));
+	getScheduler()->schedule(new VMRemoveNeighborEvent(getScheduler()->now(), this, getDirection(ni)));
+	//getScheduler()->scheduleLock(new VMRemoveNeighborEvent(getScheduler()->now(), this, getDirection(ni)));
 }
   
 void BlinkyBlocksBlock::stop() {
 	OUTPUT << "Simulator: stop VM" << endl;
-	//getScheduler()->schedule(new VMStopEvent(getScheduler()->now(), this));
-	getScheduler()->scheduleLock(new VMStopEvent(getScheduler()->now(), this));
+	getScheduler()->schedule(new VMStopEvent(getScheduler()->now(), this));
+	//getScheduler()->scheduleLock(new VMStopEvent(getScheduler()->now(), this));
 }
 
 }

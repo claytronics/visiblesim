@@ -214,7 +214,9 @@ void GlutContext::keyboardFunc(unsigned char c, int x, int y)
       case '-' : camera->mouseZoom(-0.5); break;
 	//  case 'l' : showLinks = !showLinks; break;
       case 'r' : getScheduler()->start(SCHEDULER_MODE_REALTIME); break;
+      //case 'p' : getScheduler()->pauseSimulation(getScheduler()->now()); break;
 	  case 'R' : getScheduler()->start(SCHEDULER_MODE_FASTEST); break;
+	  //case 'u' : getScheduler()->unPauseSimulation(); break;
 	  case 'z' : {
 		  World *world = BaseSimulator::getWorld();
 		  GlBlock *slct=world->getSelectedBlock();

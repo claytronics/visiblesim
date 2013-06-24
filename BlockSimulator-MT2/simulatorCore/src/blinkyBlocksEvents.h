@@ -11,6 +11,7 @@
 #include "blinkyBlocksBlock.h"
 #include "events.h"
 #include "uniqueEventsId.h"
+#include "blinkyBlocksDebugger.h"
 
 namespace BlinkyBlocks {
 
@@ -165,15 +166,31 @@ public:
 class VMDebugMessageEvent : public BlockEvent {
 
 public:
-	MessagePtr message;
+	VMDebugMessagePtr message;
 	
-	VMDebugMessageEvent(uint64_t, BlinkyBlocksBlock *conBlock, Message *mes);
+	VMDebugMessageEvent(uint64_t, BlinkyBlocksBlock *conBlock, VMDebugMessage *mes);
 	VMDebugMessageEvent(VMDebugMessageEvent *ev);
 	~VMDebugMessageEvent();
 	void consumeBlockEvent();
 	const virtual string getEventName();
 };
 
+//===========================================================================================================
+//
+//          VMDebugMessageEvent  (class)
+//
+//===========================================================================================================
+
+class VMDebugPauseSimEvent : public Event {
+
+public:
+	
+	VMDebugPauseSimEvent(uint64_t);
+	VMDebugPauseSimEvent(VMDebugPauseSimEvent *ev);
+	~VMDebugPauseSimEvent();
+	void consume();
+	const virtual string getEventName();
+};
 
 } // BlinkyBlocks namespace
 

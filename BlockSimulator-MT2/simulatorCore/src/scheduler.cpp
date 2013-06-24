@@ -53,7 +53,7 @@ bool Scheduler::schedule(Event *ev) {
 	//MODIF NICO : cette ligne me spam trop l'affichage^^
 	//~ trace(info.str());
 
-	//lock();
+	lock();
 
 	if (pev->date < Scheduler::currentDate) {
 		OUTPUT << "ERROR : An event cannot be schedule in the past !\n";
@@ -75,13 +75,13 @@ bool Scheduler::schedule(Event *ev) {
 
 	if (largestEventsMapSize < eventsMapSize) largestEventsMapSize = eventsMapSize;
 
-	//unlock();
+	unlock();
 
 	return(true);
 }
 
 void Scheduler::removeEventsToBlock(BuildingBlock *bb) {
-	//lock();
+	lock();
 	multimap<uint64_t,EventPtr>::iterator im = eventsMap.begin();
 	BuildingBlock *cb=NULL;
 	OUTPUT << bb << endl;
@@ -99,7 +99,7 @@ void Scheduler::removeEventsToBlock(BuildingBlock *bb) {
 			}
 		} else im++;
 	}
-	//unlock();
+	unlock();
 }
 
 uint64_t Scheduler::now() {
@@ -113,13 +113,13 @@ void Scheduler::trace(string message) {
 	mutex_trace.unlock();
 }
 
-/*
+
 void Scheduler::lock() {
 	mutex_schedule.lock();
 }
 
 void Scheduler::unlock() {
 	mutex_schedule.unlock();
-}*/
+}
 
 } // BaseSimulator namespace

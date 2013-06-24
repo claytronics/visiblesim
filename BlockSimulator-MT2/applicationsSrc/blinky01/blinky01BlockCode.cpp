@@ -233,7 +233,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		break;
 	case EVENT_DEBUG_MESSAGE:
 		// forward the debugging message
-		
+		//VMDataMessage *m = (VMDataMessage*) (boost::static_pointer_cast<NetworkInterfaceReceiveEvent>(pev))->message.get();
+		//bb->sendMessageToVM(m->size(), m->message);
 		break;
 	default:
 		ERRPUT << "*** ERROR *** : unknown local event" << endl;

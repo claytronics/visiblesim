@@ -6,6 +6,7 @@
  */
 
 #include "blinkyBlocksEvents.h"
+#include "blinkyBlocksScheduler.h"
 
 namespace BlinkyBlocks {
 
@@ -225,10 +226,10 @@ const string VMShakeEvent::getEventName() {
 //
 //===========================================================================================================
 
-VMDebugMessageEvent::VMDebugMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, Message *mes): BlockEvent(t, conBlock) {
+VMDebugMessageEvent::VMDebugMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, VMDebugMessage *mes): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_DEBUG_MESSAGE;
-	message = MessagePtr(mes);
+	message = VMDebugMessagePtr(mes);
 }
 
 VMDebugMessageEvent::VMDebugMessageEvent(VMDebugMessageEvent *ev) : BlockEvent(ev) {
@@ -247,6 +248,36 @@ void VMDebugMessageEvent::consumeBlockEvent() {
 
 const string VMDebugMessageEvent::getEventName() {
 	return("VMDebugMessage Event");
+}
+
+//===========================================================================================================
+//
+//          VMDebugPauseSimEvent  (class)
+//
+//===========================================================================================================
+
+VMDebugPauseSimEvent::VMDebugPauseSimEvent(uint64_t t): Event(t) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_DEBUG_PAUSE_SIMULATION;
+}
+
+VMDebugPauseSimEvent::VMDebugPauseSimEvent(VMDebugPauseSimEvent *ev) : Event(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+VMDebugPauseSimEvent::~VMDebugPauseSimEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void VMDebugPauseSimEvent::consume() {
+	EVENT_CONSUME_INFO();
+	OUTPUT << "pause sim degin" << endl;
+	getScheduler()->sem_schedulerStart->wait();
+	OUTPUT << "pause sim end" << endl;
+}
+
+const string VMDebugPauseSimEvent::getEventName() {
+	return("VMDebugPauseSim Event");
 }
 
 } // BlinkyBlocks namespace
