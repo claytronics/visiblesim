@@ -16,8 +16,6 @@ using namespace std;
 
 namespace BlinkyBlocks {
 
-extern void (*debuggerMessageHandler)(uint64_t*);
-
 /* -------------------------------------------------------------------*/
 /* To be removed later, just for testing purpose */
 inline void handleMessage (uint64_t *message) {
@@ -34,6 +32,8 @@ inline void (*initDebugger(void (*send)(int, int, uint64_t*),
 
 /* -------------------------------------------------------------------*/
 
+//typedef
+
 class VMDebugMessage {
 public:
 	int size; // in bytes
@@ -45,25 +45,51 @@ public:
 
 typedef boost::shared_ptr<VMDebugMessage> VMDebugMessagePtr;
 
-void init();
-
-void sendMessage(int id, int size, uint64_t *message);
-
-void pauseSimulation(int timestamp, int size, uint64_t *message);
-
-void unPauseSimulation(int size, uint64_t *message);
-
-/*
 class BlinkyBlocksDebugger {
-	
+
+protected:
+	void (*debuggerMessageHandler)(uint64_t*);	
+	static BlinkyBlocksDebugger *debugger;
+
 public:
 	
 	BlinkyBlocksDebugger();
 	~BlinkyBlocksDebugger();
 	
-protected:
+	void sendMes(int id, int size, uint64_t *message);
+	void pauseSim(int timestamp, int size, uint64_t *message);
+	void unPauseSim(int size, uint64_t *message);
+	
+	static BlinkyBlocksDebugger* getDebugger() {
+		assert(debugger != NULL);
+		return(debugger);
+	}
+	
+	static void createDebugger() {
+			debugger = new BlinkyBlocksDebugger();
+	}
+	
+	static void deleteDebugger() {
+		delete debugger;
+		debugger = NULL;
+	}
+};
 
-}; */
+inline void createDebugger() {
+	BlinkyBlocksDebugger::createDebugger();
+}
+
+inline void deleteDebugger() {
+	BlinkyBlocksDebugger::deleteDebugger();
+}
+
+inline BlinkyBlocksDebugger* getDebugger() { return(BlinkyBlocksDebugger::getDebugger()); }
+	
+inline void sendMessage(int id, int size, uint64_t *message) { getDebugger()->sendMes(id, size, message);}
+
+inline void pauseSimulation(int timestamp, int size, uint64_t *message) { getDebugger()->pauseSim(timestamp, size, message);}
+
+inline void unPauseSimulation(int size, uint64_t *message) { getDebugger()->unPauseSim(size,message); }
 
 }
 

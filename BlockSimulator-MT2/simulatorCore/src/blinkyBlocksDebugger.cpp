@@ -18,14 +18,21 @@ VMDebugMessage::~VMDebugMessage() {
 	delete[] message;
 }
 
+//void (*debuggerMessageHandler)(uint64_t*) = NULL; // extern
 
-void (*debuggerMessageHandler)(uint64_t*) = NULL;
+BlinkyBlocksDebugger *BlinkyBlocksDebugger::debugger=NULL;
 
-void init() {
-	debuggerMessageHandler = initDebugger(&sendMessage, &pauseSimulation, &unPauseSimulation);
+BlinkyBlocksDebugger::BlinkyBlocksDebugger() {
+	if (debugger == NULL) {
+		debugger = this;		
+		debuggerMessageHandler = initDebugger(&sendMessage, &pauseSimulation, &unPauseSimulation);
+	} else {
+		ERRPUT << "\033[1;31m" << "Only one Scheduler instance can be created, aborting !" << "\033[0m" << endl;
+		exit(EXIT_FAILURE);
+	}
 }
 
-void sendMessage(int id, int size, uint64_t *message) {
+void BlinkyBlocksDebugger::sendMes(int id, int size, uint64_t *message) {
 	
 	/*BaseSimulator::getScheduler()->scheduleLock(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
 					new VMDataMessage(hostBlock->blockId, size, message), interface));*/
@@ -41,15 +48,16 @@ void sendMessage(int id, int size, uint64_t *message) {
 	} 
 }
 
-void pauseSimulation(int timestamp, int size, uint64_t *message) {
+void BlinkyBlocksDebugger::pauseSim(int timestamp, int size, uint64_t *message) {
 	//sendMessage(-1, int size, void *message); // attention au timestamp
 	//getScheduler()->scheduleLock(new VMDebugPauseSimEvent(timestamp));
 	getScheduler()->schedule(new VMDebugPauseSimEvent(timestamp));
 }
 
-void unPauseSimulation(int size, uint64_t *message) {
+void BlinkyBlocksDebugger::unPauseSim(int size, uint64_t *message) {
 	//sendMessage(-1, int size, void *message);
 	// pas de schedule lock ici, sinon inter-blocage
 	getScheduler()->unPauseSimulation();
 }
+
 }

@@ -17,6 +17,7 @@
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include "trace.h"
+#include <set>
 
 using namespace boost;
 using boost::asio::ip::udp;
@@ -33,6 +34,8 @@ protected:
 	//boost::interprocess::interprocess_mutex mutex_schedule;
 	boost::thread *schedulerThread;
 	int schedulerMode;
+	
+	set<int> undefinedBlocksSet;
 
 public:
 
@@ -62,6 +65,16 @@ public:
 	//bool scheduleLock(Event *ev) {lock(); bool ret = schedule(ev); unlock(); return ret;};
 	void pauseSimulation(int timestamp);
 	void unPauseSimulation();
+	
+	void addUndefinedBlock(int id) {
+		undefinedBlocksSet.insert(id);
+	}
+	void removeUndefinedBlock(int id) {
+		undefinedBlocksSet.erase(id);
+	}
+	bool undefinedBlocksSetIsEmpty() {
+		return(undefinedBlocksSet.empty());
+	}
 };
 
 inline void createScheduler() {

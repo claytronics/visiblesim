@@ -52,7 +52,7 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 		if (attr) {
 			if (strcmp(attr, "True") == 0) {
 					debugging = true;
-					init();
+					createDebugger();
 			}
 		}
 		OUTPUT << "server port : " << port << endl;

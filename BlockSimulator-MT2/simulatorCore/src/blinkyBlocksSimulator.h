@@ -21,6 +21,7 @@ namespace BlinkyBlocks {
 
 class BlinkyBlocksSimulator : public BaseSimulator::Simulator {
 protected:
+
 	BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlocksBlockCode *(*blinkyBlocksCodeBuildingFunction)(BlinkyBlocksBlock*));
 	virtual ~BlinkyBlocksSimulator();
 
