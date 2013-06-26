@@ -77,7 +77,6 @@ void messageHandler(uint64_t* msg){
   }
 }
 
-int main(){return 0;}
 
 //continuously attend command line prompt for debugger
 //when the system is not paused
