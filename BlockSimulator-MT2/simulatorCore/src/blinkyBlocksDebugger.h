@@ -73,6 +73,10 @@ public:
 		delete debugger;
 		debugger = NULL;
 	}
+	
+	void handleDebugMessage(uint64_t* m) {
+		debuggerMessageHandler(m);
+	}
 };
 
 inline void createDebugger() {
@@ -90,6 +94,8 @@ inline void sendMessage(int id, int size, uint64_t *message) { getDebugger()->se
 inline void pauseSimulation(int timestamp) { getDebugger()->pauseSim(timestamp);}
 
 inline void unPauseSimulation() { getDebugger()->unPauseSim(); }
+
+inline void handleDebugMessage(uint64_t* m) { getDebugger()->handleDebugMessage(m); }
 
 }
 

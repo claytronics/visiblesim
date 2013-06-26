@@ -18,9 +18,10 @@ using boost::asio::ip::tcp;
 
 //#define SET_COLOR_EXAMPLE
 //#define COLOR_SPREADING_EXAMPLE
-#define COLOR_ON_TAP_EXAMPLE
+//#define COLOR_ON_TAP_EXAMPLE
 //#define NEIGHBOR_LIST_EXAMPLE
 //#define MESSAGE_ANALYSER
+#define DEBUGGER
 
 #define VM_MESSAGE_SET_ID			1
 #define VM_MESSAGE_STOP				4
@@ -32,6 +33,7 @@ using boost::asio::ip::tcp;
 #define VM_MESSAGE_RECEIVE_MESSAGE	10
 #define VM_MESSAGE_ACCEL			11
 #define VM_MESSAGE_SHAKE			12
+#define VM_MESSAGE_DEBUG			16
 
 typedef struct VMMessage_tt {
     uint64_t size;
@@ -313,6 +315,25 @@ void vm_thread_function(void *data) {
 #ifdef MESSAGE_ANALYSER
 	while(true) {
 		if (!readMessageFromVM(socket, &in, id)) break;
+	}
+#endif
+#ifdef DEBUGGER
+	while(true) {
+		if (!readMessageFromVM(socket, &in, id)) break;
+		if (in.type == VM_MESSAGE_DEBUG) {
+			uint64_t m[4];
+			m[0] = 7*sizeof(uint64_t);
+			m[1] = VM_MESSAGE_DEBUG;
+			m[2] = 5;
+			m[3] = 0x48656C6F00;
+			try {
+				boost::asio::write(socket, boost::asio::buffer((void*)&out,8*sizeof(uint64_t)));
+				cout << "VM " << id << " sent SET_COLOR(random)" <<  endl;
+			} catch (std::exception& e) {
+				cerr << "Connection to the Simulator lost" << endl;
+				break;
+			}
+		}
 	}
 #endif
 	socket.close();

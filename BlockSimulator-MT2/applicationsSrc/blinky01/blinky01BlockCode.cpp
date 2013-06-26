@@ -29,7 +29,7 @@ using boost::asio::ip::tcp;
 #define VM_MESSAGE_RECEIVE_MESSAGE				10
 #define VM_MESSAGE_ACCEL						11
 #define VM_MESSAGE_SHAKE						12
-#define VM_MESSAGE_DEBUG						13
+#define VM_MESSAGE_DEBUG						16
 
 string getStringMessage(uint64_t t) {
 	switch(t) {
@@ -134,6 +134,7 @@ void Blinky01BlockCode::handleNewMessage() {
 			break;
 		case VM_MESSAGE_DEBUG:
 			// debug message handler
+			handleDebugMessage(message);
 			break;
 		default:
 			ERRPUT << "*** ERROR *** : unsupported message received from VM (" << message[0] <<")" << endl;
@@ -232,9 +233,13 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		}
 		break;
 	case EVENT_DEBUG_MESSAGE:
+		{
 		// forward the debugging message
 		//VMDataMessage *m = (VMDataMessage*) (boost::static_pointer_cast<NetworkInterfaceReceiveEvent>(pev))->message.get();
 		//bb->sendMessageToVM(m->size(), m->message);
+		VMDebugMessage *m = (VMDebugMessage*) (boost::static_pointer_cast<VMDebugMessageEvent>(pev))->message.get();
+		bb->vm->sendMessage(m->size, m->message);
+		}
 		break;
 	default:
 		ERRPUT << "*** ERROR *** : unknown local event" << endl;
