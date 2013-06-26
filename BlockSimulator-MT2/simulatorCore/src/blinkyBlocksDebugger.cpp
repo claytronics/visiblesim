@@ -5,6 +5,7 @@
 #include "blinkyBlocksWorld.h"
 //#include "world.h"
 #include "blinkyBlocksBlock.h"
+#include "debug_simPrompt.hpp"
 
 namespace BlinkyBlocks {
 

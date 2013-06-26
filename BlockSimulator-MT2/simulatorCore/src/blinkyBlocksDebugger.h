@@ -10,7 +10,7 @@
 
 #include <iostream>
 #include <boost/shared_ptr.hpp>
- #include <inttypes.h>
+#include <inttypes.h>
 
 using namespace std;
 
@@ -18,7 +18,7 @@ namespace BlinkyBlocks {
 
 /* -------------------------------------------------------------------*/
 /* To be removed later, just for testing purpose */
-inline void handleMessage (uint64_t *message) {
+/*inline void handleMessage (uint64_t *message) {
 		cout << "message handler debugger" << endl;
 };
 
@@ -28,7 +28,7 @@ inline void (*initDebugger(void (*send)(int, int, uint64_t*),
 	cout << "init debugger" << endl;
 	return handleMessage;
 	
-};
+};*/
 
 /* -------------------------------------------------------------------*/
 
