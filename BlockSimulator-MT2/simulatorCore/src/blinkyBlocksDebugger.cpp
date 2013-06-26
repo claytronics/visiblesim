@@ -48,13 +48,13 @@ void BlinkyBlocksDebugger::sendMes(int id, int size, uint64_t *message) {
 	} 
 }
 
-void BlinkyBlocksDebugger::pauseSim(int timestamp, int size, uint64_t *message) {
+void BlinkyBlocksDebugger::pauseSim(int timestamp) {
 	//sendMessage(-1, int size, void *message); // attention au timestamp
 	//getScheduler()->scheduleLock(new VMDebugPauseSimEvent(timestamp));
 	getScheduler()->schedule(new VMDebugPauseSimEvent(timestamp));
 }
 
-void BlinkyBlocksDebugger::unPauseSim(int size, uint64_t *message) {
+void BlinkyBlocksDebugger::unPauseSim() {
 	//sendMessage(-1, int size, void *message);
 	// pas de schedule lock ici, sinon inter-blocage
 	getScheduler()->unPauseSimulation();

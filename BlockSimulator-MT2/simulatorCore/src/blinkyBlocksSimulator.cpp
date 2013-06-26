@@ -10,6 +10,7 @@
 #include <string.h>
 #include "trace.h"
 #include "blinkyBlocksDebugger.h"
+#include "blinkyBlocksVM.h"
 
 using namespace std;
 
@@ -55,7 +56,9 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 					createDebugger();
 			}
 		}
-		OUTPUT << "server port : " << port << endl;
+		//OUTPUT << "server port : " << port << endl;
+		setVMConfiguration(vmPath, programPath, debugging);
+		createVMServer(port);
 	}
 	
 	node = xmlDoc->FirstChild("world");
@@ -68,7 +71,7 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 		int ly = atoi(str.substr(pos1+1,pos2-pos1-1).c_str());
 		int lz = atoi(str.substr(pos2+1,str.length()-pos1-1).c_str());
 		OUTPUT << "grid size : " << lx << " x " << ly << " x " << lz << endl;
-		createWorld(lx, ly, lz, port, vmPath, programPath, debugging, argc, argv);
+		createWorld(lx, ly, lz, argc, argv);
 		world = getWorld();
 		world->loadTextures("../../simulatorCore/blinkyBlocksTextures");
 	} else {
@@ -208,6 +211,7 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 
 BlinkyBlocksSimulator::~BlinkyBlocksSimulator() {
 	OUTPUT << "\033[1;34m" << "BlinkyBlocksSimulator destructor" << "\033[0m" <<endl;
+	deleteVMServer();
 }
 
 void BlinkyBlocksSimulator::createSimulator(int argc, char *argv[], BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) {

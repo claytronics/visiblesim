@@ -32,7 +32,6 @@ BlinkyBlocksScheduler::BlinkyBlocksScheduler() {
 BlinkyBlocksScheduler::~BlinkyBlocksScheduler() {
 	OUTPUT << "\033[1;31mBlinkyBlocksScheduler destructor\33[0m" << endl;	
 	// Peut-être necessaire, a tester ?
-	getWorld()->getIos().stop();
 	getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
 	sem_schedulerStart->post(); // resume the simulation if it is paused
 	schedulerThread->join();
@@ -61,7 +60,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	OUTPUT << "\033[1;33mScheduler Mode :" << schedulerMode << "\033[0m" << endl;
 	
 	sem_schedulerStart->wait();
-	readVMMessages();
+	checkForReceivedVMMessages();
 	//BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
 	int systemStartTime, systemStopTime;
 	multimap<uint64_t, EventPtr>::iterator first;
@@ -95,7 +94,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 			while (!mustStop) {
 				systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
 				systemCurrentTimeMax = systemCurrentTime - systemStartTime;
-				readVMMessages();
+				checkForReceivedVMMessages();
 				while (true) {
 						lock();
 						if (eventsMap.empty()) { unlock(); break;}
@@ -115,7 +114,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 						eventsMapSize--;
 						unlock();
 						// may call schedule(), which contains lock();
-						readVMMessages();
+						checkForReceivedVMMessages();
 				}
 				systemCurrentTime = systemCurrentTimeMax;
 #ifdef WIN32
@@ -192,16 +191,6 @@ void BlinkyBlocksScheduler::start(int mode) {
 	sbs->schedulerMode = mode;
 	sbs->sem_schedulerStart->post();
 	//sem_schedulerStart->post();
-}
-
-void BlinkyBlocksScheduler::readVMMessages() {
-	getWorld()->getIos().poll();
-	getWorld()->getIos().reset();
-}
-
-void BlinkyBlocksScheduler::waitForOneVMMessage() {
-	getWorld()->getIos().run_one();
-	getWorld()->getIos().reset();
 }
 
 void BlinkyBlocksScheduler::pauseSimulation(int timestamp) {

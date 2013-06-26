@@ -102,14 +102,14 @@ void Blinky01BlockCode::startup() {
 	stringstream info;
 	info << "  Starting Blinky01BlockCode in block " << hostBlock->blockId;
 	BlinkyBlocks::getScheduler()->trace(info.str());
-	((BlinkyBlocksBlock*)hostBlock)->readMessageFromVM();
+	((BlinkyBlocksBlock*)hostBlock)->vm->asyncReadMessage();
 }
 
 void Blinky01BlockCode::handleNewMessage() {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
-	OUTPUT << "Blinky01BlockCode: type: " << getStringMessage(bb->getBufferPtr()->message[0]) << " size: " << bb->getBufferPtr()->size << endl;
-	uint64_t* message = bb->getBufferPtr()->message;
-	uint64_t size = bb->getBufferPtr()->size;
+	OUTPUT << "Blinky01BlockCode: type: " << getStringMessage(bb->vm->getBufferPtr()->message[0]) << " size: " << bb->vm->getBufferPtr()->size << endl;
+	uint64_t* message = bb->vm->getBufferPtr()->message;
+	uint64_t size = bb->vm->getBufferPtr()->size;
 	switch (message[0]) {
 		case VM_MESSAGE_SET_COLOR:			
 			{
@@ -153,7 +153,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 		message[3] = -1; // souce node
 		message[4] = hostBlock->blockId;
-		bb->sendMessageToVM(5*sizeof(uint64_t), message);
+		bb->vm->sendMessage(5*sizeof(uint64_t), message);
 		OUTPUT << "ID sent to the VM " << hostBlock->blockId << endl;
 		}
 		break;
@@ -164,7 +164,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[1] = VM_MESSAGE_STOP;
 		message[2] = BaseSimulator::getScheduler()->now();
 		message[3] = -1; // souce node
-		bb->sendMessageToVM(4*sizeof(uint64_t), message);
+		bb->vm->sendMessage(4*sizeof(uint64_t), message);
 		bb->state = Stop;
 		}
 		break;
@@ -177,7 +177,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[3] = -1; // souce node
 		message[4] = (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->target;
 		message[5] = (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->face;
-		bb->sendMessageToVM(6*sizeof(uint64_t), message);
+		bb->vm->sendMessage(6*sizeof(uint64_t), message);
 		}
 		break;
 	case EVENT_REMOVE_NEIGHBOR:
@@ -188,7 +188,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 		message[3] = -1; // souce node
 		message[4] = (boost::static_pointer_cast<VMRemoveNeighborEvent>(pev))->face;
-		bb->sendMessageToVM(5*sizeof(uint64_t), message);
+		bb->vm->sendMessage(5*sizeof(uint64_t), message);
 		}
 		break;
 	case EVENT_TAP:
@@ -198,13 +198,13 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[1] = VM_MESSAGE_TAP;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 		message[3] = -1; // souce node
-		bb->sendMessageToVM(4*sizeof(uint64_t), message);
+		bb->vm->sendMessage(4*sizeof(uint64_t), message);
 		}
 		break;
 	case EVENT_RECEIVE_MESSAGE: /*EVENT_NI_RECEIVE: */
 		{
 		VMDataMessage *m = (VMDataMessage*) (boost::static_pointer_cast<NetworkInterfaceReceiveEvent>(pev))->message.get();
-		bb->sendMessageToVM(m->size(), m->message);
+		bb->vm->sendMessage(m->size(), m->message);
 		}
 		break;
 	case EVENT_ACCEL:
@@ -217,7 +217,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[4] = (boost::static_pointer_cast<VMAccelEvent>(pev))->x;
 		message[5] = (boost::static_pointer_cast<VMAccelEvent>(pev))->y;
 		message[6] = (boost::static_pointer_cast<VMAccelEvent>(pev))->z;
-		bb->sendMessageToVM(7*sizeof(uint64_t), message);
+		bb->vm->sendMessage(7*sizeof(uint64_t), message);
 		}
 		break;
 	case EVENT_SHAKE:
@@ -228,7 +228,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 		message[3] = -1; // souce node
 		message[4] = (boost::static_pointer_cast<VMShakeEvent>(pev))->force;
-		bb->sendMessageToVM(5*sizeof(uint64_t), message);
+		bb->vm->sendMessage(5*sizeof(uint64_t), message);
 		}
 		break;
 	case EVENT_DEBUG_MESSAGE:

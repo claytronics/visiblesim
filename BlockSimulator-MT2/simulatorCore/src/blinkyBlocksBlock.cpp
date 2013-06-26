@@ -11,7 +11,6 @@
 #include "blinkyBlocksWorld.h"
 #include "blinkyBlocksSimulator.h"
 #include "blinkyBlocksEvents.h"
-#include <sys/wait.h>
 #include "trace.h"
 
 using namespace std;
@@ -22,43 +21,25 @@ static const GLfloat tabColors[12][4]={{1.0,0.0,0.0,1.0},{1.0,0.647058824,0.0,1.
 {0.980392157,0.5,0.456,1.0},{0.549019608,0.5,0.5,1.0},{0.980392157,0.843137255,0.0,1.0},{0.094117647,0.545098039,0.094117647,1.0}};
 
 
-BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, boost::shared_ptr<tcp::socket> s, pid_t p, BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) : BaseSimulator::BuildingBlock(bId) {
+BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) : BaseSimulator::BuildingBlock(bId) {
 	OUTPUT << "BlinkyBlocksBlock constructor" << endl;
 	buildNewBlockCode = blinkyBlocksBlockCodeBuildingFunction;
-	socket = s;
-	pid = p;
-	buffer.message = NULL;
 	blockCode = (BaseSimulator::BlockCode*)buildNewBlockCode(this);
 	for (int i=0; i<6; i++) {
 		tabInterfaces[i] = new P2PNetworkInterface(this);
 	}
+	vm = new BlinkyBlocksVM(this);
 }
 
 BlinkyBlocksBlock::~BlinkyBlocksBlock() {
 	OUTPUT << "BlinkyBlocksBlock destructor " << blockId << endl;
 	//delete[] tabInterfaces;
-	if (state == Alive)  {
-		closeSocket();
-		killVM();
-	}
-}
-
-void BlinkyBlocksBlock::waitVMEnd() {	
-	waitpid(pid, NULL, 0);
+	killVM();
+	delete vm;
 }
 
 void BlinkyBlocksBlock::killVM() {
-	kill(pid, SIGTERM);
-	waitVMEnd();
-}
-
-void BlinkyBlocksBlock::closeSocket() {
-	if (socket != NULL) {
-		socket->cancel();
-		socket->close();
-		socket.reset();
-	}
-	delete[] buffer.message;
+	vm->stop();
 }
 
 void BlinkyBlocksBlock::setPosition(const Vecteur &p) {
@@ -87,50 +68,6 @@ NeighborDirection BlinkyBlocksBlock::getDirection(P2PNetworkInterface *given_int
 	return NeighborDirection(0);
 }
 
-void BlinkyBlocksBlock::readMessageHandler(const boost::system::error_code& error, std::size_t bytes_transferred) {
-	OUTPUT << "handler called" << endl;
-	if(error) {
-		ERRPUT << "an error occurred while receiving a tcp message from VM " << blockId << " (socket closed ?) " <<endl;
-		return;
-	}
-    delete[] buffer.message;
-    buffer.message = new uint64_t[buffer.size/sizeof(uint64_t)];
-    try {
-		boost::asio::read(getSocket(),boost::asio::buffer((void*)buffer.message, buffer.size) );
-	} catch (std::exception& e) {
-		ERRPUT << "connection to the VM "<< blockId << " lost" << endl;
-	}
-    ((BlinkyBlocksBlockCode*)blockCode)->handleNewMessage();
-    this->readMessageFromVM();
-}
-  
-void BlinkyBlocksBlock::readMessageFromVM() {
-	if (socket == NULL) {
-		ERRPUT << "the simulator is not connected to the VM "<< blockId << endl;
-		return;
-	}
-	try {
-	boost::asio::async_read(getSocket(), 
-		boost::asio::buffer(&buffer.size, sizeof(uint64_t)),
-		boost::bind(&BlinkyBlocksBlock::readMessageHandler, this, boost::asio::placeholders::error,
-		boost::asio::placeholders::bytes_transferred));
-	} catch (std::exception& e) {
-		ERRPUT << "connection to the VM "<< blockId << " lost" << endl;
-	}
-}
-  
-void BlinkyBlocksBlock::sendMessageToVM(uint64_t size, uint64_t* message){
-	if (socket == NULL) {
-		ERRPUT << "the simulator is not connected to the VM "<< blockId << endl;
-		return;
-	}
-	try {
-		boost::asio::write(getSocket(), boost::asio::buffer((void*)message,size));
-	} catch (std::exception& e) {
-		ERRPUT << "connection to the VM "<< blockId << " lost" << endl;
-	}
-}
-  
 void BlinkyBlocksBlock::tap() {
 	getScheduler()->schedule(new VMTapEvent(getScheduler()->now(), this));
 	//getScheduler()->scheduleLock(new VMTapEvent(getScheduler()->now(), this));

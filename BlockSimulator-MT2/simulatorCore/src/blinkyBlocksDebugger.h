@@ -23,8 +23,8 @@ inline void handleMessage (uint64_t *message) {
 };
 
 inline void (*initDebugger(void (*send)(int, int, uint64_t*), 
-					void (*pause)(int, int, uint64_t* ), 
-					void (*unPause)(int, uint64_t*) ))(uint64_t*) {
+					void (*pause)(int), 
+					void (*unPause)(void) ))(uint64_t*) {
 	cout << "init debugger" << endl;
 	return handleMessage;
 	
@@ -57,8 +57,8 @@ public:
 	~BlinkyBlocksDebugger();
 	
 	void sendMes(int id, int size, uint64_t *message);
-	void pauseSim(int timestamp, int size, uint64_t *message);
-	void unPauseSim(int size, uint64_t *message);
+	void pauseSim(int timestamp);
+	void unPauseSim();
 	
 	static BlinkyBlocksDebugger* getDebugger() {
 		assert(debugger != NULL);
@@ -87,9 +87,9 @@ inline BlinkyBlocksDebugger* getDebugger() { return(BlinkyBlocksDebugger::getDeb
 	
 inline void sendMessage(int id, int size, uint64_t *message) { getDebugger()->sendMes(id, size, message);}
 
-inline void pauseSimulation(int timestamp, int size, uint64_t *message) { getDebugger()->pauseSim(timestamp, size, message);}
+inline void pauseSimulation(int timestamp) { getDebugger()->pauseSim(timestamp);}
 
-inline void unPauseSimulation(int size, uint64_t *message) { getDebugger()->unPauseSim(size,message); }
+inline void unPauseSimulation() { getDebugger()->unPauseSim(); }
 
 }
 

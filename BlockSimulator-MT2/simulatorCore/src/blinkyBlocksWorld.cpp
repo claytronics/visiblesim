@@ -17,7 +17,7 @@ using namespace std;
 
 namespace BlinkyBlocks {
 
-BlinkyBlocksWorld::BlinkyBlocksWorld(int slx,int sly,int slz, int p, string vP, string pP, bool d, int argc, char *argv[]):World(), ios() {
+BlinkyBlocksWorld::BlinkyBlocksWorld(int slx,int sly,int slz, int argc, char *argv[]):World() {
 	OUTPUT << "\033[1;31mBlinkyBlocksWorld constructor\033[0m" << endl;
 	gridSize[0]=slx;
 	gridSize[1]=sly;
@@ -47,11 +47,6 @@ BlinkyBlocksWorld::BlinkyBlocksWorld(int slx,int sly,int slz, int p, string vP, 
 	menuId=0;
 	numSelectedFace=0;
 	numSelectedBlock=0;
-	port = p;
-	vmPath = vP;
-	programPath = pP;
-	debugging = d;
-	acceptor =  new tcp::acceptor(ios, tcp::endpoint(tcp::v4(), port));
 }
 
 BlinkyBlocksWorld::~BlinkyBlocksWorld() {
@@ -62,12 +57,11 @@ BlinkyBlocksWorld::~BlinkyBlocksWorld() {
 	delete objBlockForPicking;
 	delete objRepere;
 	delete camera;
-	delete acceptor;
 }
 
 
-void BlinkyBlocksWorld::createWorld(int slx,int sly,int slz, int p, string vP, string pP, bool d, int argc, char *argv[]) {
-	world = new BlinkyBlocksWorld(slx,sly,slz, p, vP, pP, d, argc,argv);
+void BlinkyBlocksWorld::createWorld(int slx,int sly,int slz, int argc, char *argv[]) {
+	world = new BlinkyBlocksWorld(slx,sly,slz,argc,argv);
 }
 
 void BlinkyBlocksWorld::deleteWorld() {
@@ -85,34 +79,7 @@ void BlinkyBlocksWorld::addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlo
 		blockId++;
 	}
 
-	// Start the VM
-	pid_t VMPid = 0;
-	VMPid = fork();	
-	if(VMPid < 0) {ERRPUT << "Error when starting the VM" << endl;}
-    if(VMPid == 0) {
-		stringstream output;
-		output << "VM" << blockId << ".log";
-		int fd = open(output.str().c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
-		dup2(fd, 1);
-		dup2(fd, 2);
-		close(fd);
-		if (debugging) {
-			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-S", NULL };
-			execv(vmPath.c_str(), const_cast<char**>(cmd));
-			OUTPUT << "debugging mode!" << endl;
-		} else {
-			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), NULL };
-			OUTPUT << "no debugging mode!" << endl;			
-			execv(vmPath.c_str(), const_cast<char**>(cmd));
-		}
-	}
-
-	// Wait for an incoming connection	
-	boost::shared_ptr<tcp::socket> socket(new tcp::socket(ios));	
-	acceptor->accept(*(socket.get()));
-	OUTPUT << "VM "<< blockId << " connected" << endl;
-
-	BlinkyBlocksBlock *blinkyBlock = new BlinkyBlocksBlock(blockId, socket, VMPid, blinkyBlockCodeBuildingFunction);
+	BlinkyBlocksBlock *blinkyBlock = new BlinkyBlocksBlock(blockId, blinkyBlockCodeBuildingFunction);
 	buildingBlocksMap.insert(std::pair<int,BaseSimulator::BuildingBlock*>(blinkyBlock->blockId, (BaseSimulator::BuildingBlock*)blinkyBlock));
 
 	getScheduler()->schedule(new CodeStartEvent(getScheduler()->now(), blinkyBlock));
@@ -223,7 +190,6 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 	}
 	if (selectedBlock == bb->ptrGlBlock) {selectedBlock = NULL;}
 	delete bb->ptrGlBlock;
-	bb->closeSocket();
 	bb->killVM();
 	//delete bb;
 

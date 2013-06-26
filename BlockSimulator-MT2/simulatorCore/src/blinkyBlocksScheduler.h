@@ -11,7 +11,6 @@
 #include "scheduler.h"
 #include "network.h"
 #include "blinkyBlocksBlock.h"
-#include <boost/asio.hpp>
 #include <boost/thread.hpp>
 #include <boost/bind.hpp>
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
@@ -20,8 +19,6 @@
 #include <set>
 
 using namespace boost;
-using boost::asio::ip::udp;
-using boost::asio::ip::tcp;
 
 namespace BlinkyBlocks {
 
@@ -56,9 +53,6 @@ public:
 	void waitForSchedulerEnd() {
 		schedulerThread->join();
 	}
-	
-	void readVMMessages();
-	void waitForOneVMMessage();
 	
 	//void lock();
 	//void unlock();
