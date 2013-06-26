@@ -49,31 +49,30 @@ void (*initDebugger(void (*sendMsg)(int,int,uint64_t*),
   isPaused = true;
   pthread_create(&tid,NULL,run_debugger, NULL);
 
-  return &messageHandler;
+  return messageHandler;
 }
 
+
+/*to be called by the simulator to controll the debugger
+ * or to display some info*/
 void messageHandler(uint64_t* msg){
 
   int sizeMsg;
   int command = (int)msg[2];
-  switch(command){
-
-  case BREAKFOUND:
-    sizeMsg = 3*SIZE;
+  if (command == BREAKPOINT){
+    sizeMsg = 2*SIZE;
     uint64_t msgSend[sizeMsg/SIZE];
     msgSend[0] = sizeMsg;
     msgSend[1] = DEBUG;
     msgSend[2] = PAUSE;
-    sendMessage(-1,sizeMsg,(uint64_t*)msgSend);
+    sendMessage(-1,sizeMsg+SIZE,(uint64_t*)msgSend);
     pauseSimulation(0);
     cout << (char*)&msg[3];
     isPaused = true;
-    break;
-  case PRINTCONTENT:
+
+  } else if (command == PRINTCONTENT){
     cout << (char*)&msg[3];
     isPaused = true;
-    break;
-
   }
 }
 
@@ -147,6 +146,7 @@ void parseline(string line){
   /*if not enough info - these  types must have a specification*/
   if ((command == BREAKPOINT||command == DUMP)&& wordCount == 1){
       cout << "Please specify- type help for options" << endl;
+      isPaused = true;
       return;
   }
 
@@ -182,6 +182,7 @@ int stringType2Int(string type){
 }
 
 
+/*constructs a message to be sent to the Simulator*/
 void debugSend(int command, string build){
   
   int node;
@@ -190,29 +191,35 @@ void debugSend(int command, string build){
   int type;
   char* nameSpot;
 
-  switch(command){
-
-  case CONTINUE:
-    size = 3*SIZE;
+  
+  if(command == CONTINUE){
+    size = 2*SIZE;
     uint64_t msgCont[size/SIZE];
     msgCont[0] = size;
     msgCont[1] = DEBUG;
     msgCont[2] = UNPAUSE;
-    sendMessage(-1,size,(uint64_t*)msgCont);
+    /*broadcast unpause to all VMs*/
+    sendMessage(-1,size+SIZE,(uint64_t*)msgCont);
     unPauseSimulation();
-    break;
 
-  case BREAKPOINT:
+  } else if (command == BREAKPOINT) {
     if (build[0] == ':'||build[0] == '@'){
       cout << "Please Specify a Type" << endl;
-      break;
+      isPaused = true;
+      return;
     }
     type = stringType2Int(getType(build));
-    if (type == -1)
-      break;
-    node = atoi(getNode(build).c_str());
+    if (type == -1){
+      isPaused = true;
+      return;
+    }
+    /*if no node specified broadcast to all*/
+    if (getNode(build) == "")
+      node = -1;
+    else
+      node = atoi(getNode(build).c_str());
     name = getName(build);
-    size = 4*SIZE + (name.length() + 1) 
+    size = 3*SIZE + (name.length() + 1) 
       + (SIZE - (name.length() + 1)%SIZE);
     uint64_t msgBreak[size/SIZE];
     msgBreak[0] = size;
@@ -221,22 +228,21 @@ void debugSend(int command, string build){
     msgBreak[3] = type;
     nameSpot = (char*)&msgBreak[4];
     memcpy(nameSpot,name.c_str(),name.length()+1);
-    sendMessage(node,size,(uint64_t*)msgBreak);
-    break;
+    sendMessage(node,size+SIZE,(uint64_t*)msgBreak);
 
-  case DUMP:
+  } else if (command == DUMP){
     node = atoi(build.c_str());
-    size = 3*SIZE;
+    size = 2*SIZE;
     uint64_t msgDump[size/SIZE];
     msgDump[0] = size;
     msgDump[1] = DEBUG;
     msgDump[2] = DUMP;
-    sendMessage(node,size,(uint64_t*)msgDump);
-    break;
+    sendMessage(node,size+SIZE,(uint64_t*)msgDump);
 
-  case NOTHING:
-    break;
+  } else if (command == NOTHING){
+    isPaused = true;
   }
+  return;
 }
 		    
 		    

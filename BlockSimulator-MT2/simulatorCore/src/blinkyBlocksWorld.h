@@ -68,6 +68,9 @@ public:
 	void tapBlock(int bId);
 	void accelBlock(int bId, int x, int y, int z);
 	void shakeBlock(int bId, int f);
+	
+	void broadcastVMMessage(int size, uint64_t* message);
+	void stopBlock(int bId);
 };
 
 inline void createWorld(int slx,int sly,int slz, int argc, char *argv[]) {

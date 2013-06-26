@@ -49,10 +49,10 @@ string getStringMessage(uint64_t t) {
 		}
 }
 
-VMDataMessage::VMDataMessage(uint64_t src, uint64_t size, uint64_t* m): Message() {
-	message = new uint64_t[size/sizeof(uint64_t)+1];
-	memcpy(message+1, m, size);
-	message[0] = size;
+VMDataMessage::VMDataMessage(uint64_t src, uint64_t* m): Message() {
+	uint64_t size = m[0] + sizeof(uint64_t);
+	message = new uint64_t[size/sizeof(uint64_t)];
+	memcpy(message, m, size);
 	message[1] = VM_MESSAGE_RECEIVE_MESSAGE;
 	//message[2] = 0; // timestamp
 	message[3] = src;
@@ -108,14 +108,13 @@ void Blinky01BlockCode::startup() {
 
 void Blinky01BlockCode::handleNewMessage() {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
-	OUTPUT << "Blinky01BlockCode: type: " << getStringMessage(bb->vm->getBufferPtr()->message[0]) << " size: " << bb->vm->getBufferPtr()->size << endl;
+	OUTPUT << "Blinky01BlockCode: type: " << getStringMessage(bb->vm->getBufferPtr()->message[1]) << " size: " << bb->vm->getBufferPtr()->message[0] << endl;
 	uint64_t* message = bb->vm->getBufferPtr()->message;
-	uint64_t size = bb->vm->getBufferPtr()->size;
-	switch (message[0]) {
+	switch (message[1]) {
 		case VM_MESSAGE_SET_COLOR:			
 			{
 			// <red> <blue> <green> <intensity>
-			Vecteur color(message[3]/255.0, message[4]/255.0, message[5]/255.0, message[6]/255.0);
+			Vecteur color(message[4]/255.0, message[5]/255.0, message[6]/255.0, message[7]/255.0);
 			bb->setColor(color);
 			}	
 			break;
@@ -123,23 +122,22 @@ void Blinky01BlockCode::handleNewMessage() {
 			{
 			// <face> <content...>
 			P2PNetworkInterface *interface;
-			interface = bb->getInterface((NeighborDirection)message[3]);
+			interface = bb->getInterface((NeighborDirection)message[4]);
 			if (interface == NULL) {
 				OUTPUT << "no right neighbor" << endl;
 			}
 			BaseSimulator::getScheduler()->schedule(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
-					new VMDataMessage(hostBlock->blockId, size, message), interface));
+					new VMDataMessage(hostBlock->blockId, message), interface));
 					/*BaseSimulator::getScheduler()->scheduleLock(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
 					new VMDataMessage(hostBlock->blockId, size, message), interface));*/
 			}
 			break;
 		case VM_MESSAGE_DEBUG:
 			// debug message handler
-			cout << "receive a debug message .... " << endl;
-			
+			handleDebugMessage(message);
 			break;
 		default:
-			ERRPUT << "*** ERROR *** : unsupported message received from VM (" << message[0] <<")" << endl;
+			ERRPUT << "*** ERROR *** : unsupported message received from VM (" << message[1] <<")" << endl;
 			break;
 	}
 }
@@ -234,10 +232,11 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		}
 		break;
 	case EVENT_DEBUG_MESSAGE:
+		{
 		// forward the debugging message
-		//VMDataMessage *m = (VMDataMessage*) (boost::static_pointer_cast<NetworkInterfaceReceiveEvent>(pev))->message.get();
-		//bb->sendMessageToVM(m->size(), m->message);
-		cout << "send a debug message .... " << endl;
+		VMDebugMessage *m = (VMDebugMessage*) (boost::static_pointer_cast<VMDebugMessageEvent>(pev))->message.get();
+		bb->vm->sendMessage(m->size, m->message);
+		}
 		break;
 	default:
 		ERRPUT << "*** ERROR *** : unknown local event" << endl;

@@ -441,4 +441,28 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*)getBlockById(bId);
 		bb->shake(f);	
 	}
+	
+	void BlinkyBlocksWorld::broadcastVMMessage(int size, uint64_t* message) {
+		map<int, BaseSimulator::BuildingBlock*>::iterator it;
+		for(it = buildingBlocksMap.begin(); 
+				it != buildingBlocksMap.end(); it++) {
+			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
+			bb->vm->sendMessage(size, message);
+		}		
+	}
+	
+	void BlinkyBlocksWorld::stopBlock(int bId) {
+		if (bId < 0) {
+			map<int, BaseSimulator::BuildingBlock*>::iterator it;
+			for(it = buildingBlocksMap.begin(); 
+				it != buildingBlocksMap.end(); it++) {
+				BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
+				bb->stop();
+			}
+		} else {
+			BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(bId);
+			bb->stop();
+		}
+	}
+	
 } // BlinkyBlock namespace

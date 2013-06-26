@@ -11,6 +11,7 @@
 #include <boost/thread.hpp>
 #include <stdlib.h>
 #include <time.h>
+#include <stdio.h>
 
 using namespace std;
 using boost::asio::ip::tcp;
@@ -18,9 +19,10 @@ using boost::asio::ip::tcp;
 
 //#define SET_COLOR_EXAMPLE
 //#define COLOR_SPREADING_EXAMPLE
-#define COLOR_ON_TAP_EXAMPLE
+//#define COLOR_ON_TAP_EXAMPLE
 //#define NEIGHBOR_LIST_EXAMPLE
 //#define MESSAGE_ANALYSER
+#define DEBUGGER
 
 #define VM_MESSAGE_SET_ID			1
 #define VM_MESSAGE_STOP				4
@@ -81,6 +83,9 @@ string getStringMessage(uint64_t t) {
 		case VM_MESSAGE_SHAKE:
 			return string("VM_MESSAGE_SHAKE");
 			break;
+		case VM_MESSAGE_DEBUG:
+			return string("VM_MESSAGE_DEBUG");
+			break;		
 		default:
 			cerr << "Unknown Message" << endl;
 			return string("Unknown");
@@ -139,6 +144,7 @@ list<boost::thread*> threadsList; */
 int readMessageFromVM(tcp::socket &socket, VMMessage_t *buffer, int id) {
 	try {
 		boost::asio::read(socket,boost::asio::buffer((void*)&buffer->size, sizeof(uint64_t)));
+			cout << "VM " << id << " is receiving a message (" << buffer->size <<")" << endl;
 		boost::asio::read(socket,boost::asio::buffer((void*)&buffer->type, buffer->size));
 		if (id != -1) {
 			cout << "VM " << id << " receive a message (" << getStringMessage(buffer->type) <<")" << endl;
@@ -314,6 +320,27 @@ void vm_thread_function(void *data) {
 #ifdef MESSAGE_ANALYSER
 	while(true) {
 		if (!readMessageFromVM(socket, &in, id)) break;
+	}
+#endif
+#ifdef DEBUGGER
+	while(true) {
+		if (!readMessageFromVM(socket, &in, id)) break;
+		if (in.type == VM_MESSAGE_DEBUG) {
+			uint64_t m[4];
+			m[0] = 3*sizeof(uint64_t);
+			m[1] = VM_MESSAGE_DEBUG;
+			m[2] = 5;
+			char* s = (char*) &m[3];
+			sprintf(s, "hello\n");
+			//m[4] = 0x00484948656C6F;
+			try {
+				boost::asio::write(socket, boost::asio::buffer((void*)&m,4*sizeof(uint64_t)));
+				cout << "VM " << id << " sent PRINT" <<  endl;
+			} catch (std::exception& e) {
+				cerr << "Connection to the Simulator lost" << endl;
+				break;
+			}
+		}
 	}
 #endif
 	socket.close();

@@ -234,11 +234,12 @@ VMDebugMessageEvent::VMDebugMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock
 
 VMDebugMessageEvent::VMDebugMessageEvent(VMDebugMessageEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
-	message.reset();
+	message = ev->message;
 }
 
 VMDebugMessageEvent::~VMDebugMessageEvent() {
 	EVENT_DESTRUCTOR_INFO();
+	message.reset();
 }
 
 void VMDebugMessageEvent::consumeBlockEvent() {
