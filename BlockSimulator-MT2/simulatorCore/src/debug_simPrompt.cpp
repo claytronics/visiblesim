@@ -66,7 +66,7 @@ void messageHandler(uint64_t* msg){
     msgSend[0] = sizeMsg;
     msgSend[1] = DEBUG;
     msgSend[2] = PAUSE;
-    sendMessage(-1,sizeMsg,(uint64_t*)msgSend);
+    sendMessage(-1,sizeMsg+SIZE,(uint64_t*)msgSend);
     pauseSimulation(0);
     cout << (char*)&msg[3];
     isPaused = true;
@@ -200,7 +200,7 @@ void debugSend(int command, string build){
     msgCont[1] = DEBUG;
     msgCont[2] = UNPAUSE;
     /*broadcast unpause to all VMs*/
-    sendMessage(-1,size,(uint64_t*)msgCont);
+    sendMessage(-1,size+SIZE,(uint64_t*)msgCont);
     unPauseSimulation();
 
   } else if (command == BREAKPOINT) {
@@ -215,7 +215,7 @@ void debugSend(int command, string build){
       return;
     }
     /*if no node specified broadcast to all*/
-    if (getNode(build) == ""){
+    if (getNode(build) == "")
       node = -1;
     else
       node = atoi(getNode(build).c_str());
@@ -229,7 +229,7 @@ void debugSend(int command, string build){
     msgBreak[3] = type;
     nameSpot = (char*)&msgBreak[4];
     memcpy(nameSpot,name.c_str(),name.length()+1);
-    sendMessage(node,size,(uint64_t*)msgBreak);
+    sendMessage(node,size+SIZE,(uint64_t*)msgBreak);
 
   } else if (command == DUMP){
     node = atoi(build.c_str());
@@ -238,7 +238,7 @@ void debugSend(int command, string build){
     msgDump[0] = size;
     msgDump[1] = DEBUG;
     msgDump[2] = DUMP;
-    sendMessage(node,size,(uint64_t*)msgDump);
+    sendMessage(node,size+SIZE,(uint64_t*)msgDump);
 
   } else if (command == NOTHING){
     isPaused = true;
