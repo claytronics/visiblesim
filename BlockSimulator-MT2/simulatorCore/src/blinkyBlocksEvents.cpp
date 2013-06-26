@@ -229,16 +229,18 @@ const string VMShakeEvent::getEventName() {
 VMDebugMessageEvent::VMDebugMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, VMDebugMessage *mes): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_DEBUG_MESSAGE;
-	message = VMDebugMessagePtr(mes);
+	message = mes;
 }
 
 VMDebugMessageEvent::VMDebugMessageEvent(VMDebugMessageEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
-	message.reset();
+	message = ev->message
 }
 
 VMDebugMessageEvent::~VMDebugMessageEvent() {
 	EVENT_DESTRUCTOR_INFO();
+	cout << "VMDEBUGMESSAGEEVENT DESTRUCTOR" << endl;
+	//message.reset();
 }
 
 void VMDebugMessageEvent::consumeBlockEvent() {

@@ -215,7 +215,7 @@ void debugSend(int command, string build){
       return;
     }
     /*if no node specified broadcast to all*/
-    if (getNode(build) == ""){
+    if (getNode(build) == "")
       node = -1;
     else
       node = atoi(getNode(build).c_str());

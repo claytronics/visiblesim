@@ -13,9 +13,11 @@ VMDebugMessage::VMDebugMessage(int s, uint64_t *m) {
 	size = s;
 	message = new uint64_t[s / sizeof(uint64_t)];
 	memcpy(message, m, size);	
+	cout << "VM DEBUG MESSAGE COPY: size" <<size << " " << message[0] << " " << message[1] << endl;
 }
 
 VMDebugMessage::~VMDebugMessage() {
+	cout << "VMMM DEBUG MESSAGE DELETED!!" << endl;
 	delete[] message;
 }
 
