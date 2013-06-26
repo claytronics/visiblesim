@@ -28,10 +28,11 @@ using boost::asio::ip::tcp;
 #define VM_MESSAGE_REMOVE_NEIGHBOR	6
 #define VM_MESSAGE_TAP				7
 #define VM_MESSAGE_SET_COLOR		8
-#define VM_MESSAGE_SEND_MESSAGE		9
-#define VM_MESSAGE_RECEIVE_MESSAGE	10
-#define VM_MESSAGE_ACCEL			11
-#define VM_MESSAGE_SHAKE			12
+#define VM_MESSAGE_SEND_MESSAGE		12
+#define VM_MESSAGE_RECEIVE_MESSAGE	13
+#define VM_MESSAGE_ACCEL			14
+#define VM_MESSAGE_SHAKE			15
+#define VM_MESSAGE_DEBUG			16			
 
 typedef struct VMMessage_tt {
     uint64_t size;

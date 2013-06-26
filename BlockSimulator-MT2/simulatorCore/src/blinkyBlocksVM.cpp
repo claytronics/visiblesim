@@ -36,11 +36,11 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 		close(fd);
 		if (debugging) {
 			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-S", NULL };
-			execv(vmPath.c_str(), const_cast<char**>(cmd));
 			OUTPUT << "debugging mode!" << endl;
+			execv(vmPath.c_str(), const_cast<char**>(cmd));
 		} else {
-			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), NULL };
-			OUTPUT << "no debugging mode!" << endl;			
+			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", NULL };
+			OUTPUT << "no debugging mode!" << endl;	
 			execv(vmPath.c_str(), const_cast<char**>(cmd));
 		}
 	}

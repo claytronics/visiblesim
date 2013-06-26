@@ -10,7 +10,7 @@
 
 #include <fstream>
 
-#define LOGFILE
+//#define LOGFILE
 
 #ifdef LOGFILE
 	extern std::ofstream log_file;

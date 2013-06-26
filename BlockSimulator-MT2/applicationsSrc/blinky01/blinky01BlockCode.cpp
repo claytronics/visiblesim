@@ -25,11 +25,11 @@ using boost::asio::ip::tcp;
 #define VM_MESSAGE_REMOVE_NEIGHBOR				6
 #define VM_MESSAGE_TAP							7
 #define VM_MESSAGE_SET_COLOR					8
-#define VM_MESSAGE_SEND_MESSAGE					9
-#define VM_MESSAGE_RECEIVE_MESSAGE				10
-#define VM_MESSAGE_ACCEL						11
-#define VM_MESSAGE_SHAKE						12
-#define VM_MESSAGE_DEBUG						13
+#define VM_MESSAGE_SEND_MESSAGE					12
+#define VM_MESSAGE_RECEIVE_MESSAGE				13
+#define VM_MESSAGE_ACCEL						14
+#define VM_MESSAGE_SHAKE						15
+#define VM_MESSAGE_DEBUG						16
 
 string getStringMessage(uint64_t t) {
 	switch(t) {
@@ -54,8 +54,9 @@ VMDataMessage::VMDataMessage(uint64_t src, uint64_t size, uint64_t* m): Message(
 	memcpy(message+1, m, size);
 	message[0] = size;
 	message[1] = VM_MESSAGE_RECEIVE_MESSAGE;
-	message[2] = src; 
-	switch (m[3]) {
+	//message[2] = 0; // timestamp
+	message[3] = src;
+	switch (m[4]) {
 		case Front:
 			message[4] = Back;
 			break;
@@ -134,6 +135,8 @@ void Blinky01BlockCode::handleNewMessage() {
 			break;
 		case VM_MESSAGE_DEBUG:
 			// debug message handler
+			cout << "receive a debug message .... " << endl;
+			
 			break;
 		default:
 			ERRPUT << "*** ERROR *** : unsupported message received from VM (" << message[0] <<")" << endl;
@@ -147,13 +150,12 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	switch (pev->eventType) {
 	case EVENT_SET_ID:
 		{
-		uint64_t message[5];
+		uint64_t message[4];
 		message[0] = 4*sizeof(uint64_t);	
 		message[1] = VM_MESSAGE_SET_ID;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
-		message[3] = -1; // souce node
-		message[4] = hostBlock->blockId;
-		bb->vm->sendMessage(5*sizeof(uint64_t), message);
+		message[3] = hostBlock->blockId; // souce node is not send here
+		bb->vm->sendMessage(4*sizeof(uint64_t), message);
 		OUTPUT << "ID sent to the VM " << hostBlock->blockId << endl;
 		}
 		break;
@@ -174,7 +176,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[0] = 5*sizeof(uint64_t);	
 		message[1] = VM_MESSAGE_ADD_NEIGHBOR;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
-		message[3] = -1; // souce node
+		message[3] = bb->blockId; // souce node
 		message[4] = (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->target;
 		message[5] = (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->face;
 		bb->vm->sendMessage(6*sizeof(uint64_t), message);
@@ -186,7 +188,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[0] = 4*sizeof(uint64_t);	
 		message[1] = VM_MESSAGE_REMOVE_NEIGHBOR;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
-		message[3] = -1; // souce node
+		message[3] = bb->blockId; // souce node
 		message[4] = (boost::static_pointer_cast<VMRemoveNeighborEvent>(pev))->face;
 		bb->vm->sendMessage(5*sizeof(uint64_t), message);
 		}
@@ -197,7 +199,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[0] = 3*sizeof(uint64_t);	
 		message[1] = VM_MESSAGE_TAP;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
-		message[3] = -1; // souce node
+		message[3] = bb->blockId; // souce node
 		bb->vm->sendMessage(4*sizeof(uint64_t), message);
 		}
 		break;
@@ -213,7 +215,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[0] = 6*sizeof(uint64_t);	
 		message[1] = VM_MESSAGE_ACCEL;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
-		message[3] = -1; // souce node
+		message[3] = bb->blockId; // souce node
 		message[4] = (boost::static_pointer_cast<VMAccelEvent>(pev))->x;
 		message[5] = (boost::static_pointer_cast<VMAccelEvent>(pev))->y;
 		message[6] = (boost::static_pointer_cast<VMAccelEvent>(pev))->z;
@@ -226,7 +228,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[0] = 4*sizeof(uint64_t);	
 		message[1] = VM_MESSAGE_SET_ID;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
-		message[3] = -1; // souce node
+		message[3] = bb->blockId; // souce node
 		message[4] = (boost::static_pointer_cast<VMShakeEvent>(pev))->force;
 		bb->vm->sendMessage(5*sizeof(uint64_t), message);
 		}
@@ -235,6 +237,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		// forward the debugging message
 		//VMDataMessage *m = (VMDataMessage*) (boost::static_pointer_cast<NetworkInterfaceReceiveEvent>(pev))->message.get();
 		//bb->sendMessageToVM(m->size(), m->message);
+		cout << "send a debug message .... " << endl;
 		break;
 	default:
 		ERRPUT << "*** ERROR *** : unknown local event" << endl;
