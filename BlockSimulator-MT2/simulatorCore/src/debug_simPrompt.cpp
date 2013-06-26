@@ -52,12 +52,16 @@ void (*initDebugger(void (*sendMsg)(int,int,uint64_t*),
   return messageHandler;
 }
 
+
+/*to be called by the simulator to controll the debugger
+ * or to display some info*/
 void messageHandler(uint64_t* msg){
 
   int sizeMsg;
   int command = (int)msg[2];
+
   if (command == BREAKPOINT){
-    sizeMsg = 3*SIZE;
+    sizeMsg = 2*SIZE;
     uint64_t msgSend[sizeMsg/SIZE];
     msgSend[0] = sizeMsg;
     msgSend[1] = DEBUG;
@@ -66,6 +70,7 @@ void messageHandler(uint64_t* msg){
     pauseSimulation(0);
     cout << (char*)&msg[3];
     isPaused = true;
+
   } else if (command == PRINTCONTENT){
     cout << (char*)&msg[3];
     isPaused = true;
@@ -178,6 +183,7 @@ int stringType2Int(string type){
 }
 
 
+/*constructs a message to be sent to the Simulator*/
 void debugSend(int command, string build){
   
   int node;
@@ -186,12 +192,14 @@ void debugSend(int command, string build){
   int type;
   char* nameSpot;
 
+  
   if(command == CONTINUE){
-    size = 3*SIZE;
+    size = 2*SIZE;
     uint64_t msgCont[size/SIZE];
     msgCont[0] = size;
     msgCont[1] = DEBUG;
     msgCont[2] = UNPAUSE;
+    /*broadcast unpause to all VMs*/
     sendMessage(-1,size,(uint64_t*)msgCont);
     unPauseSimulation();
 
@@ -206,9 +214,13 @@ void debugSend(int command, string build){
       isPaused = true;
       return;
     }
-    node = atoi(getNode(build).c_str());
+    /*if no node specified broadcast to all*/
+    if (getNode(build) == ""){
+      node = -1;
+    else
+      node = atoi(getNode(build).c_str());
     name = getName(build);
-    size = 4*SIZE + (name.length() + 1) 
+    size = 3*SIZE + (name.length() + 1) 
       + (SIZE - (name.length() + 1)%SIZE);
     uint64_t msgBreak[size/SIZE];
     msgBreak[0] = size;
@@ -221,7 +233,7 @@ void debugSend(int command, string build){
 
   } else if (command == DUMP){
     node = atoi(build.c_str());
-    size = 3*SIZE;
+    size = 2*SIZE;
     uint64_t msgDump[size/SIZE];
     msgDump[0] = size;
     msgDump[1] = DEBUG;
