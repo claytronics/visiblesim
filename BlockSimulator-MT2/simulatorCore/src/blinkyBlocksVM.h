@@ -18,6 +18,7 @@ using boost::asio::ip::tcp;
 
 namespace BlinkyBlocks {
 
+#define VM_MESSAGE_MAXLENGHT 512
 typedef uint64_t MessageUnit;
 
 class BlinkyBlocksBlock;
@@ -25,11 +26,11 @@ class BlinkyBlocksBlock;
 class VMMessage {
 public:
 	int size;
-	uint64_t *message;
+	uint64_t message[VM_MESSAGE_MAXLENGHT];
 	
-	VMMessage() { message = NULL; };
-	VMMessage(int size) { message = new uint64_t[size/sizeof(uint64_t)]; };
-	~VMMessage() { if (message!= NULL) delete[] message; };
+	VMMessage() { };
+	VMMessage(int size) { };
+	~VMMessage() { };
 };
 
 /*

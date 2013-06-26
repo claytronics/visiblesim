@@ -89,10 +89,8 @@ void BlinkyBlocksVM::asyncReadMessageHandler(const boost::system::error_code& er
 		ERRPUT << "an error occurred while receiving a tcp message from VM " << hostBlock->blockId << " (socket closed ?) " <<endl;
 		return;
 	}
-    delete[] inBuffer.message;
-    inBuffer.message = new uint64_t[inBuffer.size/sizeof(uint64_t)];
     try {
-		boost::asio::read(getSocket(),boost::asio::buffer((void*)inBuffer.message, inBuffer.size) );
+		boost::asio::read(getSocket(),boost::asio::buffer((void*)(inBuffer.message + 1), inBuffer.message[0]) );
 	} catch (std::exception& e) {
 		ERRPUT << "connection to the VM "<< hostBlock->blockId << " lost" << endl;
 	}
@@ -107,7 +105,7 @@ void BlinkyBlocksVM::asyncReadMessage() {
 	}
 	try {
 	boost::asio::async_read(getSocket(), 
-		boost::asio::buffer(&inBuffer.size, sizeof(uint64_t)),
+		boost::asio::buffer(inBuffer.message, sizeof(uint64_t)),
 		boost::bind(&BlinkyBlocksVM::asyncReadMessageHandler, this, boost::asio::placeholders::error,
 		boost::asio::placeholders::bytes_transferred));
 	} catch (std::exception& e) {

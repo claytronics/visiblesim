@@ -326,16 +326,15 @@ void vm_thread_function(void *data) {
 	while(true) {
 		if (!readMessageFromVM(socket, &in, id)) break;
 		if (in.type == VM_MESSAGE_DEBUG) {
-			uint64_t m[5];
-			m[0] = 4*sizeof(uint64_t);
+			uint64_t m[4];
+			m[0] = 3*sizeof(uint64_t);
 			m[1] = VM_MESSAGE_DEBUG;
 			m[2] = 5;
-			m[3] = 5;
-			char* s = (char*) &m[4];
+			char* s = (char*) &m[3];
 			sprintf(s, "hello\n");
 			//m[4] = 0x00484948656C6F;
 			try {
-				boost::asio::write(socket, boost::asio::buffer((void*)&m,5*sizeof(uint64_t)));
+				boost::asio::write(socket, boost::asio::buffer((void*)&m,4*sizeof(uint64_t)));
 				cout << "VM " << id << " sent PRINT" <<  endl;
 			} catch (std::exception& e) {
 				cerr << "Connection to the Simulator lost" << endl;

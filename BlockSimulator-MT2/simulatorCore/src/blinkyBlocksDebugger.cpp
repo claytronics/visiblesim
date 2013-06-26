@@ -3,9 +3,9 @@
 #include "blinkyBlocksScheduler.h"
 #include "blinkyBlocksEvents.h"
 #include "blinkyBlocksWorld.h"
-//#include "world.h"
 #include "blinkyBlocksBlock.h"
 #include "debug_simPrompt.hpp"
+#include <stdio.h>
 
 namespace BlinkyBlocks {
 
@@ -40,24 +40,29 @@ void BlinkyBlocksDebugger::sendMes(int id, int size, uint64_t *message) {
 	if (id > 0) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) getWorld()->getBlockById(id);
 		if (bb != NULL) {
-			//getScheduler()->scheduleLock(new VMDebugMessageEvent(getScheduler()->now(), bb, new VMDebugMessage(size, message)));
 			getScheduler()->schedule(new VMDebugMessageEvent(getScheduler()->now(), bb, new VMDebugMessage(size, message)));
+		} else {
+			uint64_t fakeMessage[7];
+			fakeMessage[0] = 4*sizeof(uint64_t);
+			fakeMessage[1] = 16; // VM_DEBUG_MESSAGE
+			fakeMessage[2] = 5; // PRINTCONTENT
+			sprintf((char*)&fakeMessage[3], "Node %d does not exist.\n", id);
+			debuggerMessageHandler(fakeMessage);
 		}
 	} else if (id == -1) {
 		// send to all vm
-		
+		getWorld()->broadcastVMMessage(size, message);
 	} 
 }
 
 void BlinkyBlocksDebugger::pauseSim(int timestamp) {
-	//sendMessage(-1, int size, void *message); // attention au timestamp
-	//getScheduler()->scheduleLock(new VMDebugPauseSimEvent(timestamp));
+	cout << "Simulator paused" << endl;
 	getScheduler()->schedule(new VMDebugPauseSimEvent(timestamp));
 }
 
 void BlinkyBlocksDebugger::unPauseSim() {
-	//sendMessage(-1, int size, void *message);
 	// pas de schedule lock ici, sinon inter-blocage
+	cout << "Simulator unpaused" << endl;
 	getScheduler()->unPauseSimulation();
 }
 
