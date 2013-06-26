@@ -192,6 +192,41 @@ public:
 	const virtual string getEventName();
 };
 
+//===========================================================================================================
+//
+//          VMStartComputationEvent  (class)
+//
+//===========================================================================================================
+
+class VMStartComputationEvent : public BlockEvent {
+public:
+	uint64_t duration;
+
+	VMStartComputationEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint64_t dur);
+	VMStartComputationEvent(VMStartComputationEvent *ev);
+	~VMStartComputationEvent();
+	void consumeBlockEvent();
+	const virtual string getEventName();
+};
+
+//===========================================================================================================
+//
+//          VMEndComputationEvent  (class)
+//
+//===========================================================================================================
+
+class VMEndComputationEvent : public BlockEvent {
+public:
+	uint64_t duration;
+
+	VMEndComputationEvent(uint64_t, BlinkyBlocksBlock *conBlock);
+	VMEndComputationEvent(VMEndComputationEvent *ev);
+	~VMEndComputationEvent();
+	void consumeBlockEvent();
+	const virtual string getEventName();
+};
+
+
 } // BlinkyBlocks namespace
 
 

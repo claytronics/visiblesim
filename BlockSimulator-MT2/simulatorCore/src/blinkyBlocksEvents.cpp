@@ -280,4 +280,63 @@ const string VMDebugPauseSimEvent::getEventName() {
 	return("VMDebugPauseSim Event");
 }
 
+//===========================================================================================================
+//
+//          VMStartComputationEvent  (class)
+//
+//===========================================================================================================
+
+VMStartComputationEvent::VMStartComputationEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t dur): BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_VM_START_COMPUTATION;
+	duration = dur;
+}
+
+VMStartComputationEvent::VMStartComputationEvent(VMStartComputationEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+VMStartComputationEvent::~VMStartComputationEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void VMStartComputationEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMStartComputationEvent(this)));
+}
+
+const string VMStartComputationEvent::getEventName() {
+	return("VMStartComputation Event");
+}
+
+//===========================================================================================================
+//
+//          VMEndComputationEvent  (class)
+//
+//===========================================================================================================
+
+VMEndComputationEvent::VMEndComputationEvent(uint64_t t, BlinkyBlocksBlock *conBlock) : BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_VM_END_COMPUTATION;
+}
+
+VMEndComputationEvent::VMEndComputationEvent(VMEndComputationEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+VMEndComputationEvent::~VMEndComputationEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void VMEndComputationEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMEndComputationEvent(this)));
+	return;
+}
+
+const string VMEndComputationEvent::getEventName() {
+	return("VMEndComputation Event");
+}
+
+
 } // BlinkyBlocks namespace
