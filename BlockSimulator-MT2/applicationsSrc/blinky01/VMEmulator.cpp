@@ -11,6 +11,7 @@
 #include <boost/thread.hpp>
 #include <stdlib.h>
 #include <time.h>
+#include <stdio.h>
 
 using namespace std;
 using boost::asio::ip::tcp;
@@ -143,7 +144,7 @@ list<boost::thread*> threadsList; */
 int readMessageFromVM(tcp::socket &socket, VMMessage_t *buffer, int id) {
 	try {
 		boost::asio::read(socket,boost::asio::buffer((void*)&buffer->size, sizeof(uint64_t)));
-			cout << "VM " << id << " is receiving a message (" << getStringMessage(buffer->size) <<")" << endl;
+			cout << "VM " << id << " is receiving a message (" << buffer->size <<")" << endl;
 		boost::asio::read(socket,boost::asio::buffer((void*)&buffer->type, buffer->size));
 		if (id != -1) {
 			cout << "VM " << id << " receive a message (" << getStringMessage(buffer->type) <<")" << endl;
@@ -325,14 +326,17 @@ void vm_thread_function(void *data) {
 	while(true) {
 		if (!readMessageFromVM(socket, &in, id)) break;
 		if (in.type == VM_MESSAGE_DEBUG) {
-			uint64_t m[4];
-			m[0] = 3*sizeof(uint64_t);
+			uint64_t m[5];
+			m[0] = 4*sizeof(uint64_t);
 			m[1] = VM_MESSAGE_DEBUG;
 			m[2] = 5;
-			m[3] = 0x48656C6F00;
+			m[3] = 5;
+			char* s = (char*) &m[4];
+			sprintf(s, "hello\n");
+			//m[4] = 0x00484948656C6F;
 			try {
-				boost::asio::write(socket, boost::asio::buffer((void*)&m,4*sizeof(uint64_t)));
-				cout << "VM " << id << " sent SET_COLOR(random)" <<  endl;
+				boost::asio::write(socket, boost::asio::buffer((void*)&m,5*sizeof(uint64_t)));
+				cout << "VM " << id << " sent PRINT" <<  endl;
 			} catch (std::exception& e) {
 				cerr << "Connection to the Simulator lost" << endl;
 				break;

@@ -59,7 +59,6 @@ void messageHandler(uint64_t* msg){
 
   int sizeMsg;
   int command = (int)msg[2];
-
   if (command == BREAKPOINT){
     sizeMsg = 2*SIZE;
     uint64_t msgSend[sizeMsg/SIZE];

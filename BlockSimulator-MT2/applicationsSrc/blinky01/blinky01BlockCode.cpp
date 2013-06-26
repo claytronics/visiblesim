@@ -235,10 +235,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	case EVENT_DEBUG_MESSAGE:
 		{
 		// forward the debugging message
-		//VMDataMessage *m = (VMDataMessage*) (boost::static_pointer_cast<NetworkInterfaceReceiveEvent>(pev))->message.get();
-		//bb->sendMessageToVM(m->size(), m->message);
-		VMDebugMessage *m = (VMDebugMessage*) (boost::static_pointer_cast<VMDebugMessageEvent>(pev))->message;
-		cout << "VM DEBUG MESSAGE SEND: size" << m->size << " " << m->message[0] << " " << m->message[1] << endl;
+		VMDebugMessage *m = (VMDebugMessage*) (boost::static_pointer_cast<VMDebugMessageEvent>(pev))->message.get();
 		bb->vm->sendMessage(m->size, m->message);
 		}
 		break;

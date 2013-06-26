@@ -166,7 +166,7 @@ public:
 class VMDebugMessageEvent : public BlockEvent {
 
 public:
-	VMDebugMessage *message;
+	VMDebugMessagePtr message;
 	
 	VMDebugMessageEvent(uint64_t, BlinkyBlocksBlock *conBlock, VMDebugMessage *mes);
 	VMDebugMessageEvent(VMDebugMessageEvent *ev);
