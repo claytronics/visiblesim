@@ -59,6 +59,7 @@ void messageHandler(uint64_t* msg){
 
   int sizeMsg;
   int command = (int)msg[2];
+
   if (command == BREAKPOINT){
     sizeMsg = 2*SIZE;
     uint64_t msgSend[sizeMsg/SIZE];
@@ -84,6 +85,8 @@ void *run_debugger(void* holder){
   (void)holder;
   string inpt;
   
+  cout << "BLINKY BLOCK DEBUGGING MODE" << endl;
+
   while(true){
     if (isPaused){
       cout << ">";
@@ -216,8 +219,14 @@ void debugSend(int command, string build){
     /*if no node specified broadcast to all*/
     if (getNode(build) == "")
       node = -1;
-    else
+    else {
       node = atoi(getNode(build).c_str());
+      if (node <= 0){
+	cout << "Invalid Node ID" << endl;
+	isPaused = true;
+	return;
+      }
+    }
     name = getName(build);
     size = 3*SIZE + (name.length() + 1) 
       + (SIZE - (name.length() + 1)%SIZE);
@@ -231,7 +240,16 @@ void debugSend(int command, string build){
     sendMessage(node,size+SIZE,(uint64_t*)msgBreak);
 
   } else if (command == DUMP){
-    node = atoi(build.c_str());
+    if (build == "all")
+      node = -1;
+    else {
+      node = atoi(build.c_str());
+      if (node<=0){
+	cout << "Invalid Node Range" << endl;
+	isPaused = true;
+	return;
+      }
+    }
     size = 2*SIZE;
     uint64_t msgDump[size/SIZE];
     msgDump[0] = size;
