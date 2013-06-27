@@ -15,9 +15,22 @@
 #include <boost/asio.hpp> 
 #include <stdexcept>
 
+/* Inside VM:
+enum face_t {
+   INVALID_FACE = -1,
+   BOTTOM = 0,
+   NORTH = 1,
+   EAST = 2,
+   WEST = 3,
+   SOUTH = 4,
+   TOP = 5
+};
+*/
 namespace BlinkyBlocks {
 
-enum NeighborDirection { Front=0, Back, Left, Right, Top, Bottom };
+//enum NeighborDirection { Front=0, Back, Left, Right, Top, Bottom };
+// if we consider that the NORTH in the Back at the beginning:
+enum NeighborDirection { Bottom = 0, Back, Right, Left, Front, Top };
 
 class BlinkyBlocksBlockCode;
 class BlinkyBlocksVM;
@@ -41,6 +54,16 @@ public:
 	void setColor(int num);
 	void setPosition(const Vecteur &p);
 	inline P2PNetworkInterface *getInterface(NeighborDirection d) { return tabInterfaces[d]; }
+	inline P2PNetworkInterface *getInterfaceDestId(int id) {
+		for (int i=0; i<6; i++) {
+			if (tabInterfaces[i]->connectedInterface != NULL) {
+					if (tabInterfaces[i]->connectedInterface->hostBlock->blockId == id) {
+							return tabInterfaces[i];
+					}
+			}
+		}
+		return NULL;
+	}
 	NeighborDirection getDirection(P2PNetworkInterface*);
 
 	void killVM();

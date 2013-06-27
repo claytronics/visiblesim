@@ -6,6 +6,7 @@
 #include <boost/bind.hpp>
 #include "trace.h"
 #include <stdexcept>
+#include <string.h>
 
 using namespace boost;
 using asio::ip::tcp;
@@ -30,13 +31,13 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
     if(pid == 0) {
 		stringstream output;
 		output << "VM" << hostBlock->blockId << ".log";
-		int fd = open(output.str().c_str(), O_RDWR | O_CREAT, S_IRUSR | S_IWUSR);
+		int fd = open(output.str().c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
 		dup2(fd, 1);
 		dup2(fd, 2);
 		close(fd);
 		if (debugging) {
-			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-S", NULL };
-			OUTPUT << "debugging mode!" << endl;
+			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", NULL };
+			//char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", (char*)"-S", NULL }			OUTPUT << "debugging mode!" << endl;
 			execv(vmPath.c_str(), const_cast<char**>(cmd));
 		} else {
 			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", NULL };
@@ -90,6 +91,7 @@ void BlinkyBlocksVM::asyncReadMessageHandler(const boost::system::error_code& er
 		return;
 	}
     try {
+		memset(inBuffer.message+1, 0, inBuffer.message[0]);
 		boost::asio::read(getSocket(),boost::asio::buffer((void*)(inBuffer.message + 1), inBuffer.message[0]) );
 	} catch (std::exception& e) {
 		ERRPUT << "connection to the VM "<< hostBlock->blockId << " lost" << endl;
@@ -104,6 +106,7 @@ void BlinkyBlocksVM::asyncReadMessage() {
 		return;
 	}
 	try {
+	inBuffer.message[0] = 0;
 	boost::asio::async_read(getSocket(), 
 		boost::asio::buffer(inBuffer.message, sizeof(uint64_t)),
 		boost::bind(&BlinkyBlocksVM::asyncReadMessageHandler, this, boost::asio::placeholders::error,

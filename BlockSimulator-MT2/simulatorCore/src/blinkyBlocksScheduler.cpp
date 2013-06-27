@@ -30,8 +30,8 @@ BlinkyBlocksScheduler::BlinkyBlocksScheduler() {
 }
 
 BlinkyBlocksScheduler::~BlinkyBlocksScheduler() {
-	OUTPUT << "\033[1;31mBlinkyBlocksScheduler destructor\33[0m" << endl;	
-	// Peut-être necessaire, a tester ?
+	OUTPUT << "\033[1;31mBlinkyBlocksScheduler destructor\33[0m" << endl;
+	getWorld()->stopBlock(-1);
 	getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
 	sem_schedulerStart->post(); // resume the simulation if it is paused
 	schedulerThread->join();

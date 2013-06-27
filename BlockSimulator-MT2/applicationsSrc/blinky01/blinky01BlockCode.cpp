@@ -55,6 +55,8 @@ VMDataMessage::VMDataMessage(uint64_t src, uint64_t* m): Message() {
 	memcpy(message, m, size);
 	message[1] = VM_MESSAGE_RECEIVE_MESSAGE;
 	//message[2] = 0; // timestamp
+	//message[3] = m[5];
+	//message[5] = m[3];
 	message[3] = src;
 	switch (m[4]) {
 		case Front:
@@ -76,7 +78,7 @@ VMDataMessage::VMDataMessage(uint64_t src, uint64_t* m): Message() {
 			message[4] = Top;
 			break;
 		default:
-			ERRPUT << "*** ERROR *** : unknown facet" << endl;
+			ERRPUT << "*** ERROR *** : unknown face" << endl;
 			break;
 	}
 }
@@ -121,11 +123,18 @@ void Blinky01BlockCode::handleNewMessage() {
 		case VM_MESSAGE_SEND_MESSAGE:
 			{
 			// <face> <content...>
+			//cout << "receive a message: " << message[0] << " " << message[1] << " " << message[2] << " "<< message[3] << " " << message[4] << " " << message[5] << " " << message[6] << endl;
 			P2PNetworkInterface *interface;
 			interface = bb->getInterface((NeighborDirection)message[4]);
+			//interface = bb->getInterfaceDestId(message[5]);
+			//cout << "dest: " << message[<
+			//message[4] = bb->getDirection(interface);
+			//cout << "message modified: " << message[0] << " " << message[1] << " " << message[2] << " "<< message[3] << " " << message[4] << " " << message[5] << endl;
 			if (interface == NULL) {
-				OUTPUT << "no right neighbor" << endl;
+				OUTPUT << "interface not found" << endl;
+				return;
 			}
+			//cout << bb->blockId << "-->" << interface->hostBlock->blockId << endl;
 			BaseSimulator::getScheduler()->schedule(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
 					new VMDataMessage(hostBlock->blockId, message), interface));
 					/*BaseSimulator::getScheduler()->scheduleLock(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
@@ -141,19 +150,20 @@ void Blinky01BlockCode::handleNewMessage() {
 			break;
 	}
 }
-
+// WARNING: VMs appear to always use source node...
 void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
 	OUTPUT << "Blinky01BlockCode: " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
 	switch (pev->eventType) {
 	case EVENT_SET_ID:
 		{
-		uint64_t message[4];
+		uint64_t message[5];
 		message[0] = 4*sizeof(uint64_t);	
 		message[1] = VM_MESSAGE_SET_ID;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
-		message[3] = hostBlock->blockId; // souce node is not send here
-		bb->vm->sendMessage(4*sizeof(uint64_t), message);
+		message[3] = hostBlock->blockId; // BUG VM: souce node is not send here
+		message[4] = hostBlock->blockId;
+		bb->vm->sendMessage(5*sizeof(uint64_t), message);
 		OUTPUT << "ID sent to the VM " << hostBlock->blockId << endl;
 		}
 		break;
@@ -163,7 +173,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[0] = 3*sizeof(uint64_t);	
 		message[1] = VM_MESSAGE_STOP;
 		message[2] = BaseSimulator::getScheduler()->now();
-		message[3] = -1; // souce node
+		message[3] = hostBlock->blockId;
 		bb->vm->sendMessage(4*sizeof(uint64_t), message);
 		bb->state = Stop;
 		}
@@ -204,6 +214,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	case EVENT_RECEIVE_MESSAGE: /*EVENT_NI_RECEIVE: */
 		{
 		VMDataMessage *m = (VMDataMessage*) (boost::static_pointer_cast<NetworkInterfaceReceiveEvent>(pev))->message.get();
+		//cout << "message receive by " << bb->blockId << ":" << m->message[0] << " " << m->message[1] << " " << m->message[2] << " " << m->message[3] << " " << m->message[4] << " " << m->message[5] << " " << m->message[6] << endl;
 		bb->vm->sendMessage(m->size(), m->message);
 		}
 		break;
