@@ -307,7 +307,7 @@ int handle_command(string command){
     retVal = CONTINUE;
   } else if (command == "quit"||command == "q"){
     quitDebugger();
-    pthead_exit();
+    pthread_exit(0);
   } else {
     cout << "unknown command: type 'help' for options " << endl;
     retVal = NOTHING;
