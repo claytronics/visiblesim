@@ -23,12 +23,12 @@ static const GLfloat tabColors[12][4]={{1.0,0.0,0.0,1.0},{1.0,0.647058824,0.0,1.
 
 BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) : BaseSimulator::BuildingBlock(bId) {
 	OUTPUT << "BlinkyBlocksBlock constructor" << endl;
-	buildNewBlockCode = blinkyBlocksBlockCodeBuildingFunction;
-	blockCode = (BaseSimulator::BlockCode*)buildNewBlockCode(this);
 	for (int i=0; i<6; i++) {
 		tabInterfaces[i] = new P2PNetworkInterface(this);
 	}
 	vm = new BlinkyBlocksVM(this);
+	buildNewBlockCode = blinkyBlocksBlockCodeBuildingFunction;
+	blockCode = (BaseSimulator::BlockCode*)buildNewBlockCode(this);
 }
 
 BlinkyBlocksBlock::~BlinkyBlocksBlock() {

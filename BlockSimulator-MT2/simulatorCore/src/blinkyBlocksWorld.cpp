@@ -442,13 +442,20 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		bb->shake(f);	
 	}
 	
-	void BlinkyBlocksWorld::broadcastVMMessage(int size, uint64_t* message) {
+	int BlinkyBlocksWorld::broadcastVMMessage(int size, uint64_t* message) {
 		map<int, BaseSimulator::BuildingBlock*>::iterator it;
+		int aliveBlocks = 0;
 		for(it = buildingBlocksMap.begin(); 
 				it != buildingBlocksMap.end(); it++) {
 			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-			bb->vm->sendMessage(size, message);
-		}		
+			if (bb->state == Alive) {
+			//bb->vm->sendMessage(size, message);
+				// To change, everything is not debug message!
+				getScheduler()->schedule(new VMDebugMessageEvent(getScheduler()->now(), bb, new VMDebugMessage(size, message)));
+				aliveBlocks++;
+			}
+		}
+		return aliveBlocks;
 	}
 	
 	void BlinkyBlocksWorld::stopBlock(int bId) {

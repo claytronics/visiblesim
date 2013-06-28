@@ -30,13 +30,13 @@ string lastBuild = "";
 #define SIZE (sizeof(uint64_t))
 
 static bool isPaused = false;
-static void (*sendMessage)(int,int,uint64_t*);
+static int (*sendMessage)(int,int,uint64_t*);
 static void (*pauseSimulation)(int);
 static void (*unPauseSimulation)(void);
 
 /*spawn the debbugging prompt as a separate thread to
   controll the main one*/
-void (*initDebugger(void (*sendMsg)(int,int,uint64_t*),
+void (*initDebugger(int (*sendMsg)(int,int,uint64_t*),
 		    void (*pauseSim)(int),
 		    void (*unPauseSim)(void),
 		    ostream& o = cout, istream& i = cin))(uint64_t*){
@@ -244,7 +244,9 @@ void debugSend(int command, string build){
     msgBreak[3] = type;
     nameSpot = (char*)&msgBreak[4];
     memcpy(nameSpot,name.c_str(),name.length()+1);
-    sendMessage(node,size+SIZE,(uint64_t*)msgBreak);
+    int i = sendMessage(node,size+SIZE,(uint64_t*)msgBreak);
+    
+    cout << "waiting for " << i << " hello" << endl;
 
   } else if (command == DUMP){
     if (build == "all")
