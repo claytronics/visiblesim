@@ -96,7 +96,7 @@ void *run_debugger(void* holder){
 
   while(true){
     if (isPaused){
-      out << ">";
+      debugout << ">";
       isPaused = false;
       getline(debugin,inpt);
       //react to the input
