@@ -36,5 +36,6 @@ int main(int argc, char **argv) {
 	deleteSimulator();
 	
 	OUTPUT << "\033[1;33m" << "end (main)" << "\033[0m" << endl;
+	//exit(0);
 	return(0);
 }

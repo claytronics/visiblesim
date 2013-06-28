@@ -60,7 +60,6 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 		setVMConfiguration(vmPath, programPath, debugging);
 		createVMServer(port);
 	}
-	
 	node = xmlDoc->FirstChild("world");
 	if (node) {
 		TiXmlElement* worldElement = node->ToElement();

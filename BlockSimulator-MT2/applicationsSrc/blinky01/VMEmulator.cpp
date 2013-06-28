@@ -30,11 +30,11 @@ using boost::asio::ip::tcp;
 #define VM_MESSAGE_REMOVE_NEIGHBOR	6
 #define VM_MESSAGE_TAP				7
 #define VM_MESSAGE_SET_COLOR		8
-#define VM_MESSAGE_SEND_MESSAGE		9
-#define VM_MESSAGE_RECEIVE_MESSAGE	10
-#define VM_MESSAGE_ACCEL			11
-#define VM_MESSAGE_SHAKE			12
-#define VM_MESSAGE_DEBUG			16
+#define VM_MESSAGE_SEND_MESSAGE		12
+#define VM_MESSAGE_RECEIVE_MESSAGE	13
+#define VM_MESSAGE_ACCEL			14
+#define VM_MESSAGE_SHAKE			15
+#define VM_MESSAGE_DEBUG			16			
 
 typedef struct VMMessage_tt {
     uint64_t size;
@@ -48,7 +48,8 @@ typedef struct VMMessage_tt {
 	uint64_t param5;
 } VMMessage_t;
 
-enum NeighborDirection {Front=0, Back, Left, Right, Top, Bottom };
+//enum NeighborDirection {Front=0, Back, Left, Right, Top, Bottom };
+enum NeighborDirection { Bottom = 0, Back, Right, Left, Front, Top };
 typedef pair<uint64_t, uint64_t> Neighbor;
 
 string getStringMessage(uint64_t t) {
@@ -144,7 +145,6 @@ list<boost::thread*> threadsList; */
 int readMessageFromVM(tcp::socket &socket, VMMessage_t *buffer, int id) {
 	try {
 		boost::asio::read(socket,boost::asio::buffer((void*)&buffer->size, sizeof(uint64_t)));
-			cout << "VM " << id << " is receiving a message (" << buffer->size <<")" << endl;
 		boost::asio::read(socket,boost::asio::buffer((void*)&buffer->type, buffer->size));
 		if (id != -1) {
 			cout << "VM " << id << " receive a message (" << getStringMessage(buffer->type) <<")" << endl;
@@ -160,7 +160,7 @@ int readMessageFromVM(tcp::socket &socket, VMMessage_t *buffer, int id) {
 void vm_thread_function(void *data) {	
 	boost::asio::io_service ios;
 	boost::asio::ip::tcp::resolver resolver(ios);
-	boost::asio::ip::tcp::resolver::query query("127.0.0.1", "7800");
+	boost::asio::ip::tcp::resolver::query query("127.0.0.1", "5000");
 	boost::asio::ip::tcp::resolver::iterator iter = resolver.resolve(query);
 	boost::asio::ip::tcp::resolver::iterator end;
 	boost::asio::ip::tcp::endpoint endpoint;	
@@ -184,7 +184,7 @@ void vm_thread_function(void *data) {
 	cout << "VMEmulator start" << endl;
 	if (readMessageFromVM(socket, &in, -1) == 1) {
 		if (in.type == VM_MESSAGE_SET_ID) {
-			id = in.param1;
+			id = in.param1; // CHANGE IN THE FORMAT...
 			cout << "VM received id: " << id << endl;
 		} else {
 			cout << "problem id not first message" << endl;
@@ -210,7 +210,7 @@ void vm_thread_function(void *data) {
 	if (id == 1) {
 		out.size = 8*sizeof(uint64_t);
 		out.type = VM_MESSAGE_SEND_MESSAGE;
-		out.param1 = 3; // face: right
+		out.param1 = Right; // face: right
 		out.param2 = 0;
 		out.param3 = 255; // green
 		out.param4 = 0;
@@ -251,11 +251,11 @@ void vm_thread_function(void *data) {
 				} catch (std::exception& e) {
 					cerr << "Connection to the Simulator lost" << endl;
 				}
-				if (id != 5) {
+				if (id != 6) {
 					// SEND MESSAGE ON RIGHT		
 					out.size = 8*sizeof(uint64_t);
 					out.type = VM_MESSAGE_SEND_MESSAGE;
-					out.param1 = 3; // face: right
+					out.param1 = Right; // face: right
 					out.param2 = in.param2;
 					out.param3 = in.param3; // green
 					out.param4 = in.param4;
