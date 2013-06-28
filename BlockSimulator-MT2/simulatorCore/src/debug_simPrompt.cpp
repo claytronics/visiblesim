@@ -25,9 +25,6 @@ void debugSend(int command, string build);
 int lastInstruction = 0;
 string lastBuild = "";
 
-/*
-ostream& debugout = cout;
-istream& debugin = cin;*/
 
 #define DEBUG 16
 #define SIZE (sizeof(uint64_t))
