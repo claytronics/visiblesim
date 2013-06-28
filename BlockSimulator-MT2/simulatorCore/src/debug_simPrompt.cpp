@@ -24,9 +24,10 @@ void debugSend(int command, string build);
 /*to store the last input in the debugger*/
 int lastInstruction = 0;
 string lastBuild = "";
-ostream debugout = cout;
-istream debugin = cin;
 
+/*
+ostream& debugout = cout;
+istream& debugin = cin;*/
 
 #define DEBUG 16
 #define SIZE (sizeof(uint64_t))
@@ -41,13 +42,15 @@ static void (*unPauseSimulation)(void);
 void (*initDebugger(void (*sendMsg)(int,int,uint64_t*),
 		    void (*pauseSim)(int),
 		    void (*unPauseSim)(void),
-		    ostream& o, istream& i))(uint64_t*){
+		    ostream& o = cout, istream& i = cin))(uint64_t*){
   
 
   pthread_t tid;
   
-  debugout = o;
-  debugin = i;
+  
+  cin.rdbuf(i.rdbuf());
+  cout.rdbuf(o.rdbuf());
+
 
   sendMessage = sendMsg;
   pauseSimulation = pauseSim;
@@ -75,11 +78,11 @@ void messageHandler(uint64_t* msg){
     msgSend[2] = PAUSE;
     sendMessage(-1,sizeMsg+SIZE,(uint64_t*)msgSend);
     pauseSimulation(0);
-    debugout << (char*)&msg[3];
+    cout << (char*)&msg[3];
     isPaused = true;
 
   } else if (command == PRINTCONTENT){
-    debugout << (char*)&msg[3];
+    cout << (char*)&msg[3];
     isPaused = true;
   }
 }
@@ -92,13 +95,13 @@ void *run_debugger(void* holder){
   (void)holder;
   string inpt;
   
-  debugout << "BLINKY BLOCK DEBUGGING MODE" << endl;
+  cout << "BLINKY BLOCK DEBUGGING MODE" << endl;
 
   while(true){
     if (isPaused){
-      debugout << ">";
+      cout << ">";
       isPaused = false;
-      getline(debugin,inpt);
+      getline(cin,inpt);
       //react to the input
       parseline(inpt);
     }
@@ -155,7 +158,7 @@ void parseline(string line){
   
   /*if not enough info - these  types must have a specification*/
   if ((command == BREAKPOINT||command == DUMP)&& wordCount == 1){
-      debugout << "Please specify- type help for options" << endl;
+      cout << "Please specify- type help for options" << endl;
       isPaused = true;
       return;
   }
@@ -186,7 +189,7 @@ int stringType2Int(string type){
   } else if (type == "block"){
     return BLOCK;
   } else { 
-    debugout << "unknown type-- enter help for options" << endl;
+    cout << "unknown type-- enter help for options" << endl;
     return -1;
   }
 }
@@ -214,7 +217,7 @@ void debugSend(int command, string build){
 
   } else if (command == BREAKPOINT) {
     if (build[0] == ':'||build[0] == '@'){
-      debugout << "Please Specify a Type" << endl;
+      cout << "Please Specify a Type" << endl;
       isPaused = true;
       return;
     }
@@ -229,7 +232,7 @@ void debugSend(int command, string build){
     else {
       node = atoi(getNode(build).c_str());
       if (node <= 0){
-	debugout << "Invalid Node ID" << endl;
+	cout << "Invalid Node ID" << endl;
 	isPaused = true;
 	return;
       }
@@ -252,7 +255,7 @@ void debugSend(int command, string build){
     else {
       node = atoi(build.c_str());
       if (node<=0){
-	debugout << "Invalid Node Range" << endl;
+	cout << "Invalid Node Range" << endl;
 	isPaused = true;
 	return;
       }
@@ -294,7 +297,7 @@ int handle_command(string command){
   } else if (command == "quit"||command == "q"){
     exit(0);
   } else {
-    debugout << "unknown command: type 'help' for options " << endl;
+    cout << "unknown command: type 'help' for options " << endl;
     retVal = NOTHING;
   }
   return retVal;
@@ -303,27 +306,27 @@ int handle_command(string command){
 
 /*prints the help screen*/
 void help(){
-  debugout << endl;
-  debugout << "*******************************************************************" << endl;
-  debugout << endl;
-  debugout << "DEBUGGER HELP" << endl;
-  debugout << "\t-break <Specification>- set break point at specified place" << endl;
-  debugout << "\t\t-Specification Format:" << endl;
-  debugout << "\t\t  <type>:<name>@<block> OR" << endl;
-  debugout << "\t\t  <type>:<name>        OR" << endl;
-  debugout << "\t\t  <type>@<block>" << endl;
-  debugout << "\t\t    -type - [factRet|factDer|factCon|action|sense|block]" << endl;
-  debugout <<             "\t\t\t-a type MUST be specified" << endl;
-  debugout << "\t\t    -name - the name of certain type ex. the name of a fact" << endl;
-  debugout << "\t\t    -node - the number of the node" << endl;
-  debugout << "\t-dump or d <nodeID> <all> - dump the state of the system" << endl;
-  debugout << "\t-continue or c - continue execution" << endl;
-  debugout << "\t-run or r - start the program" << endl;
-  debugout << "\t-quit - exit debugger" << endl;
-  debugout << endl;
-  debugout << "\t-Press Enter to use last Input" << endl;
-  debugout << endl;
-  debugout << "*******************************************************************" << endl;
+  cout << endl;
+  cout << "*******************************************************************" << endl;
+  cout << endl;
+  cout << "DEBUGGER HELP" << endl;
+  cout << "\t-break <Specification>- set break point at specified place" << endl;
+  cout << "\t\t-Specification Format:" << endl;
+  cout << "\t\t  <type>:<name>@<block> OR" << endl;
+  cout << "\t\t  <type>:<name>        OR" << endl;
+  cout << "\t\t  <type>@<block>" << endl;
+  cout << "\t\t    -type - [factRet|factDer|factCon|action|sense|block]" << endl;
+  cout <<             "\t\t\t-a type MUST be specified" << endl;
+  cout << "\t\t    -name - the name of certain type ex. the name of a fact" << endl;
+  cout << "\t\t    -node - the number of the node" << endl;
+  cout << "\t-dump or d <nodeID> <all> - dump the state of the system" << endl;
+  cout << "\t-continue or c - continue execution" << endl;
+  cout << "\t-run or r - start the program" << endl;
+  cout << "\t-quit - exit debugger" << endl;
+  cout << endl;
+  cout << "\t-Press Enter to use last Input" << endl;
+  cout << endl;
+  cout << "*******************************************************************" << endl;
 }
   
 

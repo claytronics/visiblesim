@@ -28,7 +28,7 @@ BlinkyBlocksDebugger::BlinkyBlocksDebugger() {
 		debugger = this;		
 		debuggerMessageHandler = initDebugger(&sendMessage, &pauseSimulation, &unPauseSimulation);
 	} else {
-		ERRPUT << "\033[1;31m" << "Only one Scheduler instance can be created, aborting !" << "\033[0m" << endl;
+		ERRPUT << "\033[1;31m" << "Only one Debugger instance can be created, aborting !" << "\033[0m" << endl;
 		exit(EXIT_FAILURE);
 	}
 }
