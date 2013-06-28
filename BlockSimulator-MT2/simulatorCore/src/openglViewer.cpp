@@ -150,8 +150,9 @@ void GlutContext::mouseFunc(int button,int state,int x,int y) {
 				if (state==GLUT_DOWN) {
 					camera->mouseDown(x,y);
 					int n=selectFunc(x,y);
-					GlBlock *glb = BaseSimulator::getWorld()->getSelectedBlock();
-					if (glb != NULL) {
+					GlBlock *glb = BaseSimulator::getWorld()->getBlockByNum(n-1);
+					GlBlock *glbs = BaseSimulator::getWorld()->getSelectedBlock();
+					if (glbs != NULL && glbs == glb) {
 						BaseSimulator::getWorld()->tapBlock(glb->blockId);
 					}
 				} else

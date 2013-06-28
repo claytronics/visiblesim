@@ -11,6 +11,7 @@
 #include <iostream>
 #include <boost/shared_ptr.hpp>
 #include <inttypes.h>
+#include "blinkyBlocksSimulator.h"
 
 using namespace std;
 
@@ -96,6 +97,9 @@ inline void pauseSimulation(int timestamp) { getDebugger()->pauseSim(timestamp);
 inline void unPauseSimulation() { getDebugger()->unPauseSim(); }
 
 inline void handleDebugMessage(uint64_t* m) { getDebugger()->handleDebugMessage(m); }
+
+inline void quit() { //be careful if simulation is paused (unpause it)
+					deleteSimulator(); }
 
 }
 
