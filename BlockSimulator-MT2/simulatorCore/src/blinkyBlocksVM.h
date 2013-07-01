@@ -12,6 +12,7 @@
 #include <boost/asio.hpp>
 #include <boost/shared_ptr.hpp>
 #include <inttypes.h>
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
 
 using namespace std;
 using boost::asio::ip::tcp;
@@ -50,6 +51,8 @@ protected:
 	boost::shared_ptr<tcp::socket> socket;
 	/* buffer used to receive tcp message */
 	VMMessage inBuffer;
+	/* Mutex used when sending message */
+	boost::interprocess::interprocess_mutex mutex_send;
 	
 	tcp::socket& getSocket() { assert(socket != NULL); return *(socket.get()); };
 	

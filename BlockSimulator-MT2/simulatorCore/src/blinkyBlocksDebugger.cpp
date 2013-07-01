@@ -4,6 +4,7 @@
 #include "blinkyBlocksEvents.h"
 #include "blinkyBlocksWorld.h"
 #include "blinkyBlocksBlock.h"
+#include "blinkyBlocksVM.h"
 #include "debug_simPrompt.hpp"
 #include <stdio.h>
 
@@ -40,7 +41,8 @@ int BlinkyBlocksDebugger::sendMsg(int id, int size, uint64_t *message) {
 	if (id > 0) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) getWorld()->getBlockById(id);
 		if (bb != NULL) {
-			getScheduler()->schedule(new VMDebugMessageEvent(getScheduler()->now(), bb, new VMDebugMessage(size, message)));
+			//getScheduler()->schedule(new VMDebugMessageEvent(getScheduler()->now(), bb, new VMDebugMessage(size, message)));
+			bb->vm->sendMessage(size, message);
 			return 1;
 		} else {
 			uint64_t fakeMessage[7];

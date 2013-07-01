@@ -69,6 +69,14 @@ public:
 	bool undefinedBlocksSetIsEmpty() {
 		return(undefinedBlocksSet.empty());
 	}
+	
+	bool isPaused() {
+		bool r = sem_schedulerStart->try_wait();
+		if (r) {
+			sem_schedulerStart->post();
+		}
+		return !r;
+	}
 };
 
 inline void createScheduler() {

@@ -96,8 +96,6 @@ unsigned int VMDataMessage::size() {
 
 Blinky01BlockCode::Blinky01BlockCode(BlinkyBlocksBlock *host): BlinkyBlocksBlockCode(host) {
 	OUTPUT << "Blinky01BlockCode constructor" << endl;
-	// Send the id to the block
-	BaseSimulator::getScheduler()->schedule(new VMSetIdEvent(BaseSimulator::getScheduler()->now(), (BlinkyBlocksBlock*)hostBlock));
 }
 
 Blinky01BlockCode::~Blinky01BlockCode() {
@@ -119,7 +117,7 @@ void Blinky01BlockCode::handleNewMessage() {
 		case VM_MESSAGE_SET_COLOR:			
 			{
 			// <red> <blue> <green> <intensity>
-			Vecteur color(message[4]/255.0, message[5]/255.0, message[6]/255.0, message[7]/255.0);
+			Vecteur color((float)message[4]/255.0, (float)message[5]/255.0, (float)message[6]/255.0, (float)message[7]/255.0);
 			bb->setColor(color);
 			}	
 			break;

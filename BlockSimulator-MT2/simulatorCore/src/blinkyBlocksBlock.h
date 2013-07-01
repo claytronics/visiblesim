@@ -30,7 +30,9 @@ namespace BlinkyBlocks {
 
 //enum NeighborDirection { Front=0, Back, Left, Right, Top, Bottom };
 // if we consider that the NORTH in the Back at the beginning:
-enum NeighborDirection { Bottom = 0, Back, Right, Left, Front, Top };
+enum NeighborDirection { Bottom = 0, Back = 1, Right, Front, Left, Top };
+
+int getOppositeDirection(int d);
 
 class BlinkyBlocksBlockCode;
 class BlinkyBlocksVM;

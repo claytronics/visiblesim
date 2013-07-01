@@ -1,12 +1,15 @@
 
 #include "blinkyBlocksVM.h"
 #include "blinkyBlocksBlock.h"
+#include "blinkyBlocksBlockCode.h"
 #include <sys/wait.h>
 #include <stdio.h>
 #include <boost/bind.hpp>
 #include "trace.h"
 #include <stdexcept>
 #include <string.h>
+#include "events.h"
+#include "blinkyBlocksEvents.h"
 
 using namespace boost;
 using asio::ip::tcp;
@@ -50,6 +53,16 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 	socket = boost::shared_ptr<tcp::socket>(new tcp::socket(*ios));	
 	acceptor->accept(*(socket.get()));
 	OUTPUT << "VM "<< hostBlock->blockId << " connected" << endl;
+	// Send the id to the block
+	if (debugging) {
+		// to do it right now
+		//VMSetIdEvent ev(BaseSimulator::getScheduler()->now(), (BlinkyBlocksBlock*)hostBlock);
+		//hostBlock->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), (BlinkyBlocksBlock*)hostBlock)));
+		BaseSimulator::getScheduler()->schedule(new VMSetIdEvent(BaseSimulator::getScheduler()->now(), (BlinkyBlocksBlock*)hostBlock));
+	} else {
+		// schedule it, so that it will only happen once the scheduler starts
+		BaseSimulator::getScheduler()->schedule(new VMSetIdEvent(BaseSimulator::getScheduler()->now(), (BlinkyBlocksBlock*)hostBlock));
+	}
 }
 
 BlinkyBlocksVM::~BlinkyBlocksVM() {
@@ -117,6 +130,7 @@ void BlinkyBlocksVM::asyncReadMessage() {
 }
   
 void BlinkyBlocksVM::sendMessage(uint64_t size, uint64_t* message){
+	mutex_send.lock();
 	if (socket == NULL) {
 		ERRPUT << "the simulator is not connected to the VM "<< hostBlock->blockId << endl;
 		return;
@@ -126,6 +140,7 @@ void BlinkyBlocksVM::sendMessage(uint64_t size, uint64_t* message){
 	} catch (std::exception& e) {
 		ERRPUT << "connection to the VM "<< hostBlock->blockId << " lost" << endl;
 	}
+	mutex_send.unlock();
 }
 
 }

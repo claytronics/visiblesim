@@ -20,6 +20,32 @@ static const GLfloat tabColors[12][4]={{1.0,0.0,0.0,1.0},{1.0,0.647058824,0.0,1.
 									{0.0,0.0,1.0,1.0},{0.274509804,0.509803922,0.705882353,1.0},{0.815686275,0.125490196,0.564705882,1.0},{0.5,0.5,0.5,1.0},
 {0.980392157,0.5,0.456,1.0},{0.549019608,0.5,0.5,1.0},{0.980392157,0.843137255,0.0,1.0},{0.094117647,0.545098039,0.094117647,1.0}};
 
+int getOppositeDirection(int d) {
+switch (NeighborDirection(d)) {
+		case Front:
+			return Back;
+			break;
+		case Back:
+			return Front;
+			break;
+		case Left:
+			return Right;
+			break;
+		case Right:
+			return Left;
+			break;
+		case Top:
+			return Bottom;
+			break;
+		case Bottom:
+			return Top;
+			break;
+		default:
+			ERRPUT << "*** ERROR *** : unknown face" << endl;
+			return -1;
+			break;
+	}
+}
 
 BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) : BaseSimulator::BuildingBlock(bId) {
 	OUTPUT << "BlinkyBlocksBlock constructor" << endl;
@@ -113,13 +139,13 @@ string getStringNeighborDirection(uint64_t d) {
   
 void BlinkyBlocksBlock::addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target) {
 	OUTPUT << "Simulator: "<< blockId << " add neighbor " << target->blockId << " on " << getStringNeighborDirection(getDirection(ni)) << endl;
-	getScheduler()->schedule(new VMAddNeighborEvent(getScheduler()->now(), this, getDirection(ni), target->blockId));
+	getScheduler()->schedule(new VMAddNeighborEvent(getScheduler()->now(), this, getOppositeDirection(getDirection(ni)), target->blockId));
 	//getScheduler()->scheduleLock(new VMAddNeighborEvent(getScheduler()->now(), this, getDirection(ni), target->blockId));
 }
 
 void BlinkyBlocksBlock::removeNeighbor(P2PNetworkInterface *ni) {
 	OUTPUT << "Simulator: "<< blockId << " remove neighbor on " << getStringNeighborDirection(getDirection(ni)) << endl;
-	getScheduler()->schedule(new VMRemoveNeighborEvent(getScheduler()->now(), this, getDirection(ni)));
+	getScheduler()->schedule(new VMRemoveNeighborEvent(getScheduler()->now(), this, getOppositeDirection(getDirection(ni))));
 	//getScheduler()->scheduleLock(new VMRemoveNeighborEvent(getScheduler()->now(), this, getDirection(ni)));
 }
   
