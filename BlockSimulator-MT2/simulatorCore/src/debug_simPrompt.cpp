@@ -25,26 +25,39 @@ void debugSend(int command, string build);
 int lastInstruction = 0;
 string lastBuild = "";
 
+/*for sychronization purposes*/
+int waitNode = 0;
+
+
 #define DEBUG 16
 #define SIZE (sizeof(uint64_t))
 
 static bool isPaused = false;
-static void (*sendMessage)(int,int,uint64_t*);
+static int (*sendMessage)(int,int,uint64_t*);
 static void (*pauseSimulation)(int);
 static void (*unPauseSimulation)(void);
+static void (*quitDebugger)(void);
 
 /*spawn the debbugging prompt as a separate thread to
   controll the main one*/
-void (*initDebugger(void (*sendMsg)(int,int,uint64_t*),
+void (*initDebugger(int (*sendMsg)(int,int,uint64_t*),
 		    void (*pauseSim)(int),
-		    void (*unPauseSim)(void)))(uint64_t*){
+		    void (*unPauseSim)(void),
+		    void (*quit)(void),
+		    ostream& o = cout, istream& i = cin))(uint64_t*){
   
 
   pthread_t tid;
   
+  
+  cin.rdbuf(i.rdbuf());
+  cout.rdbuf(o.rdbuf());
+
+
   sendMessage = sendMsg;
   pauseSimulation = pauseSim;
   unPauseSimulation = unPauseSim;
+  quitDebugger = quit;
 
   isPaused = true;
   pthread_create(&tid,NULL,run_debugger, NULL);
@@ -73,7 +86,9 @@ void messageHandler(uint64_t* msg){
 
   } else if (command == PRINTCONTENT){
     cout << (char*)&msg[3];
-    isPaused = true;
+    waitNode--;
+    if (waitNode == 0)
+      isPaused = true;
   }
 }
 
@@ -237,7 +252,12 @@ void debugSend(int command, string build){
     msgBreak[3] = type;
     nameSpot = (char*)&msgBreak[4];
     memcpy(nameSpot,name.c_str(),name.length()+1);
-    sendMessage(node,size+SIZE,(uint64_t*)msgBreak);
+    waitNode = sendMessage(node,size+SIZE,(uint64_t*)msgBreak);
+    //if an error has occured
+    if (waitNode == 0){
+      isPaused = true;
+      return;
+    }
 
   } else if (command == DUMP){
     if (build == "all")
@@ -255,7 +275,9 @@ void debugSend(int command, string build){
     msgDump[0] = size;
     msgDump[1] = DEBUG;
     msgDump[2] = DUMP;
-    sendMessage(node,size+SIZE,(uint64_t*)msgDump);
+    waitNode = sendMessage(node,size+SIZE,(uint64_t*)msgDump);
+    if (build!="all")
+      waitNode = 1;
 
   } else if (command == NOTHING){
     isPaused = true;
@@ -285,7 +307,8 @@ int handle_command(string command){
   } else if (command == "continue"||command == "c"){
     retVal = CONTINUE;
   } else if (command == "quit"||command == "q"){
-    exit(0);
+    quitDebugger();
+    pthread_exit(0);
   } else {
     cout << "unknown command: type 'help' for options " << endl;
     retVal = NOTHING;

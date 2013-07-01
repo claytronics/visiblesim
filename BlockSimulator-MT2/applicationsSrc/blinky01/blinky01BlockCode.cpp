@@ -51,13 +51,16 @@ string getStringMessage(uint64_t t) {
 
 VMDataMessage::VMDataMessage(uint64_t src, uint64_t* m): Message() {
 	uint64_t size = m[0] + sizeof(uint64_t);
-	message = new uint64_t[size/sizeof(uint64_t)];
+	message = new uint64_t[size/sizeof(uint64_t)+1];
 	memcpy(message, m, size);
 	message[1] = VM_MESSAGE_RECEIVE_MESSAGE;
 	//message[2] = 0; // timestamp
 	//message[3] = m[5];
 	//message[5] = m[3];
-	message[3] = src;
+	message[5] = src;
+	message[3] = m[5];
+	
+	/*message[3] = src;
 	switch (m[4]) {
 		case Front:
 			message[4] = Back;
@@ -80,7 +83,7 @@ VMDataMessage::VMDataMessage(uint64_t src, uint64_t* m): Message() {
 		default:
 			ERRPUT << "*** ERROR *** : unknown face" << endl;
 			break;
-	}
+	}*/
 }
 	
 VMDataMessage::~VMDataMessage() {
@@ -125,8 +128,8 @@ void Blinky01BlockCode::handleNewMessage() {
 			// <face> <content...>
 			//cout << "receive a message: " << message[0] << " " << message[1] << " " << message[2] << " "<< message[3] << " " << message[4] << " " << message[5] << " " << message[6] << endl;
 			P2PNetworkInterface *interface;
-			interface = bb->getInterface((NeighborDirection)message[4]);
-			//interface = bb->getInterfaceDestId(message[5]);
+			//interface = bb->getInterface((NeighborDirection)message[4]);
+			interface = bb->getInterfaceDestId(message[5]);
 			//cout << "dest: " << message[<
 			//message[4] = bb->getDirection(interface);
 			//cout << "message modified: " << message[0] << " " << message[1] << " " << message[2] << " "<< message[3] << " " << message[4] << " " << message[5] << endl;
@@ -157,13 +160,13 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	switch (pev->eventType) {
 	case EVENT_SET_ID:
 		{
-		uint64_t message[5];
-		message[0] = 4*sizeof(uint64_t);	
+		uint64_t message[4];
+		message[0] = 3*sizeof(uint64_t);	
 		message[1] = VM_MESSAGE_SET_ID;
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 		message[3] = hostBlock->blockId; // BUG VM: souce node is not send here
-		message[4] = hostBlock->blockId;
-		bb->vm->sendMessage(5*sizeof(uint64_t), message);
+		//message[4] = hostBlock->blockId;
+		bb->vm->sendMessage(4*sizeof(uint64_t), message);
 		OUTPUT << "ID sent to the VM " << hostBlock->blockId << endl;
 		}
 		break;

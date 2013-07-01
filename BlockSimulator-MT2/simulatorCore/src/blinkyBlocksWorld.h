@@ -70,7 +70,8 @@ public:
 	void accelBlock(int bId, int x, int y, int z);
 	void shakeBlock(int bId, int f);
 	
-	void broadcastVMMessage(int size, uint64_t* message);
+	/* return to how many nodes the message has been sent */
+	int broadcastVMMessage(int size, uint64_t* message);
 	void stopBlock(int bId);
 };
 

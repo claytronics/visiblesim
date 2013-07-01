@@ -26,14 +26,14 @@ BlinkyBlocksDebugger *BlinkyBlocksDebugger::debugger=NULL;
 BlinkyBlocksDebugger::BlinkyBlocksDebugger() {
 	if (debugger == NULL) {
 		debugger = this;		
-		debuggerMessageHandler = initDebugger(&sendMessage, &pauseSimulation, &unPauseSimulation);
+		debuggerMessageHandler = initDebugger(&sendMessage, &pauseSimulation, &unPauseSimulation, &quit);
 	} else {
-		ERRPUT << "\033[1;31m" << "Only one Scheduler instance can be created, aborting !" << "\033[0m" << endl;
+		ERRPUT << "\033[1;31m" << "Only one Debugger instance can be created, aborting !" << "\033[0m" << endl;
 		exit(EXIT_FAILURE);
 	}
 }
 
-void BlinkyBlocksDebugger::sendMes(int id, int size, uint64_t *message) {
+int BlinkyBlocksDebugger::sendMsg(int id, int size, uint64_t *message) {
 	
 	/*BaseSimulator::getScheduler()->scheduleLock(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
 					new VMDataMessage(hostBlock->blockId, size, message), interface));*/
@@ -41,6 +41,7 @@ void BlinkyBlocksDebugger::sendMes(int id, int size, uint64_t *message) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) getWorld()->getBlockById(id);
 		if (bb != NULL) {
 			getScheduler()->schedule(new VMDebugMessageEvent(getScheduler()->now(), bb, new VMDebugMessage(size, message)));
+			return 1;
 		} else {
 			uint64_t fakeMessage[7];
 			fakeMessage[0] = 4*sizeof(uint64_t);
@@ -48,10 +49,11 @@ void BlinkyBlocksDebugger::sendMes(int id, int size, uint64_t *message) {
 			fakeMessage[2] = 5; // PRINTCONTENT
 			sprintf((char*)&fakeMessage[3], "Node %d does not exist.\n", id);
 			debuggerMessageHandler(fakeMessage);
+			return 0;
 		}
 	} else if (id == -1) {
 		// send to all vm
-		getWorld()->broadcastVMMessage(size, message);
+		return getWorld()->broadcastVMMessage(size, message);
 	} 
 }
 
