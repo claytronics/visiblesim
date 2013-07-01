@@ -70,18 +70,18 @@ void GlutWindow::bindTexture() {
 
 // function printing a string on the glut screen on x,y
 // warning : must be ended by \0
-GLfloat GlutWindow::drawString(GLfloat x,GLfloat y,const char *str)
+GLfloat GlutWindow::drawString(GLfloat x,GLfloat y,const char *str,void *mode,GLint height)
 { glRasterPos2f(x,y);
   while (*str)
   { if (*str=='\n')
-    { y-=14;
+    { y-=height;
 	  glRasterPos2f(x,y);
     } else
-    { glutBitmapCharacter(GLUT_BITMAP_8_BY_13,*str);
+    { glutBitmapCharacter(mode,*str);
     }
     str++;
   }
-  return y-14;
+  return y-height;
 }
 
 /***************************************************************************************/
@@ -423,14 +423,14 @@ void GlutPopupMenuWindow::glDraw() {
 int GlutPopupMenuWindow::mouseFunc(int button,int state,int mx,int my) {
 	if (!isVisible) return 0;
 	int n = GlutWindow::mouseFunc(button,state,mx,my);
-	switch (n) {
+	/*switch (n) {
 		case 1 :
 
 		break;
 		case 2 :
 
 		break;
-	}
+	}*/
 	return n;
 }
 
@@ -443,3 +443,76 @@ void GlutPopupMenuWindow::activate(int id,bool value) {
 		((GlutButton*)(*cb))->activate(value);
 	}
 }
+
+/***************************************************************************************/
+/* GlutHelpWindow */
+/***************************************************************************************/
+GlutHelpWindow::GlutHelpWindow(GlutWindow *parent,GLint px,GLint py,GLint pw,GLint ph,const char *textFile)
+:GlutWindow(parent,-1,px,py,pw,ph,NULL) {
+	isVisible=false;
+	text=NULL;
+	
+	GlutButton *btn = new GlutButton(this, 999,pw-35,ph-35,32,32,"../../simulatorCore/smartBlocksTextures/close.tga");
+
+	ifstream fin(textFile);
+	if(!fin) { 
+		cerr << "cannot open file " << textFile << endl;
+	} else {
+		stringstream out;
+	    out << fin.rdbuf();
+	    string strout = out.str();
+	    text=(unsigned char*)new char[strout.size()+1];
+	    memcpy(text,strout.c_str(),strout.size());
+	    text[strout.size()-1]=0; // end of string
+	    
+	    cout << "content size: " << strout.size() << endl
+	         << "content:" << text << endl;
+	}
+}
+
+GlutHelpWindow::~GlutHelpWindow() {
+	delete [] text;
+}
+
+void GlutHelpWindow::glDraw() {
+	if (isVisible) {
+		glDisable(GL_LIGHTING);
+		glDisable(GL_TEXTURE_2D);
+		glColor4f(0.5,0.5,0.5,0.75);
+		glPushMatrix();
+		glTranslatef(x,y,0);
+		glBegin(GL_QUADS);
+		glVertex2i(0,h-40);
+		glVertex2i(w,h-40);
+		glVertex2i(w,h);
+		glVertex2i(0,h);
+		glEnd();
+		glColor4f(1.0,1.0,0.0,0.75);
+		glBegin(GL_QUADS);
+		glVertex2i(0,0);
+		glVertex2i(w,0);
+		glVertex2i(w,h-40);
+		glVertex2i(0,h-40);
+		glEnd();
+		glColor4f(0.0,0.0,0.0,1.0);
+		glRasterPos2f(10,h-32);
+		glutBitmapString(GLUT_BITMAP_HELVETICA_18,text);
+		glPopMatrix();
+		GlutWindow::glDraw();
+	}
+}
+
+int GlutHelpWindow::mouseFunc(int button,int state,int mx,int my) {
+	if (!isVisible) return 0;
+	int n = GlutWindow::mouseFunc(button,state,mx,my);
+	switch (n) {
+		case 999 :
+			isVisible=false;
+		break;
+	}
+	return n;
+}
+
+
+
+

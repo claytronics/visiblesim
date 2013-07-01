@@ -465,4 +465,10 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		}
 	}
 	
+	void BlinkyBlocksWorld::createHelpWindow() {
+		if (GlutContext::helpWindow) delete GlutContext::helpWindow;
+
+		GlutContext::helpWindow = new GlutHelpWindow(NULL,10,40,540,480,"../../simulatorCore/blinkyBlocksHelp.txt");
+	}
+
 } // BlinkyBlock namespace

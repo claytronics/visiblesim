@@ -58,6 +58,7 @@ public:
 	virtual void glDrawId() {};
 	virtual void glDrawIdByMaterial() {};
 	virtual void createPopupMenu(int ix,int iy) {};
+	virtual void createHelpWindow() {};
 	virtual Camera *getCamera() { return NULL; };
 	virtual void menuChoice(int) {};
 	/* Notify the bId block that these events happened */

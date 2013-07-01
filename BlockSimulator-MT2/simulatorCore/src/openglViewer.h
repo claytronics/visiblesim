@@ -28,6 +28,7 @@ class GlutContext {
     static GlutSlidingMainWindow *mainWindow;
     static GlutPopupWindow *popup;
     static GlutPopupMenuWindow *popupMenu;
+    static GlutHelpWindow *helpWindow;
 	static int screenWidth, screenHeight;
 	static bool fullScreenMode;
 //	bool showLinks;

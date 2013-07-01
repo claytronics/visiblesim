@@ -39,9 +39,8 @@ protected :
 	virtual int mouseFunc(int button,int state,int x,int y);
 	virtual void reshapeFunc(int mw,int mh) {};
 	static GLuint loadTexture(const char *titre,int &tw,int &th);
-	//GLuint loadTexture(const char *titre);
 	static unsigned char *lectureTarga(const char *titre, int& width, int& height ,bool retourner=false);
-	static GLfloat drawString(GLfloat x,GLfloat y,const char *str);
+	static GLfloat drawString(GLfloat x,GLfloat y,const char *str,void* mode=GLUT_BITMAP_8_BY_13,GLint height=13);
 };
 
 class GlutButton : public GlutWindow {
@@ -98,6 +97,19 @@ public :
 	int mouseFunc(int button,int state,int x,int y);
 	void glDraw();
 	void activate(int n,bool value);
+};
+
+class GlutHelpWindow : public GlutWindow {
+	bool isVisible;
+	unsigned char* text;
+public :
+	GlutHelpWindow(GlutWindow *parent,GLint px,GLint py,GLint pw,GLint ph,const char *textFile);
+	virtual ~GlutHelpWindow();
+
+	void show(bool v) { isVisible=v;};
+	void showHide() { isVisible=!isVisible;};
+	int mouseFunc(int button,int state,int x,int y);
+	void glDraw();
 };
 
 #define ID_SW_BUTTON_OPEN	1001
