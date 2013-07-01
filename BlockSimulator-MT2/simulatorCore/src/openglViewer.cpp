@@ -25,6 +25,7 @@ bool GlutContext::fullScreenMode=false;
 GlutSlidingMainWindow *GlutContext::mainWindow=NULL;
 GlutPopupWindow *GlutContext::popup=NULL;
 GlutPopupMenuWindow *GlutContext::popupMenu=NULL;
+GlutHelpWindow *GlutContext::helpWindow=NULL;
 
 void GlutContext::init(int argc, char **argv) {
 	OUTPUT << "Avant glutInit()" << endl;
@@ -125,6 +126,7 @@ void GlutContext::passiveMotionFunc(int x,int y) {
 	}
 	mainWindow->mouseFunc(-1,-1,x,screenHeight - y);
 	if (popupMenu) popupMenu->mouseFunc(-1,-1,x,screenHeight - y);
+	if (helpWindow) helpWindow->mouseFunc(-1,-1,x,screenHeight - y);
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -141,6 +143,7 @@ void GlutContext::mouseFunc(int button,int state,int x,int y) {
 			getWorld()->menuChoice(n);
 		}
 	}
+	if (helpWindow) helpWindow->mouseFunc(button,state,x,screenHeight - y);
 
 	keyboardModifier = glutGetModifiers();
 	if (keyboardModifier!=GLUT_ACTIVE_CTRL) { // rotation du point de vue
@@ -234,7 +237,14 @@ void GlutContext::keyboardFunc(unsigned char c, int x, int y)
               glutReshapeWindow(1024, 800);
               glutPositionWindow(0,0);
           }
-  break;
+      break;
+	  case 'h' :
+		  if (!helpWindow) {
+			  BaseSimulator::getWorld()->createHelpWindow();
+		  }
+		  helpWindow->showHide();
+	  break;
+
 
     }
 
@@ -283,6 +293,7 @@ void GlutContext::drawFunc(void) {
 	mainWindow->glDraw();
 	popup->glDraw();
 	if (popupMenu) popupMenu->glDraw();
+	if (helpWindow) helpWindow->glDraw();
 	glEnable(GL_DEPTH_TEST);
 	glutSwapBuffers();
 }

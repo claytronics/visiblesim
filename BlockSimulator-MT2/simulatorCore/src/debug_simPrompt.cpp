@@ -253,6 +253,7 @@ void debugSend(int command, string build){
     nameSpot = (char*)&msgBreak[4];
     memcpy(nameSpot,name.c_str(),name.length()+1);
     waitNode = sendMessage(node,size+SIZE,(uint64_t*)msgBreak);
+    //if an error has occured
     if (waitNode == 0){
       isPaused = true;
       return;

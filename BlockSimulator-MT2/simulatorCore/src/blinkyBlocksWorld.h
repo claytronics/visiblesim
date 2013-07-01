@@ -61,6 +61,7 @@ public:
 	virtual void glDrawIdByMaterial();
 	virtual void updateGlData(BlinkyBlocksBlock*blc);
 	virtual void createPopupMenu(int ix, int iy);
+	virtual void createHelpWindow();
 	inline virtual Camera *getCamera() { return camera; };
 	virtual void setSelectedFace(int n);
 	virtual void menuChoice(int n);
