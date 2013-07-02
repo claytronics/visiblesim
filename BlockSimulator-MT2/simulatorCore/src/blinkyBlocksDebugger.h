@@ -81,33 +81,22 @@ public:
 	}
 };
 
-inline void createDebugger() {
-	BlinkyBlocksDebugger::createDebugger();
-}
+inline void createDebugger() { BlinkyBlocksDebugger::createDebugger(); }
 
-inline void deleteDebugger() {
-	BlinkyBlocksDebugger::deleteDebugger();
-}
+inline void deleteDebugger() { BlinkyBlocksDebugger::deleteDebugger(); }
 
 inline BlinkyBlocksDebugger* getDebugger() { return(BlinkyBlocksDebugger::getDebugger()); }
 	
-inline int sendMessage(int id, int size, uint64_t *message) { return getDebugger()->sendMsg(id, size, message);}
+inline int sendMessage(int id, int size, uint64_t *message) { return getDebugger()->sendMsg(id, size, message); }
 
-inline void pauseSimulation(int timestamp) { getDebugger()->pauseSim(timestamp);}
+inline void pauseSimulation(int timestamp) { getDebugger()->pauseSim(timestamp); }
 
 inline void unPauseSimulation() { getDebugger()->unPauseSim(); }
 
 inline void handleDebugMessage(uint64_t* m) { getDebugger()->handleDebugMessage(m); }
 
-inline void quit() {//deleteScheduler(); 
-					glutLeaveMainLoop();
-					//deleteScheduler();
-					//deleteSimulator();
-					 //
-					//be careful if simulation is paused (unpause it)
-					//deleteSimulator(); }
+inline void quit() { glutLeaveMainLoop(); }
 
-}
 }
 
 #endif /* BLINKYBLOCKSDEBUGGER_H_ */

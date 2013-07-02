@@ -97,7 +97,7 @@ public:
 		ios = NULL; acceptor = NULL;
 	};
 	
-	/* close the socket, and then kill the vm program */
+	/* close the socket */
 	void stop();
 	
 	/* send and receive message from the associated VM program */

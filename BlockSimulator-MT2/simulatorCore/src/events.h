@@ -85,7 +85,7 @@ protected:
 public:
 	BaseSimulator::BuildingBlock* getConcernedBlock() {return concernedBlock;};
 	virtual void consumeBlockEvent() = 0;
-	void consume() {
+	virtual void consume() {
 		if (concernedBlock->state == BaseSimulator::Alive) {
 			this->consumeBlockEvent();
 		}
@@ -133,7 +133,8 @@ public:
 
 	ProcessLocalEvent(uint64_t, BaseSimulator::BuildingBlock *conBlock);
 	~ProcessLocalEvent();
-	void consumeBlockEvent();
+	void consumeBlockEvent() {};
+	void consume();
 	const virtual string getEventName();
 };
 

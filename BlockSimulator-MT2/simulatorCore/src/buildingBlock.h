@@ -33,7 +33,7 @@ class BlockCode;
 //
 //===========================================================================================================
 
-enum State {Stop = 0, Removed = 1, Alive = 2};
+enum State {Stopped = 0, Removed = 1, Alive = 2};
 
 class BuildingBlock {
 protected:

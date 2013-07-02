@@ -172,11 +172,13 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 	iy = int(bb->position.pt[1]);
 	iz = int(bb->position.pt[2]);
 	setGridPtr(ix,iy,iz,NULL);
+	
 	// remove the block from the lists
 	//buildingBlocksMap.erase(bb->blockId);
-
 	// remove event from the list
 	//getScheduler()->removeEventsToBlock(bb);
+	
+	bb->stop(); // schedule stop event, set stopped state
 	bb->setState(Removed);
 
 	// remove the associated glBlock
@@ -409,7 +411,7 @@ void BlinkyBlocksWorld::menuChoice(int n) {
 		} break;
 		case 3 : {
 			BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(tabGlBlocks[numSelectedBlock]->blockId);
-			bb->stop();
+			stopBlock(bb->blockId);
 		} break;
 	}
 }
@@ -461,15 +463,35 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		if (bId < 0) {
 			map<int, BaseSimulator::BuildingBlock*>::iterator it;
 			for(it = buildingBlocksMap.begin(); 
-				it != buildingBlocksMap.end(); it++) {
+					it != buildingBlocksMap.end(); it++) {
 				BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-				bb->stop();
+				if (bb->state == Alive) {
+					bb->stop();
+				}
 			}
-		} else {
-			map<int, BaseSimulator::BuildingBlock*>::iterator it;
-			it = buildingBlocksMap.begin();
+		} else {			
 			BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(bId);
-			bb->stop();
+			if(bb->state == Alive) {
+				// cut links between bb and others
+				for(int i=0; i<6; i++) {
+					P2PNetworkInterface *bbi = bb->getInterface(NeighborDirection(i));
+					if (bbi->connectedInterface) {
+						//bb->removeNeighbor(bbi); //Useless
+						bbi->connectedInterface->hostBlock->removeNeighbor(bbi->connectedInterface);
+						bbi->connectedInterface->connectedInterface=NULL;
+						bbi->connectedInterface=NULL;
+					}
+				}
+				// free grid cell
+				int ix,iy,iz;
+				ix = int(bb->position.pt[0]);
+				iy = int(bb->position.pt[1]);
+				iz = int(bb->position.pt[2]);
+				setGridPtr(ix,iy,iz,NULL);
+				bb->stop(); // schedule stop event, set stopped state
+				bb->setState(Stopped);
+				linkBlocks();
+			}
 		}
 	}
 	

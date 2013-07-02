@@ -27,7 +27,8 @@ public:
 	VMSetIdEvent(uint64_t, BlinkyBlocksBlock *conBlock);
 	VMSetIdEvent(VMSetIdEvent *ev);
 	~VMSetIdEvent();
-	void consumeBlockEvent();
+	void consumeBlockEvent() {};
+	void consume();
 	const virtual string getEventName();
 };
 
@@ -43,7 +44,8 @@ public:
 	VMStopEvent(uint64_t, BlinkyBlocksBlock *conBlock);
 	VMStopEvent(VMStopEvent *ev);
 	~VMStopEvent();
-	void consumeBlockEvent();
+	void consumeBlockEvent() {};
+	void consume();
 	const virtual string getEventName();
 };
 

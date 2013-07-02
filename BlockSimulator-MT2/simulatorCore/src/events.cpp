@@ -146,7 +146,7 @@ ProcessLocalEvent::~ProcessLocalEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void ProcessLocalEvent::consumeBlockEvent() {
+void ProcessLocalEvent::consume() {
 	EVENT_CONSUME_INFO();
 	concernedBlock->processLocalEvent();
 }
