@@ -35,12 +35,12 @@ BlinkyBlocksScheduler::~BlinkyBlocksScheduler() {
 	getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()));
 	sem_schedulerStart->post(); // resume the simulation if it is paused
 	schedulerThread->join();
-	delete schedulerThread;
+	delete schedulerThread;	
 	delete sem_schedulerStart;
 	/* sleep for a while, to be sure that the schedulerThread will be
 	* killed before destroying all the events.
 	*/ 
-	//usleep(5000);
+	//usleep(10000);
 }
 
 void BlinkyBlocksScheduler::createScheduler() {

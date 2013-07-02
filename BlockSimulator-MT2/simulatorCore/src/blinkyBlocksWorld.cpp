@@ -177,7 +177,7 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 
 	// remove event from the list
 	//getScheduler()->removeEventsToBlock(bb);
-	bb->state = Removed;
+	bb->setState(Removed);
 
 	// remove the associated glBlock
 	std::vector<GlBlock*>::iterator cit=tabGlBlocks.begin();
@@ -190,8 +190,6 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 	}
 	if (selectedBlock == bb->ptrGlBlock) {selectedBlock = NULL;}
 	delete bb->ptrGlBlock;
-	bb->killVM();
-	//delete bb;
 
 	linkBlocks();
 }
@@ -468,6 +466,8 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 				bb->stop();
 			}
 		} else {
+			map<int, BaseSimulator::BuildingBlock*>::iterator it;
+			it = buildingBlocksMap.begin();
 			BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(bId);
 			bb->stop();
 		}

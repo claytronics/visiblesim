@@ -68,7 +68,8 @@ public:
 	}
 	NeighborDirection getDirection(P2PNetworkInterface*);
 
-	void killVM();
+	void stopVM();
+	void setState(int s);
 
 	/* schedule the appropriate event for this action */
 	void tap();

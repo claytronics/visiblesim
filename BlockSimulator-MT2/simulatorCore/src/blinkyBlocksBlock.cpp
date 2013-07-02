@@ -60,13 +60,25 @@ BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, BlinkyBlocksBlockCode *(*blinkyBlo
 BlinkyBlocksBlock::~BlinkyBlocksBlock() {
 	OUTPUT << "BlinkyBlocksBlock destructor " << blockId << endl;
 	//delete[] tabInterfaces;
-	killVM();
-	delete vm;
+	if (vm != NULL) {
+		delete vm;
+		vm = NULL;
+	}
 }
 
-void BlinkyBlocksBlock::killVM() {
-	vm->stop();
+void BlinkyBlocksBlock::stopVM() {
+	if (getState() == Alive) {
+		vm->stop();
+		vm = NULL;
+	}
 }
+
+void BlinkyBlocksBlock::setState(int s) {
+	if (s == Removed || s == Stop) {
+		stopVM();
+	}
+	state = State(s);
+} 
 
 void BlinkyBlocksBlock::setPosition(const Vecteur &p) {
 	position=p;

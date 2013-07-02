@@ -55,6 +55,10 @@ protected:
 	boost::interprocess::interprocess_mutex mutex_send;
 	
 	tcp::socket& getSocket() { assert(socket != NULL); return *(socket.get()); };
+	/* kill the associated VM program (and wait for the effective end) */
+	void terminate();
+	/* close the socket associated to the VM program */
+	void closeSocket();
 	
 	//static int port;
 	static boost::asio::io_service *ios;
@@ -93,12 +97,6 @@ public:
 		ios = NULL; acceptor = NULL;
 	};
 	
-	/* wait for the termination of the associated VM program */
-	void waitEnd();
-	/* kill the associated VM program */
-	void terminate();
-	/* close the socket associated to the VM program */
-	void closeSocket();
 	/* close the socket, and then kill the vm program */
 	void stop();
 	

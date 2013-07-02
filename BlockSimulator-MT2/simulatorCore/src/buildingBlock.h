@@ -68,6 +68,8 @@ public:
 	virtual void removeNeighbor(P2PNetworkInterface *ni) {};
 	
 	virtual void stop() {};
+	int getState() { return state; };
+	virtual void setState(int s) { state = State(s); };
 };
 
 } // BaseSimulator namespace

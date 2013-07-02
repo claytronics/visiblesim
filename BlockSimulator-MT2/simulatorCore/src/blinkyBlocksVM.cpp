@@ -76,15 +76,9 @@ void BlinkyBlocksVM::stop() {
 	terminate();
 }
 
-void BlinkyBlocksVM::waitEnd() {	
-	waitpid(pid, NULL, 0);
-}
-
 void BlinkyBlocksVM::terminate() {
-	if (hostBlock->state == Alive) {
-		kill(pid, SIGTERM);
-		waitEnd();
-	}
+	//kill(pid, SIGTERM);
+	//waitpid(pid, NULL, 0);
 }
 
 void BlinkyBlocksVM::closeSocket() {
