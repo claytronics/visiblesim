@@ -465,9 +465,7 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 			for(it = buildingBlocksMap.begin(); 
 					it != buildingBlocksMap.end(); it++) {
 				BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-				if (bb->state == Alive) {
-					bb->stop();
-				}
+				if (bb->state == Alive ) bb->stop();
 			}
 		} else {			
 			BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(bId);

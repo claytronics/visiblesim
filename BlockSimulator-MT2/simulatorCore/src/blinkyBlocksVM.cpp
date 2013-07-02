@@ -78,8 +78,8 @@ void BlinkyBlocksVM::stop() {
 }
 
 void BlinkyBlocksVM::terminate() {
-	//kill(pid, SIGTERM);
-	//waitpid(pid, NULL, 0);
+	//kill(pid, SIGKILL);
+	waitpid(pid, NULL, 0);
 }
 
 void BlinkyBlocksVM::closeSocket() {
