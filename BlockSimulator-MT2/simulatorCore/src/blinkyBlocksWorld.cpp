@@ -70,6 +70,7 @@ void BlinkyBlocksWorld::deleteWorld() {
 
 void BlinkyBlocksWorld::addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlockCodeBuildingFunction)(BlinkyBlocksBlock*),const Vecteur &pos,const Vecteur &col) {
 
+	/* Now blocks aren't any more deleted, we can't continue to use this way
 	if (blockId==-1) {// rechercher un blockID valide
 		vector <GlBlock*>::const_iterator ci = tabGlBlocks.begin();
 		while (ci!=tabGlBlocks.end()) {
@@ -77,8 +78,18 @@ void BlinkyBlocksWorld::addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlo
 			ci++;
 		}
 		blockId++;
+	}*/ 
+	if (blockId == -1) {
+		// En supposant que les blocs sont ordonnees:
+		//blockId = (buildingBlocksMap.rbegin())->second->blockId;
+		map<int, BaseSimulator::BuildingBlock*>::iterator it;
+			for(it = buildingBlocksMap.begin(); 
+					it != buildingBlocksMap.end(); it++) {
+				BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
+				if (it->second->blockId > blockId) blockId = bb->blockId;
+			}
+		blockId++;
 	}
-
 	BlinkyBlocksBlock *blinkyBlock = new BlinkyBlocksBlock(blockId, blinkyBlockCodeBuildingFunction);
 	buildingBlocksMap.insert(std::pair<int,BaseSimulator::BuildingBlock*>(blinkyBlock->blockId, (BaseSimulator::BuildingBlock*)blinkyBlock));
 
@@ -156,31 +167,33 @@ void BlinkyBlocksWorld::linkBlocks() {
 }
 
 void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
-	// cut links between bb and others
-	for(int i=0; i<6; i++) {
-		P2PNetworkInterface *bbi = bb->getInterface(NeighborDirection(i));
-		if (bbi->connectedInterface) {
-			//bb->removeNeighbor(bbi); //Useless
-			bbi->connectedInterface->hostBlock->removeNeighbor(bbi->connectedInterface);
-			bbi->connectedInterface->connectedInterface=NULL;
-			bbi->connectedInterface=NULL;
+	if (bb->state == Alive ) {
+		// cut links between bb and others
+		for(int i=0; i<6; i++) {
+			P2PNetworkInterface *bbi = bb->getInterface(NeighborDirection(i));
+			if (bbi->connectedInterface) {
+				//bb->removeNeighbor(bbi); //Useless
+				bbi->connectedInterface->hostBlock->removeNeighbor(bbi->connectedInterface);
+				bbi->connectedInterface->connectedInterface=NULL;
+				bbi->connectedInterface=NULL;
+			}
 		}
+		// free grid cell
+		int ix,iy,iz;
+		ix = int(bb->position.pt[0]);
+		iy = int(bb->position.pt[1]);
+		iz = int(bb->position.pt[2]);
+		setGridPtr(ix,iy,iz,NULL);
+		
+		// remove the block from the lists
+		//buildingBlocksMap.erase(bb->blockId);
+		// remove event from the list
+		//getScheduler()->removeEventsToBlock(bb);
+		
+		bb->stop(); // schedule stop event, set stopped state
+		bb->setState(Removed);
+		linkBlocks();
 	}
-	// free grid cell
-	int ix,iy,iz;
-	ix = int(bb->position.pt[0]);
-	iy = int(bb->position.pt[1]);
-	iz = int(bb->position.pt[2]);
-	setGridPtr(ix,iy,iz,NULL);
-	
-	// remove the block from the lists
-	//buildingBlocksMap.erase(bb->blockId);
-	// remove event from the list
-	//getScheduler()->removeEventsToBlock(bb);
-	
-	bb->stop(); // schedule stop event, set stopped state
-	bb->setState(Removed);
-
 	// remove the associated glBlock
 	std::vector<GlBlock*>::iterator cit=tabGlBlocks.begin();
 	if (*cit==bb->ptrGlBlock) tabGlBlocks.erase(cit);
@@ -192,8 +205,6 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 	}
 	if (selectedBlock == bb->ptrGlBlock) {selectedBlock = NULL;}
 	delete bb->ptrGlBlock;
-
-	linkBlocks();
 }
 
 
