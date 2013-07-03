@@ -29,7 +29,7 @@ VMSetIdEvent::~VMSetIdEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMSetIdEvent::consumeBlockEvent() {
+void VMSetIdEvent::consume() {
 	EVENT_CONSUME_INFO();
 	concernedBlock->scheduleLocalEvent(EventPtr(new VMSetIdEvent(this)));
 }
@@ -57,7 +57,7 @@ VMStopEvent::~VMStopEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMStopEvent::consumeBlockEvent() {
+void VMStopEvent::consume() {
 	EVENT_CONSUME_INFO();
 	concernedBlock->scheduleLocalEvent(EventPtr(new VMStopEvent(this)));
 }

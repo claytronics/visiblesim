@@ -173,14 +173,14 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		}
 		break;
 	case EVENT_STOP:
-		{			
+		{
 		uint64_t message[4];
 		message[0] = 3*sizeof(uint64_t);	
 		message[1] = VM_MESSAGE_STOP;
 		message[2] = BaseSimulator::getScheduler()->now();
 		message[3] = hostBlock->blockId;
 		bb->vm->sendMessage(4*sizeof(uint64_t), message);
-		bb->state = Stop;
+		bb->stopVM();
 		}
 		break;
 	case EVENT_ADD_NEIGHBOR:

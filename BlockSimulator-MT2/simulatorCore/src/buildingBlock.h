@@ -33,7 +33,7 @@ class BlockCode;
 //
 //===========================================================================================================
 
-enum State {Stop = 0, Removed = 1, Alive = 2};
+enum State {Stopped = 0, Removed = 1, Alive = 2};
 
 class BuildingBlock {
 protected:
@@ -68,6 +68,8 @@ public:
 	virtual void removeNeighbor(P2PNetworkInterface *ni) {};
 	
 	virtual void stop() {};
+	int getState() { return state; };
+	virtual void setState(int s) { state = State(s); };
 };
 
 } // BaseSimulator namespace

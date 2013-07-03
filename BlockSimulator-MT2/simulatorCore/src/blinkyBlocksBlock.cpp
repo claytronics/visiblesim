@@ -60,12 +60,14 @@ BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, BlinkyBlocksBlockCode *(*blinkyBlo
 BlinkyBlocksBlock::~BlinkyBlocksBlock() {
 	OUTPUT << "BlinkyBlocksBlock destructor " << blockId << endl;
 	//delete[] tabInterfaces;
-	killVM();
-	delete vm;
+	stopVM();
 }
 
-void BlinkyBlocksBlock::killVM() {
-	vm->stop();
+void BlinkyBlocksBlock::stopVM() {
+	if (vm != NULL) {
+		delete vm;
+		vm = NULL;
+	}
 }
 
 void BlinkyBlocksBlock::setPosition(const Vecteur &p) {
@@ -151,6 +153,7 @@ void BlinkyBlocksBlock::removeNeighbor(P2PNetworkInterface *ni) {
   
 void BlinkyBlocksBlock::stop() {
 	OUTPUT << "Simulator: stop VM" << endl;
+	setState(Stopped);
 	getScheduler()->schedule(new VMStopEvent(getScheduler()->now(), this));
 	//getScheduler()->scheduleLock(new VMStopEvent(getScheduler()->now(), this));
 }
