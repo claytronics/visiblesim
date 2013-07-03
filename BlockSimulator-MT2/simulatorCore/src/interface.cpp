@@ -95,6 +95,10 @@ GlutWindow(NULL,1,px,py,pw,ph,titreTexture) {
 	buttonClose = new GlutButton(this,ID_SW_BUTTON_CLOSE,5,26,32,32,"../../simulatorCore/smartBlocksTextures/boutons_fd.tga",false);
 }
 
+GlutSlidingMainWindow::~GlutSlidingMainWindow() {
+	traces.clear();
+}
+
 void GlutSlidingMainWindow::glDraw() {
     // drawing of the tab
 	bindTexture();
@@ -139,15 +143,16 @@ void GlutSlidingMainWindow::glDraw() {
 			sprintf(str, "Selected Block : None\n(use [Ctrl]+click)");
 		}
 		drawString(42.0,h-40.0,str);
-/*
-        if (!Scheduler::lstInfos.empty())
-	    { list<Info*>::const_iterator ci = Scheduler::lstInfos.begin();
-		  GLfloat posy = h-70;
-		  while (posy>2 && ci!=Scheduler::lstInfos.end())
-		  { posy = drawString(42.0,posy,(*ci)->str);
-		    ci++;
-		  }
-	    }*/
+		
+		multimap<int,string>::iterator it = traces.begin();
+		GLfloat posy = h-70;
+		stringstream line;
+		while (it != traces.end()) {
+			line.str("");
+			line << "[" << (*it).first << "] " << (*it).second ;
+			posy = drawString(42.0,posy,line.str().c_str());
+			++it;		    
+		}
 	}
 	glPopMatrix();
 	GlutWindow::glDraw();
@@ -158,15 +163,15 @@ int GlutSlidingMainWindow::mouseFunc(int button,int state,int mx,int my)
   switch (n) {
 	  case ID_SW_BUTTON_OPEN :
 		  openingLevel++;
-		  x-=200;
-		  w+=200;
+		  x-=400;
+		  w+=400;
 		  buttonOpen->activate(false);
 		  buttonClose->activate(true);
 	  break;
 	  case ID_SW_BUTTON_CLOSE :
 		  openingLevel--;
-		  x+=200;
-		  w-=200;
+		  x+=400;
+		  w-=400;
 		  buttonOpen->activate(true);
 		  buttonClose->activate(false);
 	  break;
@@ -179,6 +184,30 @@ void GlutSlidingMainWindow::reshapeFunc(int mw,int mh)
   setGeometry(mw-sz,50,sz,mh-60);
 }
 
+void GlutSlidingMainWindow::addTrace(int id,const string &str) {
+	  traces.insert(pair<int,string>(id,str));
+}
+/*
+  cout << "Number of elements with key a: " << m.count("a") << endl;
+  cout << "Elements in m: " << endl;
+  for (multimap<string, int>::iterator it = m.begin();
+       it != m.end();
+       ++it)
+   {
+       cout << "  [" << (*it).first << ", " << (*it).second << "]" << endl;
+   }
+
+   ppp = m.equal_range("b");
+   // Loop through range of maps of key "b"
+   cout << endl << "Range of \"b\" elements:" << endl;
+   for (multimap<string, int>::iterator it2 = ppp.first;
+       it2 != ppp.second;
+       ++it2)
+   {
+       cout << "  [" << (*it2).first << ", " << (*it2).second << "]" << endl;
+   }
+   m.clear();
+*/
 /***************************************************************************************/
 /* GlutButton */
 /***************************************************************************************/
@@ -464,9 +493,6 @@ GlutHelpWindow::GlutHelpWindow(GlutWindow *parent,GLint px,GLint py,GLint pw,GLi
 	    text=(unsigned char*)new char[strout.size()+1];
 	    memcpy(text,strout.c_str(),strout.size());
 	    text[strout.size()-1]=0; // end of string
-	    
-	    cout << "content size: " << strout.size() << endl
-	         << "content:" << text << endl;
 	}
 }
 

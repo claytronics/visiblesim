@@ -36,6 +36,7 @@ class GlutContext {
 	static void init(int argc, char **argv);
 	static void deleteContext();
 	static void mainLoop(void);
+	static void addTrace(const string &str,int id);
 private :
     static void reshapeFunc(int w,int h);
     static void passiveMotionFunc(int x,int y);

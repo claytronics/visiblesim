@@ -55,7 +55,7 @@ public:
 
 	virtual bool schedule(Event *ev);
 	uint64_t now();
-	virtual void trace(string message);
+	virtual void trace(string message,int id=-1);
 	void removeEventsToBlock(BuildingBlock *bb);
 
 	void lock();

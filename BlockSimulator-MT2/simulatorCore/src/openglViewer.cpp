@@ -182,11 +182,12 @@ void GlutContext::mouseFunc(int button,int state,int x,int y) {
 		if (state==GLUT_DOWN) {
 			if (button==GLUT_LEFT_BUTTON) {
 				int n=selectFunc(x,y);
-				if (n) {
-					GlBlock *slct=BaseSimulator::getWorld()->getSelectedBlock();
-					if (slct) slct->toggleHighlight();
-		  			BaseSimulator::getWorld()->setSelectedBlock(n-1)->toggleHighlight();
-				}
+				GlBlock *slct=BaseSimulator::getWorld()->getSelectedBlock();
+				// unselect current if exists
+				if (slct) slct->toggleHighlight();
+				// set n-1 block selected block (no selected block if n=0
+				if (n) BaseSimulator::getWorld()->setSelectedBlock(n-1)->toggleHighlight();
+				else BaseSimulator::getWorld()->setSelectedBlock(-1);
 		  	} else if (button==GLUT_RIGHT_BUTTON) {
 				int n=selectFaceFunc(x,y);
 				if (n) {
@@ -389,3 +390,9 @@ void GlutContext::mainLoop() {
 	glutMainLoop();
 	deleteContext();
 }
+
+void GlutContext::addTrace(const string &message,int id) {
+	cout << "[" << id << "]" << message << endl;
+	if (mainWindow) mainWindow->addTrace(id,message);
+}
+

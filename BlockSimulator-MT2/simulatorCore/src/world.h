@@ -48,7 +48,7 @@ public:
 	virtual BuildingBlock* getBlockById(int bId);
 
 	inline GlBlock* getSelectedBlock() { return selectedBlock; };
-	inline GlBlock* setSelectedBlock(int n) { return (selectedBlock=tabGlBlocks[n]); };
+	inline GlBlock* setSelectedBlock(int n) { return (selectedBlock=(n>=0)?tabGlBlocks[n]:NULL); };
 	virtual void setSelectedFace(int n) {};
 	inline GlBlock* getBlockByNum(int n) { return tabGlBlocks[n]; };
 

@@ -59,10 +59,11 @@ public :
 class GlutSlidingMainWindow : public GlutWindow {
 	int openingLevel;
 	GlutButton* buttonOpen, *buttonClose;
-
+	multimap<int,string> traces;
+	pair<multimap<string, int>::iterator, multimap<string, int>::iterator> selection;
 public :
 	GlutSlidingMainWindow(GLint px,GLint py,GLint pw,GLint ph,const char *titreTexture);
-	virtual ~GlutSlidingMainWindow() {};
+	virtual ~GlutSlidingMainWindow();
 
 	inline void open() { openingLevel++; };
 	inline void close() { openingLevel--; };
@@ -70,6 +71,7 @@ public :
 	int mouseFunc(int button,int state,int mx,int my);
 	void reshapeFunc(int mw,int mh);
 	void glDraw();
+	void addTrace(int id,const string &str);
 };
 
 class GlutPopupWindow : public GlutWindow {
@@ -97,6 +99,7 @@ public :
 	int mouseFunc(int button,int state,int x,int y);
 	void glDraw();
 	void activate(int n,bool value);
+	void addTrace(int id,int time,const string &str);
 };
 
 class GlutHelpWindow : public GlutWindow {

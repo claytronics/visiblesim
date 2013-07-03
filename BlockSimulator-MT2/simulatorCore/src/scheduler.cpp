@@ -10,6 +10,7 @@
 #include "assert.h"
 #include "scheduler.h"
 #include "trace.h"
+#include "openglViewer.h"
 
 using namespace std;
 
@@ -106,10 +107,11 @@ uint64_t Scheduler::now() {
 	return(currentDate);
 }
 
-void Scheduler::trace(string message) {
+void Scheduler::trace(string message,int id) {
 	mutex_trace.lock();
 	OUTPUT.precision(6);
 	OUTPUT << fixed << (double)(currentDate)/1000000 << " " << message << endl;
+	GlutContext::addTrace(message,id);
 	mutex_trace.unlock();
 }
 

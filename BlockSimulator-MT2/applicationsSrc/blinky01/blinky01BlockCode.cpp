@@ -105,7 +105,7 @@ Blinky01BlockCode::~Blinky01BlockCode() {
 void Blinky01BlockCode::startup() {
 	stringstream info;
 	info << "  Starting Blinky01BlockCode in block " << hostBlock->blockId;
-	BlinkyBlocks::getScheduler()->trace(info.str());
+	BlinkyBlocks::getScheduler()->trace(info.str(),hostBlock->blockId);
 	((BlinkyBlocksBlock*)hostBlock)->vm->asyncReadMessage();
 }
 
@@ -153,6 +153,8 @@ void Blinky01BlockCode::handleNewMessage() {
 }
 // WARNING: VMs appear to always use source node...
 void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
+	stringstream info;
+
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
 	OUTPUT << "Blinky01BlockCode: " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
 	switch (pev->eventType) {
@@ -166,6 +168,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		//message[4] = hostBlock->blockId;
 		bb->vm->sendMessage(4*sizeof(uint64_t), message);
 		OUTPUT << "ID sent to the VM " << hostBlock->blockId << endl;
+		BlinkyBlocks::getScheduler()->trace("ID sent to the VM",hostBlock->blockId);
+
 		}
 		break;
 	case EVENT_STOP:
@@ -217,6 +221,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		VMDataMessage *m = (VMDataMessage*) (boost::static_pointer_cast<NetworkInterfaceReceiveEvent>(pev))->message.get();
 		//cout << "message receive by " << bb->blockId << ":" << m->message[0] << " " << m->message[1] << " " << m->message[2] << " " << m->message[3] << " " << m->message[4] << " " << m->message[5] << " " << m->message[6] << endl;
 		bb->vm->sendMessage(m->size(), m->message);
+		info << "message received from " << m->sourceInterface->hostBlock->blockId;
+		BlinkyBlocks::getScheduler()->trace(info.str(),hostBlock->blockId);
 		}
 		break;
 	case EVENT_ACCEL:
