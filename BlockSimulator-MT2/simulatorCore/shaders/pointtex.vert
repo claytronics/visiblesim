@@ -1,28 +1,19 @@
-varying vec3 lightDir,normal,halfVector;
-varying vec4 diffuse,ambientGlobal,ambient;
+varying vec3 ecPos,normal;
+varying vec4 diffuse,specular,ambientGlobal,ambient;
 	
-void main()
-{
-  vec4 ecPos;
-  vec3 aux;
+void main() {
 		
-  normal = normalize(gl_NormalMatrix * gl_Normal);
+	normal = normalize(gl_NormalMatrix * gl_Normal);
 		
-  ecPos = gl_ModelViewMatrix * gl_Vertex;
-
-  aux = vec3(gl_LightSource[0].position-ecPos);
-  lightDir = normalize(aux);
-
-  vec3 eyeDir = normalize(-ecPos.xyz);
-  halfVector = normalize(lightDir + eyeDir);
-  //halfVector = normalize(gl_LightSource[0].halfVector.xyz);
+	ecPos = vec3(gl_ModelViewMatrix * gl_Vertex);
 		
-  diffuse = gl_FrontMaterial.diffuse * gl_LightSource[0].diffuse;	
-  ambient = gl_FrontMaterial.ambient * gl_LightSource[0].ambient;
-  ambientGlobal = gl_LightModel.ambient * gl_FrontMaterial.ambient;
+	diffuse = gl_FrontMaterial.diffuse * gl_LightSource[0].diffuse;	
+	specular = gl_FrontMaterial.specular * gl_LightSource[0].specular;	
+	ambient = gl_FrontMaterial.ambient * gl_LightSource[0].ambient;
+	ambientGlobal = gl_LightModel.ambient * gl_FrontMaterial.ambient;
 
 			
-  gl_TexCoord[0] = gl_MultiTexCoord0;
-  gl_TexCoord[1] = gl_TextureMatrix[0]*ecPos;
-  gl_Position = ftransform();
+	gl_TexCoord[0] = gl_MultiTexCoord0;
+	gl_TexCoord[1] = gl_TextureMatrix[0]*vec4(ecPos.xyz,1);
+	gl_Position = ftransform();
 }
