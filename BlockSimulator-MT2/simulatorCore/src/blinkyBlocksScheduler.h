@@ -57,8 +57,11 @@ public:
 	//void lock();
 	//void unlock();
 	//bool scheduleLock(Event *ev) {lock(); bool ret = schedule(ev); unlock(); return ret;};
-	void pauseSimulation(int timestamp);
-	void unPauseSimulation();
+	
+	// stop for good
+	void stop();	
+	void pause(int timestamp);
+	void unPause();
 	
 	void addUndefinedBlock(int id) {
 		undefinedBlocksSet.insert(id);

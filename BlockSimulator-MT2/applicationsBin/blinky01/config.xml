@@ -4,9 +4,10 @@
 <vm serverport="5000" vmPath="/home/ubuntu/Bureau/CMU/meld/meld" programPath="/home/ubuntu/Bureau/CMU/meld/examples/ends.m"  />
 <vm serverport="5000" vmPath="/home/ubuntu/Bureau/CMU/meld/meld" programPath="/home/ubuntu/Bureau/CMU/meld/examples/ends.m" debugging="True" />
 <vm serverport="5000" vmPath="VMEmulator" programPath="ends.m" debugging="True" />
--->
-<vm serverport="5000" vmPath="/home/bpiranda/git-simulateur/meld/meld" programPath="/home/bpiranda/git-simulateur/meld/examples/ends.m" debugging="True" />
 
+<vm serverport="5000" vmPath="/home/bpiranda/git-simulateur/meld/meld" programPath="/home/bpiranda/git-simulateur/meld/examples/ends.m" debugging="True" />
+-->
+<vm serverport="5000" vmPath="/home/ubuntu/Bureau/CMU/meld/meld" programPath="/home/ubuntu/Bureau/CMU/bbsim/meld-programs/r.m" debugging="True" />
 <world gridsize="10,10,10">
 	<camera target="200,200,200" directionSpherical="0,70,400" angle="45"/>
 	<spotlight target="200,20,200" directionSpherical="45,60,500" angle="40"/>

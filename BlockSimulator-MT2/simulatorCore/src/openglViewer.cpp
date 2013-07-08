@@ -211,7 +211,7 @@ void GlutContext::keyboardFunc(unsigned char c, int x, int y)
 
 	switch(c)
     { case 27 : case 'q' : case 'Q' : // quit
-        glutLeaveMainLoop();
+        getScheduler()->stop(); glutLeaveMainLoop();
       break;
       case 'f' : glPolygonMode(GL_FRONT_AND_BACK,GL_LINE); break;
       case 'F' : glPolygonMode(GL_FRONT_AND_BACK,GL_FILL); break;
@@ -388,6 +388,7 @@ int GlutContext::processHits(GLint hits, GLuint *buffer) {
 
 void GlutContext::mainLoop() {
 	glutMainLoop();
+	getScheduler()->stop();
 	deleteContext();
 }
 

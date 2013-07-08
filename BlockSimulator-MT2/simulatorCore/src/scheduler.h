@@ -65,6 +65,8 @@ public:
 	//virtual void unPauseSimulation() {};
 
 	virtual void start(int) {};
+	// stop for good
+	virtual void stop() {};
 };
 
 inline void deleteScheduler() {

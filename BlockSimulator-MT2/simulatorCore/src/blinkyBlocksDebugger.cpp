@@ -67,7 +67,7 @@ void BlinkyBlocksDebugger::pauseSim(int timestamp) {
 void BlinkyBlocksDebugger::unPauseSim() {
 	// pas de schedule lock ici, sinon inter-blocage
 	cout << "Simulator unpaused" << endl;
-	getScheduler()->unPauseSimulation();
+	getScheduler()->unPause();
 }
 
 }
