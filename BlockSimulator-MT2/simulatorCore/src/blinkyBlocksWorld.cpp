@@ -124,40 +124,40 @@ void BlinkyBlocksWorld::linkBlocks() {
 				ptrBlock = getGridPtr(ix,iy,iz);
 				if (ptrBlock) {
 					if (iz<gridSize[2]-1 && getGridPtr(ix,iy,iz+1)) {
-						(ptrBlock)->getInterface(Top)->connect(getGridPtr(ix,iy,iz+1)->getInterface(Bottom));
+						(ptrBlock)->getInterface(NeighborDirection::Top)->connect(getGridPtr(ix,iy,iz+1)->getInterface(NeighborDirection::Bottom));
 						OUTPUT << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix,iy,iz+1)->blockId << endl;
 					} else {
-						(ptrBlock)->getInterface(Top)->connect(NULL);
+						(ptrBlock)->getInterface(NeighborDirection::Top)->connect(NULL);
 					}
 					if (iy<gridSize[1]-1 && getGridPtr(ix,iy+1,iz)) {
-						(ptrBlock)->getInterface(Right)->connect(getGridPtr(ix,iy+1,iz)->getInterface(Left));
+						(ptrBlock)->getInterface(NeighborDirection::Right)->connect(getGridPtr(ix,iy+1,iz)->getInterface(NeighborDirection::Left));
 						OUTPUT << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix,iy+1,iz)->blockId << endl;
 					} else {
-						(ptrBlock)->getInterface(Right)->connect(NULL);
+						(ptrBlock)->getInterface(NeighborDirection::Right)->connect(NULL);
 					}
 					if (ix<gridSize[0]-1 && getGridPtr(ix+1,iy,iz)) {
-						(ptrBlock)->getInterface(Front)->connect(getGridPtr(ix+1,iy,iz)->getInterface(Back));
+						(ptrBlock)->getInterface(NeighborDirection::Front)->connect(getGridPtr(ix+1,iy,iz)->getInterface(NeighborDirection::Back));
 						OUTPUT << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix+1,iy,iz)->blockId << endl;
 					} else {
-						(ptrBlock)->getInterface(Front)->connect(NULL);
+						(ptrBlock)->getInterface(NeighborDirection::Front)->connect(NULL);
 					}
 					if (iy>0 && getGridPtr(ix,iy-1,iz)) {
-						(ptrBlock)->getInterface(Left)->connect(getGridPtr(ix,iy-1,iz)->getInterface(Right));
+						(ptrBlock)->getInterface(NeighborDirection::Left)->connect(getGridPtr(ix,iy-1,iz)->getInterface(NeighborDirection::Right));
 						OUTPUT << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix,iy-1,iz)->blockId << endl;
 					} else {
-						(ptrBlock)->getInterface(Left)->connect(NULL);
+						(ptrBlock)->getInterface(NeighborDirection::Left)->connect(NULL);
 					}
 					if (iz>0 && getGridPtr(ix,iy,iz-1)) {
-						(ptrBlock)->getInterface(Bottom)->connect(getGridPtr(ix,iy,iz-1)->getInterface(Top));
+						(ptrBlock)->getInterface(NeighborDirection::Bottom)->connect(getGridPtr(ix,iy,iz-1)->getInterface(NeighborDirection::Top));
 						OUTPUT << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix,iy,iz-1)->blockId << endl;
 					} else {
-						(ptrBlock)->getInterface(Bottom)->connect(NULL);
+						(ptrBlock)->getInterface(NeighborDirection::Bottom)->connect(NULL);
 					}
 					if (ix>0 && getGridPtr(ix-1,iy,iz)) {
-						(ptrBlock)->getInterface(Back)->connect(getGridPtr(ix-1,iy,iz)->getInterface(Front));
+						(ptrBlock)->getInterface(NeighborDirection::Back)->connect(getGridPtr(ix-1,iy,iz)->getInterface(NeighborDirection::Front));
 						OUTPUT << "connection #" << (ptrBlock)->blockId << " to #" << getGridPtr(ix-1,iy,iz)->blockId << endl;
 					} else {
-						(ptrBlock)->getInterface(Back)->connect(NULL);
+						(ptrBlock)->getInterface(NeighborDirection::Back)->connect(NULL);
 					}
 				}
 			}
@@ -170,7 +170,7 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 	if (bb->state == Alive ) {
 		// cut links between bb and others
 		for(int i=0; i<6; i++) {
-			P2PNetworkInterface *bbi = bb->getInterface(NeighborDirection(i));
+			P2PNetworkInterface *bbi = bb->getInterface(NeighborDirection::Direction(i));
 			if (bbi->connectedInterface) {
 				//bb->removeNeighbor(bbi); //Useless
 				bbi->connectedInterface->hostBlock->removeNeighbor(bbi->connectedInterface);
@@ -362,22 +362,22 @@ void BlinkyBlocksWorld::createPopupMenu(int ix, int iy) {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(tabGlBlocks[numSelectedBlock]->blockId);
 	bool valid=true;
 	switch (numSelectedFace) {
-		case Left :
+		case NeighborDirection::Left :
 			valid=(bb->position[0]>0 && getGridPtr(int(bb->position[0])-1,int(bb->position[1]),int(bb->position[2]))==NULL);
 			break;
-		case Right :
+		case NeighborDirection::Right :
 			valid=(bb->position[0]<gridSize[0]-1 && getGridPtr(int(bb->position[0])+1,int(bb->position[1]),int(bb->position[2]))==NULL);
 		break;
-		case Front :
+		case NeighborDirection::Front :
 			valid=(bb->position[1]>0 && getGridPtr(int(bb->position[0]),int(bb->position[1])-1,int(bb->position[2]))==NULL);
 			break;
-		case Back :
+		case NeighborDirection::Back :
 			valid=(bb->position[1]<gridSize[1]-1 && getGridPtr(int(bb->position[0]),int(bb->position[1])+1,int(bb->position[2]))==NULL);
 		break;
-		case Bottom :
+		case NeighborDirection::Bottom :
 			valid=(bb->position[2]>0 && getGridPtr(int(bb->position[0]),int(bb->position[1]),int(bb->position[2])-1)==NULL);
 			break;
-		case Top :
+		case NeighborDirection::Top :
 			valid=(bb->position[2]<gridSize[2]-1 && getGridPtr(int(bb->position[0]),int(bb->position[1]),int(bb->position[2])+1)==NULL);
 		break;
 	}
@@ -393,22 +393,22 @@ void BlinkyBlocksWorld::menuChoice(int n) {
 			OUTPUT << "ADD block link to : " << bb->blockId << "     num Face : " << numSelectedFace << endl;
 			Vecteur pos=bb->position;
 			switch (numSelectedFace) {
-				case Left :
+				case NeighborDirection::Left :
 					pos.pt[0]--;
 					break;
-				case Right :
+				case NeighborDirection::Right :
 					pos.pt[0]++;
 				break;
-				case Front :
+				case NeighborDirection::Front :
 					pos.pt[1]--;
 					break;
-				case Back :
+				case NeighborDirection::Back :
 					pos.pt[1]++;
 				break;
-				case Bottom :
+				case NeighborDirection::Bottom :
 					pos.pt[2]--;
 					break;
-				case Top :
+				case NeighborDirection::Top :
 					pos.pt[2]++;
 				break;
 			}
@@ -430,12 +430,12 @@ void BlinkyBlocksWorld::menuChoice(int n) {
 void BlinkyBlocksWorld::setSelectedFace(int n) {
 	numSelectedBlock=n/6;
 	string name = objBlockForPicking->getObjMtlName(n%6);
-    if (name=="face_top") numSelectedFace=Top;
-    else if (name=="face_bottom") numSelectedFace=Bottom;
-    else if (name=="face_right") numSelectedFace=Right;
-    else if (name=="face_left") numSelectedFace=Left;
-    else if (name=="face_front") numSelectedFace=Front;
-    else if (name=="face_back") numSelectedFace=Back;
+    if (name=="face_top") numSelectedFace=NeighborDirection::Top;
+    else if (name=="face_bottom") numSelectedFace=NeighborDirection::Bottom;
+    else if (name=="face_right") numSelectedFace=NeighborDirection::Right;
+    else if (name=="face_left") numSelectedFace=NeighborDirection::Left;
+    else if (name=="face_front") numSelectedFace=NeighborDirection::Front;
+    else if (name=="face_back") numSelectedFace=NeighborDirection::Back;
 }
 
 	void BlinkyBlocksWorld::tapBlock(int bId) {
@@ -483,7 +483,7 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 			if(bb->state == Alive) {
 				// cut links between bb and others
 				for(int i=0; i<6; i++) {
-					P2PNetworkInterface *bbi = bb->getInterface(NeighborDirection(i));
+					P2PNetworkInterface *bbi = bb->getInterface(NeighborDirection::Direction(i));
 					if (bbi->connectedInterface) {
 						//bb->removeNeighbor(bbi); //Useless
 						bbi->connectedInterface->hostBlock->removeNeighbor(bbi->connectedInterface);

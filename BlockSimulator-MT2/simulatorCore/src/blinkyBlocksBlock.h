@@ -30,9 +30,13 @@ namespace BlinkyBlocks {
 
 //enum NeighborDirection { Front=0, Back, Left, Right, Top, Bottom };
 // if we consider that the NORTH in the Back at the beginning:
-enum NeighborDirection { Bottom = 0, Back = 1, Right, Front, Left, Top };
 
-int getOppositeDirection(int d);
+class NeighborDirection {
+public:
+	enum Direction { Bottom = 0, Back = 1, Right, Front, Left, Top };
+	static int getOpposite(int d);
+	static string getString(int d);
+};
 
 class BlinkyBlocksBlockCode;
 class BlinkyBlocksVM;
@@ -55,7 +59,7 @@ public:
 	void setColor(const Vecteur &c);
 	void setColor(int num);
 	void setPosition(const Vecteur &p);
-	inline P2PNetworkInterface *getInterface(NeighborDirection d) { return tabInterfaces[d]; }
+	inline P2PNetworkInterface *getInterface(NeighborDirection::Direction d) { return tabInterfaces[d]; }
 	inline P2PNetworkInterface *getInterfaceDestId(int id) {
 		for (int i=0; i<6; i++) {
 			if (tabInterfaces[i]->connectedInterface != NULL) {
@@ -66,7 +70,7 @@ public:
 		}
 		return NULL;
 	}
-	NeighborDirection getDirection(P2PNetworkInterface*);
+	NeighborDirection::Direction getDirection(P2PNetworkInterface*);
 
 	void stopVM();
 

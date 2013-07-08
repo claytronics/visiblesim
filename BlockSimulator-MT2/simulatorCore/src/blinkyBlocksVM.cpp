@@ -79,6 +79,7 @@ void BlinkyBlocksVM::stop() {
 
 void BlinkyBlocksVM::terminate() {
 	//kill(pid, SIGKILL);
+	//waitpid(pid, NULL, WNOHANG);
 	waitpid(pid, NULL, 0);
 }
 
