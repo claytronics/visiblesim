@@ -393,7 +393,6 @@ void GlutContext::mainLoop() {
 }
 
 void GlutContext::addTrace(const string &message,int id) {
-	cout << "[" << id << "]" << message << endl;
 	if (mainWindow) mainWindow->addTrace(id,message);
 }
 
