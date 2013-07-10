@@ -219,11 +219,27 @@ public:
 
 class VMEndComputationEvent : public BlockEvent {
 public:
-	uint64_t duration;
 
 	VMEndComputationEvent(uint64_t, BlinkyBlocksBlock *conBlock);
 	VMEndComputationEvent(VMEndComputationEvent *ev);
 	~VMEndComputationEvent();
+	void consumeBlockEvent();
+	const virtual string getEventName();
+};
+
+//===========================================================================================================
+//
+//          VMWaitMessageEvent  (class)
+//
+//===========================================================================================================
+
+class VMWaitMessageEvent : public BlockEvent {
+public:
+	uint64_t timeOut;
+
+	VMWaitMessageEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint64_t tt);
+	VMWaitMessageEvent(VMWaitMessageEvent *ev);
+	~VMWaitMessageEvent();
 	void consumeBlockEvent();
 	const virtual string getEventName();
 };

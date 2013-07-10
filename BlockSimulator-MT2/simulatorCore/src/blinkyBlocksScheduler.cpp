@@ -81,7 +81,6 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 					eventsMapSize--;
 					unlock();
 				}
-			
 			}		
 			break;
 		case SCHEDULER_MODE_REALTIME:

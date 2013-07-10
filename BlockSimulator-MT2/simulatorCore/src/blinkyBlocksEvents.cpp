@@ -339,5 +339,34 @@ const string VMEndComputationEvent::getEventName() {
 	return("VMEndComputation Event");
 }
 
+//===========================================================================================================
+//
+//          VMWaitMessageEvent  (class)
+//
+//===========================================================================================================
+
+VMWaitMessageEvent::VMWaitMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t tt): BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_VM_START_COMPUTATION;
+	timeOut = tt;
+}
+
+VMWaitMessageEvent::VMWaitMessageEvent(VMWaitMessageEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+VMWaitMessageEvent::~VMWaitMessageEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void VMWaitMessageEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMWaitMessageEvent(this)));
+}
+
+const string VMWaitMessageEvent::getEventName() {
+	return("VMWaitMessageEvent Event");
+}
+
 
 } // BlinkyBlocks namespace

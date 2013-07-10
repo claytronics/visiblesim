@@ -31,6 +31,10 @@ using boost::asio::ip::tcp;
 #define VM_MESSAGE_SHAKE						15
 #define VM_MESSAGE_DEBUG						16
 
+#define VM_MESSAGE_START_COMPUTATION 			20
+#define VM_MESSAGE_END_COMPUTATION 				21
+#define VM_MESSAGE_WAIT_FOR_MESSAGE				22
+
 string getStringMessage(uint64_t t) {
 	switch(t) {
 		case VM_MESSAGE_SET_COLOR:
@@ -96,6 +100,8 @@ unsigned int VMDataMessage::size() {
 
 Blinky01BlockCode::Blinky01BlockCode(BlinkyBlocksBlock *host): BlinkyBlocksBlockCode(host) {
 	OUTPUT << "Blinky01BlockCode constructor" << endl;
+	computing = false;
+	//waitingForVM = true;
 }
 
 Blinky01BlockCode::~Blinky01BlockCode() {
@@ -116,14 +122,15 @@ void Blinky01BlockCode::handleNewMessage() {
 	switch (message[1]) {
 		case VM_MESSAGE_SET_COLOR:			
 			{
-			// <red> <blue> <green> <intensity>
+			// format: <size> <timestamp> <src> <command> <red> <blue> <green> <intensity>
 			Vecteur color((float)message[4]/255.0, (float)message[5]/255.0, (float)message[6]/255.0, (float)message[7]/255.0);
 			bb->setColor(color);
 			}	
 			break;
 		case VM_MESSAGE_SEND_MESSAGE:
 			{
-			// <face> <content...>
+			// format: <size> <timestamp> <src> <command> <face> <content...>
+			
 			//cout << "receive a message: " << message[0] << " " << message[1] << " " << message[2] << " "<< message[3] << " " << message[4] << " " << message[5] << " " << message[6] << endl;
 			P2PNetworkInterface *interface;
 			//interface = bb->getInterface((NeighborDirection)message[4]);
@@ -145,6 +152,26 @@ void Blinky01BlockCode::handleNewMessage() {
 		case VM_MESSAGE_DEBUG:
 			// debug message handler
 			handleDebugMessage(message);
+			break;
+		case VM_MESSAGE_START_COMPUTATION: // format: <size> <timestamp> <src> <command> <duration>
+			if (!BlinkyBlocks::getScheduler()->isBlockUndefined(bb->blockId)) {
+				stringstream info;
+				info.str("");
+				info << "Block " << bb->blockId << " received a COMPUTATION_LOCK whereas it was not in undefined state !";
+				BlinkyBlocks::getScheduler()->trace(info.str());
+			}
+			BlinkyBlocks::getScheduler()->schedule(new VMStartComputationEvent(BlinkyBlocks::getScheduler()->now(), bb, message[4]));
+			BlinkyBlocks::getScheduler()->removeUndefinedBlock(bb->blockId);
+			break;
+		case VM_MESSAGE_WAIT_FOR_MESSAGE:
+			if (!BlinkyBlocks::getScheduler()->isBlockUndefined(bb->blockId)) {
+				stringstream info;
+				info.str("");
+				info << "Block " << bb->blockId << " received a WAIT_FOR_MESSAGE whereas it was not in undefined state !";
+				BlinkyBlocks::getScheduler()->trace(info.str());
+			}
+			BlinkyBlocks::getScheduler()->removeUndefinedBlock(bb->blockId);
+			//getScheduler()->printUndefinedBlocksSet(); */
 			break;
 		default:
 			ERRPUT << "*** ERROR *** : unsupported message received from VM (" << message[1] <<")" << endl;
@@ -169,7 +196,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		bb->vm->sendMessage(4*sizeof(uint64_t), message);
 		OUTPUT << "ID sent to the VM " << hostBlock->blockId << endl;
 		BlinkyBlocks::getScheduler()->trace("ID sent to the VM",hostBlock->blockId);
-
+		//waitingForVM = true;
+		//BlinkyBlocks::getScheduler()->addUndefinedBlock(hostBlock->blockId);
 		}
 		break;
 	case EVENT_STOP:
@@ -193,6 +221,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[4] = (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->target;
 		message[5] = (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->face;
 		bb->vm->sendMessage(6*sizeof(uint64_t), message);
+		//waitingForVM = true;
+		//BlinkyBlocks::getScheduler()->addUndefinedBlock(hostBlock->blockId);
 		}
 		break;
 	case EVENT_REMOVE_NEIGHBOR:
@@ -204,6 +234,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[3] = bb->blockId; // souce node
 		message[4] = (boost::static_pointer_cast<VMRemoveNeighborEvent>(pev))->face;
 		bb->vm->sendMessage(5*sizeof(uint64_t), message);
+		//waitingForVM = true;
+		//BlinkyBlocks::getScheduler()->addUndefinedBlock(hostBlock->blockId);
 		}
 		break;
 	case EVENT_TAP:
@@ -214,6 +246,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 		message[3] = bb->blockId; // souce node
 		bb->vm->sendMessage(4*sizeof(uint64_t), message);
+		//waitingForVM = true;
+		//BlinkyBlocks::getScheduler()->addUndefinedBlock(hostBlock->blockId);
 		}
 		break;
 	case EVENT_RECEIVE_MESSAGE: /*EVENT_NI_RECEIVE: */
@@ -236,6 +270,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[5] = (boost::static_pointer_cast<VMAccelEvent>(pev))->y;
 		message[6] = (boost::static_pointer_cast<VMAccelEvent>(pev))->z;
 		bb->vm->sendMessage(7*sizeof(uint64_t), message);
+		//waitingForVM = true;
+		//BlinkyBlocks::getScheduler()->addUndefinedBlock(hostBlock->blockId);
 		}
 		break;
 	case EVENT_SHAKE:
@@ -247,6 +283,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		message[3] = bb->blockId; // souce node
 		message[4] = (boost::static_pointer_cast<VMShakeEvent>(pev))->force;
 		bb->vm->sendMessage(5*sizeof(uint64_t), message);
+		//waitingForVM = true;
+		//BlinkyBlocks::getScheduler()->addUndefinedBlock(hostBlock->blockId);
 		}
 		break;
 	case EVENT_DEBUG_MESSAGE:
@@ -256,6 +294,54 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		bb->vm->sendMessage(m->size, m->message);
 		}
 		break;
+	case EVENT_VM_START_COMPUTATION:
+		{
+		uint64_t duration;
+		stringstream info;
+		
+		if (computing) {
+			info.str("");
+			info << "*** ERROR *** block " << bb->blockId << " got a COMPUTATION_LOCK from VM but it was already computing !";
+			BlinkyBlocks::getScheduler()->trace(info.str());
+		}
+		computing = true;
+		/*
+		if (!waitingForVM) {
+			info.str("");
+			info << "*** ERROR *** block " << bb->blockId << " got a COMPUTATION_LOCK from VM but was not waiting for one";
+			BlinkyBlocks::getScheduler()->trace(info.str());
+		}*/
+		//waitingForVM = false;
+		duration = (boost::static_pointer_cast<VMStartComputationEvent>(pev))->duration;
+		//availabilityDate = BlinkyBlocks::getScheduler()->now()+duration;
+		info.str("");
+		info << "blinky01BlockCode " << hostBlock->blockId << " starting computation (will last for " << duration << ")" ;
+		BlinkyBlocks::getScheduler()->trace(info.str());
+		BlinkyBlocks::getScheduler()->schedule(new VMEndComputationEvent(BlinkyBlocks::getScheduler()->now()+duration, bb));
+		}
+		break;
+	case EVENT_VM_END_COMPUTATION:
+		{
+		uint64_t message[5];
+		stringstream info;
+		
+		computing = false;
+		info.str("");
+		info << "blinky01BlockCode " << bb->blockId << " finished its computation";
+		BlinkyBlocks::getScheduler()->trace(info.str());				
+		message[0] = 3*sizeof(uint64_t);	
+		message[1] = VM_MESSAGE_END_COMPUTATION;
+		message[2] = BlinkyBlocks::getScheduler()->now(); // timestamp
+		message[3] = bb->blockId; // souce node
+		BlinkyBlocks::getScheduler()->addUndefinedBlock(hostBlock->blockId);
+		bb->vm->sendMessage(4*sizeof(uint64_t), message);
+		//waitingForVM = true;
+		}
+		break;
+	case EVENT_VM_WAIT_FOR_MESSAGE:
+	{
+		//
+	}
 	default:
 		ERRPUT << "*** ERROR *** : unknown local event" << endl;
 		break;

@@ -73,6 +73,28 @@ public:
 		return(undefinedBlocksSet.empty());
 	}
 	
+	bool isBlockUndefined(int id) {
+//		printUndefinedBlocksSet();
+		set<int>::iterator res;
+		res = undefinedBlocksSet.find(id);
+		if (res != undefinedBlocksSet.end()) {
+			return(true);
+		} else {
+			return(false);
+		}
+	}
+	
+	void printUndefinedBlocksSet() {
+		set<int>::iterator it = undefinedBlocksSet.begin();
+		cout << "undefined Blocks set : ";
+		while (it != undefinedBlocksSet.end()) {
+			cout << (*it) << " ";
+			it++;
+		}
+		cout << endl;
+	}
+	
+	// NOT TESTED
 	bool isPaused() {
 		bool r = sem_schedulerStart->try_wait();
 		if (r) {

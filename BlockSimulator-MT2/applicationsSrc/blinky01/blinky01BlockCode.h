@@ -21,6 +21,10 @@ public:
 };
 
 class Blinky01BlockCode : public BlinkyBlocks::BlinkyBlocksBlockCode {
+private:
+	bool computing;
+	//bool waitingForVM;
+	
 public:
 
 	Blinky01BlockCode(BlinkyBlocks::BlinkyBlocksBlock *host);
