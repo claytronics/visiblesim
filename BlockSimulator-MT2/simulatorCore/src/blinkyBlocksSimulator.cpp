@@ -33,7 +33,7 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 	createScheduler();
 	
 	/* reading the xml file */
-		/* VM part */	
+	/* VM part */	
 	TiXmlNode *node = xmlDoc->FirstChild("vm");
 	if (node) {		
 		TiXmlElement* vmElement = node->ToElement();
@@ -204,7 +204,8 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 	} else { // end if(nodeBlock)
 		ERRPUT << "no Block List" << endl;
 	}
-	world->linkBlocks();
+	
+	world->linkBlocks();	
 	GlutContext::mainLoop();
 }
 
