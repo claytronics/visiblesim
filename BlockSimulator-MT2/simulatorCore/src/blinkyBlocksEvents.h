@@ -229,21 +229,37 @@ public:
 
 //===========================================================================================================
 //
-//          VMWaitMessageEvent  (class)
+//          VMWaitForMessageEvent  (class)
 //
 //===========================================================================================================
 
-class VMWaitMessageEvent : public BlockEvent {
+class VMWaitForMessageEvent : public BlockEvent {
 public:
 	uint64_t timeOut;
 
-	VMWaitMessageEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint64_t tt);
-	VMWaitMessageEvent(VMWaitMessageEvent *ev);
-	~VMWaitMessageEvent();
+	VMWaitForMessageEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint64_t tt);
+	VMWaitForMessageEvent(VMWaitForMessageEvent *ev);
+	~VMWaitForMessageEvent();
 	void consumeBlockEvent();
 	const virtual string getEventName();
 };
 
+
+//===========================================================================================================
+//
+//          VMTimeOutWaitForMessageEvent  (class)
+//
+//===========================================================================================================
+
+class VMTimeOutWaitForMessageEvent : public BlockEvent {
+public:
+
+	VMTimeOutWaitForMessageEvent(uint64_t, BlinkyBlocksBlock *conBlock);
+	VMTimeOutWaitForMessageEvent(VMTimeOutWaitForMessageEvent *ev);
+	~VMTimeOutWaitForMessageEvent();
+	void consumeBlockEvent();
+	const virtual string getEventName();
+};
 
 } // BlinkyBlocks namespace
 

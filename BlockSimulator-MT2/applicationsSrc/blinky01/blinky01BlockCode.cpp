@@ -101,6 +101,7 @@ unsigned int VMDataMessage::size() {
 Blinky01BlockCode::Blinky01BlockCode(BlinkyBlocksBlock *host): BlinkyBlocksBlockCode(host) {
 	OUTPUT << "Blinky01BlockCode constructor" << endl;
 	computing = false;
+	waitingForMessage = false;
 	//waitingForVM = true;
 }
 
@@ -170,6 +171,7 @@ void Blinky01BlockCode::handleNewMessage() {
 				info << "Block " << bb->blockId << " received a WAIT_FOR_MESSAGE whereas it was not in undefined state !";
 				BlinkyBlocks::getScheduler()->trace(info.str());
 			}
+			BlinkyBlocks::getScheduler()->schedule(new VMWaitForMessageEvent(BlinkyBlocks::getScheduler()->now(), bb, message[4]));
 			BlinkyBlocks::getScheduler()->removeUndefinedBlock(bb->blockId);
 			//getScheduler()->printUndefinedBlocksSet(); */
 			break;
@@ -297,7 +299,6 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	case EVENT_VM_START_COMPUTATION:
 		{
 		uint64_t duration;
-		stringstream info;
 		
 		if (computing) {
 			info.str("");
@@ -315,7 +316,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		duration = (boost::static_pointer_cast<VMStartComputationEvent>(pev))->duration;
 		//availabilityDate = BlinkyBlocks::getScheduler()->now()+duration;
 		info.str("");
-		info << "blinky01BlockCode " << hostBlock->blockId << " starting computation (will last for " << duration << ")" ;
+		info << "blinky01BlockCode " << bb->blockId << " starting computation (will last for " << duration << ")" ;
 		BlinkyBlocks::getScheduler()->trace(info.str());
 		BlinkyBlocks::getScheduler()->schedule(new VMEndComputationEvent(BlinkyBlocks::getScheduler()->now()+duration, bb));
 		}
@@ -323,7 +324,6 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	case EVENT_VM_END_COMPUTATION:
 		{
 		uint64_t message[5];
-		stringstream info;
 		
 		computing = false;
 		info.str("");
@@ -339,9 +339,26 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		}
 		break;
 	case EVENT_VM_WAIT_FOR_MESSAGE:
-	{
-		//
-	}
+		{
+		uint64_t timeOut;
+		
+		waitingForMessage = true;
+		timeOut = (boost::static_pointer_cast<VMWaitForMessageEvent>(pev))->timeOut;
+		info.str("");
+		info << "blinky01BlockCode " << bb->blockId << " starting wait for a message (will last for " << timeOut << ")" ;
+		BlinkyBlocks::getScheduler()->trace(info.str());
+		BlinkyBlocks::getScheduler()->schedule(new VMTimeOutWaitForMessageEvent(BlinkyBlocks::getScheduler()->now()+timeOut, bb));
+		}
+		break;
+	case EVENT_VM_TIMEOUT_WAIT_FOR_MESSAGE:
+		{
+			// message not received
+			waitingForMessage = false; // + send a message ?
+			info.str("");
+			info << "blinky01BlockCode " << bb->blockId << " does not wait any more for a message";
+			BlinkyBlocks::getScheduler()->trace(info.str());
+		}
+		break;
 	default:
 		ERRPUT << "*** ERROR *** : unknown local event" << endl;
 		break;

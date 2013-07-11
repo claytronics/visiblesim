@@ -23,6 +23,7 @@ public:
 class Blinky01BlockCode : public BlinkyBlocks::BlinkyBlocksBlockCode {
 private:
 	bool computing;
+	bool waitingForMessage;
 	//bool waitingForVM;
 	
 public:

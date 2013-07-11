@@ -341,32 +341,59 @@ const string VMEndComputationEvent::getEventName() {
 
 //===========================================================================================================
 //
-//          VMWaitMessageEvent  (class)
+//          VMWaitForMessageEvent  (class)
 //
 //===========================================================================================================
 
-VMWaitMessageEvent::VMWaitMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t tt): BlockEvent(t, conBlock) {
+VMWaitForMessageEvent::VMWaitForMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t tt): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
-	eventType = EVENT_VM_START_COMPUTATION;
+	eventType = EVENT_VM_WAIT_FOR_MESSAGE;
 	timeOut = tt;
 }
 
-VMWaitMessageEvent::VMWaitMessageEvent(VMWaitMessageEvent *ev) : BlockEvent(ev) {
+VMWaitForMessageEvent::VMWaitForMessageEvent(VMWaitForMessageEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 }
 
-VMWaitMessageEvent::~VMWaitMessageEvent() {
+VMWaitForMessageEvent::~VMWaitForMessageEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMWaitMessageEvent::consumeBlockEvent() {
+void VMWaitForMessageEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
-	concernedBlock->scheduleLocalEvent(EventPtr(new VMWaitMessageEvent(this)));
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMWaitForMessageEvent(this)));
 }
 
-const string VMWaitMessageEvent::getEventName() {
-	return("VMWaitMessageEvent Event");
+const string VMWaitForMessageEvent::getEventName() {
+	return("VMWaitForMessage Event");
 }
 
+//===========================================================================================================
+//
+//          VMTimeOutWaitForMessageEvent  (class)
+//
+//===========================================================================================================
+
+VMTimeOutWaitForMessageEvent::VMTimeOutWaitForMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_VM_TIMEOUT_WAIT_FOR_MESSAGE;
+}
+
+VMTimeOutWaitForMessageEvent::VMTimeOutWaitForMessageEvent(VMTimeOutWaitForMessageEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+VMTimeOutWaitForMessageEvent::~VMTimeOutWaitForMessageEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void VMTimeOutWaitForMessageEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMTimeOutWaitForMessageEvent(this)));
+}
+
+const string VMTimeOutWaitForMessageEvent::getEventName() {
+	return("VMTimeOutWaitForMessage Event");
+}
 
 } // BlinkyBlocks namespace
