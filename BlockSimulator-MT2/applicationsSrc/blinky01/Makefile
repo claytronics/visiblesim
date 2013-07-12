@@ -28,12 +28,13 @@ CC = g++
 %.depends: %.cpp
 	$(CC) -M $(CCFLAGS) $(INCLUDES) $< > $@
 	
-all: $(OUT) blinkyThreadsManager VMEmulator
+all: $(OUT) blinkyThreadsManager VMEmulator VMEmulator2
 
-autoinstall: $(OUT) blinkyThreadsManager VMEmulator tcp_trial
+autoinstall: $(OUT) blinkyThreadsManager VMEmulator tcp_trial VMEmulator2
 	cp $(OUT) blinkyThreadsManager $(APPDIR)	
 	cp $(OUT) VMEmulator $(APPDIR)
 	cp $(OUT) tcp_trial $(APPDIR)
+	cp $(OUT) VMEmulator2 $(APPDIR)
 
 $(APPDIR)/$(OUT): $(OUT)
 
@@ -49,7 +50,10 @@ $(OUT): $(SIMULATORLIB) $(OBJS)
 
 VMEmulator: VMEmulator.cpp
 	$(CC) $(CCFLAGS) $(INCLUDES) -o VMEmulator VMEmulator.cpp -L/opt/local/lib $(LIBS)
-	
+
+VMEmulator2: VMEmulator2.cpp
+	$(CC) $(CCFLAGS) $(INCLUDES) -o VMEmulator2 VMEmulator2.cpp -L/opt/local/lib $(LIBS)
+
 tcp_trial: tcp_trial.cpp
 	$(CC) $(CCFLAGS) $(INCLUDES) -o tcp_trial tcp_trial.cpp -L/opt/local/lib $(LIBS)
 	

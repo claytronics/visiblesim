@@ -54,8 +54,6 @@ bool Scheduler::schedule(Event *ev) {
 	//MODIF NICO : cette ligne me spam trop l'affichage^^
 	//~ trace(info.str());
 
-	lock();
-
 	if (pev->date < Scheduler::currentDate) {
 		OUTPUT << "ERROR : An event cannot be schedule in the past !\n";
 	    OUTPUT << "current time : " << Scheduler::currentDate << endl;
@@ -70,6 +68,9 @@ bool Scheduler::schedule(Event *ev) {
 		OUTPUT << "maximumDate : " << maximumDate << endl;
 	    return(false);
 	}
+	
+	lock();
+	
 	eventsMap.insert(pair<uint64_t, EventPtr>(pev->date,pev));
 
 	eventsMapSize++;

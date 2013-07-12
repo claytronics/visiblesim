@@ -6,7 +6,8 @@
 */
 
 #include <iostream>
-#include <stdlib.h>
+#include <cstdlib>
+#include <algorithm>
 #include "blinkyBlocksScheduler.h"
 #include "blinkyBlocksSimulator.h"
 #include "blinkyBlocksWorld.h"
@@ -47,11 +48,21 @@ void BlinkyBlocksScheduler::deleteScheduler() {
 	delete((BlinkyBlocksScheduler*)scheduler);
 }
 
+static bool sortEvents(multimap<uint64_t, EventPtr>::iterator f, multimap<uint64_t, EventPtr>::iterator s) {
+	BaseSimulator::BuildingBlock *b1 = f->second->getConcernedBlock();
+	BaseSimulator::BuildingBlock *b2 = s->second->getConcernedBlock();
+	if(!b1 || !b2) {
+		return true;
+	}
+	return (b1->blockId*rand() > b2->blockId*rand());
+}
+
 void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	
 	bool mustStop;
 	uint64_t systemCurrentTime, systemCurrentTimeMax;
-
+	int seed = 500;
+	
 	usleep(1000000);
 	OUTPUT << "\033[1;33mScheduler Mode :" << schedulerMode << "\033[0m" << endl;
 	
@@ -59,29 +70,56 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	checkForReceivedVMMessages();
 	//BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
 	int systemStartTime, systemStopTime;
-	multimap<uint64_t, EventPtr>::iterator first;
+	multimap<uint64_t, EventPtr>::iterator first, tmp;
 	EventPtr pev;
 	systemStartTime = (glutGet(GLUT_ELAPSED_TIME))*1000;
 	OUTPUT << "\033[1;33m" << "Scheduler : start order received " << systemStartTime << "\033[0m" << endl;
 
 	switch (schedulerMode) {
 		case SCHEDULER_MODE_FASTEST:
-			while ( (!eventsMap.empty() ) && currentDate < maximumDate) {
+			cout << "START SCHEDULER FASTEST MODE" << endl;
+			while (!eventsMap.empty()) {
 				while (!undefinedBlocksSetIsEmpty()) {
 					waitForOneVMMessage();
 				}
 				//lock(); necessary ?
-				if (eventsMap.empty()) { //unlock(); continue; };
-					first=eventsMap.begin();
-					pev = (*first).second;
-					//unlock();
-					pev->consume();
-					lock();
-					eventsMap.erase(first);
-					eventsMapSize--;
-					unlock();
+				//if (eventsMap.empty()) { continue; }//unlock(); continue; };
+								
+				first = eventsMap.begin();		
+				pev = (*first).second;
+				/*
+				cout << "nb events: " << eventsMap.count(pev->date) << endl;
+				if (eventsMap.count(pev->date) > 1) {
+					// Election of the priority event
+					std::pair<multimap<uint64_t, EventPtr>::iterator,multimap<uint64_t, EventPtr>::iterator> range = eventsMap.equal_range(pev->date);
+					srand (seed++);
+					// Does not work, multimap::iterator are not RandomAccessIterator
+					//sort(range.first, range.second, sortEvents);
+					if (range.first->second->getConcernedBlock() != NULL) {
+						first = range.first;
+						for(multimap<uint64_t, EventPtr>::iterator it = range.first; it != range.second; it++) {
+							cout << pev->eventType << endl;
+							BaseSimulator::BuildingBlock *bb = it->second->getConcernedBlock();
+							if (bb == NULL || pev->eventType == EVENT_CODE_START || pev->eventType == EVENT_SET_ID) { 
+								first = it;
+								cout << "break" << endl;
+								break;
+							}
+							if (bb->blockId*(rand()%100) < first->second->getConcernedBlock()->blockId*(rand()%100)) {
+								first = it;
+							}
+						}
+					}
+				}*/
+				currentDate = pev->date;
+				//unlock();
+				//cout << "consume " << pev->eventType << endl;
+				pev->consume();
+				lock();
+				eventsMap.erase(first);
+				eventsMapSize--;
+				unlock();
 				}
-			}		
 			break;
 		case SCHEDULER_MODE_REALTIME:
 			OUTPUT << "Realtime mode scheduler\n";
@@ -89,6 +127,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 			while (!mustStop) {
 				systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
 				systemCurrentTimeMax = systemCurrentTime - systemStartTime;
+				currentDate = systemCurrentTimeMax;
 				checkForReceivedVMMessages();
 				while (true) {
 						lock();
@@ -111,7 +150,6 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 						// may call schedule(), which contains lock();
 						checkForReceivedVMMessages();
 				}
-				systemCurrentTime = systemCurrentTimeMax;
 #ifdef WIN32
 				Sleep(5);
 #else

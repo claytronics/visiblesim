@@ -102,6 +102,7 @@ public:
 		}
 		return !r;
 	}
+		
 };
 
 inline void createScheduler() {

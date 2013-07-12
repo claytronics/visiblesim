@@ -100,6 +100,23 @@ public:
 	const virtual string getEventName();
 };
 
+/*
+//===========================================================================================================
+//
+//          VMSetColorEvent  (class)
+//
+//===========================================================================================================
+
+class VMSetColorEvent : public BlockEvent {
+public:
+
+	VMSetColorEvent(uint64_t, BlinkyBlocksBlock *conBlock);
+	VMSetColorEvent(VMTapEvent *ev);
+	~VMSetColorEvent();
+	void consumeBlockEvent();
+	const virtual string getEventName();
+};
+*/
 
 //===========================================================================================================
 //

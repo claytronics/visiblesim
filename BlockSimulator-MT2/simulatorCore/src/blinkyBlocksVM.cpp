@@ -74,7 +74,6 @@ BlinkyBlocksVM::~BlinkyBlocksVM() {
 }
 
 void BlinkyBlocksVM::stop() {
-	cout << "stop" << endl;
 	closeSocket();
 	terminate();
 }

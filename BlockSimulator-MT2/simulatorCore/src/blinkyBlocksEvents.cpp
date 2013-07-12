@@ -156,6 +156,7 @@ const string VMTapEvent::getEventName() {
 	return("VMTap Event");
 }
 
+
 //===========================================================================================================
 //
 //          VMAccelEvent  (class)
@@ -295,6 +296,7 @@ VMStartComputationEvent::VMStartComputationEvent(uint64_t t, BlinkyBlocksBlock *
 
 VMStartComputationEvent::VMStartComputationEvent(VMStartComputationEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
+	duration = ev->duration;
 }
 
 VMStartComputationEvent::~VMStartComputationEvent() {
@@ -353,6 +355,7 @@ VMWaitForMessageEvent::VMWaitForMessageEvent(uint64_t t, BlinkyBlocksBlock *conB
 
 VMWaitForMessageEvent::VMWaitForMessageEvent(VMWaitForMessageEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
+	timeOut = ev->timeOut;
 }
 
 VMWaitForMessageEvent::~VMWaitForMessageEvent() {
