@@ -188,7 +188,7 @@ void vm_thread_function(void *data) {
 	cout << "VMEmulator start" << endl;
 	if (readMessageFromVM(socket, &in, -1) == 1) {
 		if (in.type == VM_MESSAGE_SET_ID) {
-			id = in.param1; // CHANGE IN THE FORMAT...
+			id = in.sourcenode;
 			cout << "VM received id: " << id << endl;
 		} else {
 			cout << "problem id not first message" << endl;

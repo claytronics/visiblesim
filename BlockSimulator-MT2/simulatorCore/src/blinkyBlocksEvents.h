@@ -246,17 +246,17 @@ public:
 
 //===========================================================================================================
 //
-//          VMWaitForMessageEvent  (class)
+//          VMWaitForCommandEvent  (class)
 //
 //===========================================================================================================
 
-class VMWaitForMessageEvent : public BlockEvent {
+class VMWaitForCommandEvent : public BlockEvent {
 public:
 	uint64_t timeOut;
 
-	VMWaitForMessageEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint64_t tt);
-	VMWaitForMessageEvent(VMWaitForMessageEvent *ev);
-	~VMWaitForMessageEvent();
+	VMWaitForCommandEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint64_t tt);
+	VMWaitForCommandEvent(VMWaitForCommandEvent *ev);
+	~VMWaitForCommandEvent();
 	void consumeBlockEvent();
 	const virtual string getEventName();
 };
@@ -264,18 +264,20 @@ public:
 
 //===========================================================================================================
 //
-//          VMTimeOutWaitForMessageEvent  (class)
+//          VMTimeOutWaitForCommandEvent  (class)
 //
 //===========================================================================================================
 
-class VMTimeOutWaitForMessageEvent : public BlockEvent {
+class VMTimeOutWaitForCommandEvent : public BlockEvent {
 public:
-
-	VMTimeOutWaitForMessageEvent(uint64_t, BlinkyBlocksBlock *conBlock);
-	VMTimeOutWaitForMessageEvent(VMTimeOutWaitForMessageEvent *ev);
-	~VMTimeOutWaitForMessageEvent();
+	bool cancelled;
+	
+	VMTimeOutWaitForCommandEvent(uint64_t, BlinkyBlocksBlock *conBlock);
+	VMTimeOutWaitForCommandEvent(VMTimeOutWaitForCommandEvent *ev);
+	~VMTimeOutWaitForCommandEvent();
 	void consumeBlockEvent();
 	const virtual string getEventName();
+	void cancel() { cancelled = true;};
 };
 
 } // BlinkyBlocks namespace

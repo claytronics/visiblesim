@@ -102,6 +102,8 @@ public:
 		}
 		return !r;
 	}
+	
+	bool schedule(Event *ev);
 		
 };
 

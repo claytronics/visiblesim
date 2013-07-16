@@ -62,6 +62,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	bool mustStop;
 	uint64_t systemCurrentTime, systemCurrentTimeMax;
 	int seed = 500;
+	srand (seed);
 	
 	usleep(1000000);
 	OUTPUT << "\033[1;33mScheduler Mode :" << schedulerMode << "\033[0m" << endl;
@@ -243,13 +244,56 @@ void BlinkyBlocksScheduler::stop(){
 	sem_schedulerStart->post(); // resume the simulation if it is paused
 }
 
-/*
-void BlinkyBlocksScheduler::lock() {
-	mutex_schedule.lock();
-}
+bool BlinkyBlocksScheduler::schedule(Event *ev) {
+	assert(ev != NULL);
+	stringstream info;
 
-void BlinkyBlocksScheduler::unlock() {
-	mutex_schedule.unlock();
-} */
+	EventPtr pev(ev);
+
+	OUTPUT << "BlinkyBlocksScheduler: Schedule a " << pev->getEventName() << " (" << ev->id << ")";
+	//MODIF NICO : cette ligne me spam trop l'affichage^^
+	//~ trace(info.str());
+
+	if (pev->date < Scheduler::currentDate) {
+		OUTPUT << "ERROR : An event cannot be schedule in the past !\n";
+	    OUTPUT << "current time : " << Scheduler::currentDate << endl;
+	    OUTPUT << "ev->eventDate : " << pev->date << endl;
+	    OUTPUT << "ev->getEventName() : " << pev->getEventName() << endl;
+	    return(false);
+	}
+
+	if (pev->date > maximumDate) {
+		OUTPUT << "WARNING : An event should not be schedule beyond the end of simulation date !\n";
+		OUTPUT << "pev->date : " << pev->date << endl;
+		OUTPUT << "maximumDate : " << maximumDate << endl;
+	    return(false);
+	}
+	
+	lock();
+	switch (schedulerMode) {
+	case SCHEDULER_MODE_REALTIME:
+		eventsMap.insert(pair<uint64_t, EventPtr>(pev->date,pev));
+		break;
+	case SCHEDULER_MODE_FASTEST:
+		if (eventsMap.count(pev->date) > 1) {
+			multimap<uint64_t, EventPtr>::iterator it = eventsMap.find(pev->date);
+			advance (it, rand() % eventsMap.count(pev->date));
+			eventsMap.insert(it, pair<uint64_t, EventPtr>(pev->date,pev));
+		} else {
+			eventsMap.insert(pair<uint64_t, EventPtr>(pev->date,pev));	
+		}
+		break;
+	default:
+		ERRPUT << "unknown scheduler mode" << endl;
+		break;
+	}
+	eventsMapSize++;
+
+	if (largestEventsMapSize < eventsMapSize) largestEventsMapSize = eventsMapSize;
+
+	unlock();
+
+	return(true);
+}
 
 } // BlinkyBlocks namespace

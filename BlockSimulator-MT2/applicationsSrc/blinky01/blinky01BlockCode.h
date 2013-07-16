@@ -10,6 +10,7 @@
 
 #include "blinkyBlocksBlockCode.h"
 #include "blinkyBlocksSimulator.h"
+#include "blinkyBlocksEvents.h"
 
 class VMDataMessage : public Message {	
 public:
@@ -20,11 +21,12 @@ public:
 	virtual unsigned int size();
 };
 
+//class VMTimeOutWaitForCommandEvent;
+
 class Blinky01BlockCode : public BlinkyBlocks::BlinkyBlocksBlockCode {
 private:
 	bool computing;
-	bool waitingForMessage;
-	//bool waitingForVM;
+	BlinkyBlocks::VMTimeOutWaitForCommandEvent* timeOutEvent;
 	
 public:
 
