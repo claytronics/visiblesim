@@ -198,8 +198,12 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	stringstream info;
 
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
-	OUTPUT << "Blinky01BlockCode: " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
-	
+	OUTPUT << "Blinky01BlockCode: process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
+	/*cout << "block " << bb->blockId << "random value:" << endl;
+	std::cout << "Random value: " << generator()%1000 << std::endl;
+	std::cout << "Random value: " << generator()%1000 << std::endl;
+	std::cout << "Random value: " << generator()%1000 << std::endl;
+	std::cout << "Random value: " << generator()%1000 << std::endl;*/
 	switch (pev->eventType) {
 		case EVENT_TAP:
 		case EVENT_RECEIVE_MESSAGE:

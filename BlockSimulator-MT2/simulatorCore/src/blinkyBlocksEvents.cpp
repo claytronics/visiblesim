@@ -19,6 +19,7 @@ namespace BlinkyBlocks {
 VMSetIdEvent::VMSetIdEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_SET_ID;
+	randomNumber = -2;
 }
 
 VMSetIdEvent::VMSetIdEvent(VMSetIdEvent *ev) : BlockEvent(ev) {
@@ -47,6 +48,7 @@ const string VMSetIdEvent::getEventName() {
 VMStopEvent::VMStopEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_STOP;
+	randomNumber = -2;
 }
 
 VMStopEvent::VMStopEvent(VMStopEvent *ev) : BlockEvent(ev) {
@@ -77,6 +79,7 @@ VMAddNeighborEvent::VMAddNeighborEvent(uint64_t t, BlinkyBlocksBlock *conBlock, 
 	eventType = EVENT_ADD_NEIGHBOR;
 	face = f;
 	target = ta;
+	randomNumber = -1;
 }
 
 VMAddNeighborEvent::VMAddNeighborEvent(VMAddNeighborEvent *ev) : BlockEvent(ev) {
@@ -108,6 +111,7 @@ VMRemoveNeighborEvent::VMRemoveNeighborEvent(uint64_t t, BlinkyBlocksBlock *conB
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_REMOVE_NEIGHBOR;
 	face = f;
+	randomNumber = -1;
 }
 
 VMRemoveNeighborEvent::VMRemoveNeighborEvent(VMRemoveNeighborEvent *ev) : BlockEvent(ev) {

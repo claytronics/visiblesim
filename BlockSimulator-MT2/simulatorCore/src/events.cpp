@@ -29,6 +29,7 @@ Event::Event(uint64_t t) {
 	nbLivingEvents++;
 	date = t;
 	eventType = EVENT_GENERIC;
+	randomNumber = -1;
 	EVENT_CONSTRUCTOR_INFO();
 }
 
@@ -38,6 +39,7 @@ Event::Event(Event *ev) {
 	nbLivingEvents++;
 	date = ev->date;
 	eventType = ev->eventType;
+	randomNumber = ev->randomNumber;
 	EVENT_CONSTRUCTOR_INFO();
 }
 
@@ -67,6 +69,7 @@ unsigned int Event::getNbLivingEvents() {
 BlockEvent::BlockEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock) : Event(t) {
 	EVENT_CONSTRUCTOR_INFO();
 	concernedBlock = conBlock;
+	randomNumber = conBlock->getNextRandomNumber();
 	eventType = BLOCKEVENT_GENERIC;
 }
 
@@ -92,6 +95,7 @@ const string BlockEvent::getEventName() {
 CodeStartEvent::CodeStartEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_CODE_START;
+	randomNumber = -3;
 }
 CodeStartEvent::~CodeStartEvent() {
 	EVENT_DESTRUCTOR_INFO();
@@ -117,6 +121,7 @@ const string CodeStartEvent::getEventName() {
 CodeEndSimulationEvent::CodeEndSimulationEvent(uint64_t t): Event(t) {
 	eventType = EVENT_END_SIMULATION;
 	EVENT_CONSTRUCTOR_INFO();
+	randomNumber = -3;
 }
 
 CodeEndSimulationEvent::~CodeEndSimulationEvent() {
@@ -164,6 +169,7 @@ const string ProcessLocalEvent::getEventName() {
 NetworkInterfaceStartTransmittingEvent::NetworkInterfaceStartTransmittingEvent(uint64_t t, P2PNetworkInterface *ni):Event(t) {
 	eventType = EVENT_NI_START_TRANSMITTING;
 	interface = ni;
+	randomNumber = ni->hostBlock->getNextRandomNumber();
 	EVENT_CONSTRUCTOR_INFO();
 }
 NetworkInterfaceStartTransmittingEvent::~NetworkInterfaceStartTransmittingEvent() {
@@ -188,6 +194,7 @@ const string NetworkInterfaceStartTransmittingEvent::getEventName() {
 NetworkInterfaceStopTransmittingEvent::NetworkInterfaceStopTransmittingEvent(uint64_t t, P2PNetworkInterface *ni):Event(t) {
 	eventType = EVENT_NI_STOP_TRANSMITTING;
 	interface = ni;
+	randomNumber = ni->hostBlock->getNextRandomNumber();
 	EVENT_CONSTRUCTOR_INFO();
 }
 NetworkInterfaceStopTransmittingEvent::~NetworkInterfaceStopTransmittingEvent() {
@@ -222,6 +229,7 @@ NetworkInterfaceReceiveEvent::NetworkInterfaceReceiveEvent(uint64_t t, P2PNetwor
 	eventType = EVENT_NI_RECEIVE;
 	interface = ni;
 	message = mes;
+	randomNumber = ni->hostBlock->getNextRandomNumber();
 	EVENT_CONSTRUCTOR_INFO();
 }
 
@@ -248,6 +256,7 @@ NetworkInterfaceEnqueueOutgoingEvent::NetworkInterfaceEnqueueOutgoingEvent(uint6
 	eventType = EVENT_NI_ENQUEUE_OUTGOING_MESSAGE;
 	message = MessagePtr(mes);
 	sourceInterface = ni;
+	randomNumber = ni->hostBlock->getNextRandomNumber();
 	EVENT_CONSTRUCTOR_INFO();
 }
 

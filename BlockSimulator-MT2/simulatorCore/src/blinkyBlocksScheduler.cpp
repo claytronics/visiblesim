@@ -250,7 +250,7 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 
 	EventPtr pev(ev);
 
-	OUTPUT << "BlinkyBlocksScheduler: Schedule a " << pev->getEventName() << " (" << ev->id << ")";
+	OUTPUT << "BlinkyBlocksScheduler: Schedule a " << pev->getEventName() << " (" << ev->id << ") with " << ev->randomNumber << endl;
 	//MODIF NICO : cette ligne me spam trop l'affichage^^
 	//~ trace(info.str());
 
@@ -276,8 +276,19 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 		break;
 	case SCHEDULER_MODE_FASTEST:
 		if (eventsMap.count(pev->date) > 1) {
-			multimap<uint64_t, EventPtr>::iterator it = eventsMap.find(pev->date);
-			advance (it, rand() % eventsMap.count(pev->date));
+			//multimap<uint64_t, EventPtr>::iterator it = eventsMap.find(pev->date);
+			std::pair<multimap<uint64_t, EventPtr>::iterator,multimap<uint64_t, EventPtr>::iterator> range = eventsMap.equal_range(pev->date);
+			multimap<uint64_t, EventPtr>::iterator it = range.first;
+			while (it != range.second) {
+				if (it->second->randomNumber >= pev->randomNumber) {
+					break;
+				}
+				it++;
+			}
+			if (it == range.second) {
+				it--;
+			}
+			//advance (it, rand() % eventsMap.count(pev->date));
 			eventsMap.insert(it, pair<uint64_t, EventPtr>(pev->date,pev));
 		} else {
 			eventsMap.insert(pair<uint64_t, EventPtr>(pev->date,pev));	

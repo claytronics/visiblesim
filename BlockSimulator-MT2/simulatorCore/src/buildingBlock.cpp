@@ -33,6 +33,7 @@ BuildingBlock::BuildingBlock(int bId) {
 	}
 	P2PNetworkInterfaceNextLocalId = 0;
 	state = Alive;
+	generator = boost::rand48(50*blockId);
 }
 
 BuildingBlock::~BuildingBlock() {
@@ -130,6 +131,10 @@ void BuildingBlock::processLocalEvent() {
 		getScheduler()->schedule(new ProcessLocalEvent(blockCode->availabilityDate,this));
 	}
 
+}
+
+int BuildingBlock::getNextRandomNumber() {
+	return generator()%1000;
 }
 
 } // BaseSimulator namespace

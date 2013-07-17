@@ -10,6 +10,7 @@
 
 //#include <tr1/unordered_set>
 #include <boost/shared_ptr.hpp>
+#include <boost/random.hpp>
 #include <list>
 
 #include "glBlock.h"
@@ -48,6 +49,7 @@ public:
 	int blockId;
 	BlockCode *blockCode;
 	State state;
+	boost::rand48 generator;
 
 	BuildingBlock(int bId);
 	virtual ~BuildingBlock();
@@ -70,6 +72,8 @@ public:
 	virtual void stop() {};
 	int getState() { return state; };
 	virtual void setState(int s) { state = State(s); };
+	
+	int getNextRandomNumber();
 };
 
 } // BaseSimulator namespace

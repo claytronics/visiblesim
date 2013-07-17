@@ -7,11 +7,13 @@
 <vm serverport="5000" vmPath="/home/ubuntu/Bureau/CMU/meld/meld" programPath="/home/ubuntu/Bureau/CMU/programs/tree-alg/broadcast.m" debugging="True" />
 <vm serverport="5000" vmPath="/home/ubuntu/Bureau/CMU/meld/meld" programPath="/home/ubuntu/Bureau/CMU/meld/examples/rainbow.m" debugging="True" />
 
+<vm serverport="5000" vmPath="VMEmulator2" programPath="/home/ubuntu/Bureau/CMU/meld/examples/ends.m" debugging="True" />
+
 
 <vm serverport="5000" vmPath="/home/bpiranda/git-simulateur/meld/meld" programPath="/home/bpiranda/git-simulateur/meld/examples/ends.m" debugging="True" />
 -->
+<vm serverport="5000" vmPath="/home/ubuntu/Bureau/CMU/meld/meld" programPath="/home/ubuntu/Bureau/CMU/meld/examples/rainbow.m" debugging="True" />
 
-<vm serverport="5000" vmPath="VMEmulator2" programPath="/home/ubuntu/Bureau/CMU/meld/examples/ends.m" debugging="True" />
 
 <world gridsize="10,10,10">
 	<camera target="200,200,200" directionSpherical="0,70,400" angle="45"/>
