@@ -5,8 +5,6 @@
 <vm serverport="5000" vmPath="/home/ubuntu/Bureau/CMU/meld/meld" programPath="/home/ubuntu/Bureau/CMU/meld/examples/rainbow.m" debugging="True" />
 <vm serverport="5000" vmPath="VMEmulator" programPath="ends.m" debugging="True" />
 <vm serverport="5000" vmPath="/home/ubuntu/Bureau/CMU/meld/meld" programPath="/home/ubuntu/Bureau/CMU/programs/tree-alg/broadcast.m" debugging="True" />
-<vm serverport="5000" vmPath="/home/ubuntu/Bureau/CMU/meld/meld" programPath="/home/ubuntu/Bureau/CMU/meld/examples/rainbow.m" debugging="True" />
-
 <vm serverport="5000" vmPath="VMEmulator2" programPath="/home/ubuntu/Bureau/CMU/meld/examples/ends.m" debugging="True" />
 
 
