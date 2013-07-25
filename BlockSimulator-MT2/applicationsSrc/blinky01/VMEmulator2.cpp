@@ -38,7 +38,6 @@ using boost::asio::ip::tcp;
 
 #define VM_MESSAGE_START_COMPUTATION 			20
 #define VM_MESSAGE_END_COMPUTATION 				21
-#define VM_MESSAGE_WAIT_FOR_MESSAGE				22
 
 typedef struct VMMessage_tt {
     uint64_t size;
@@ -90,7 +89,12 @@ string getStringMessage(uint64_t t) {
 			break;
 		case VM_MESSAGE_DEBUG:
 			return string("VM_MESSAGE_DEBUG");
-			break;		
+			break;
+		case VM_MESSAGE_START_COMPUTATION:
+			return string("VM_MESSAGE_START_COMPUTATION");
+			break;
+		case VM_MESSAGE_END_COMPUTATION:
+			return string ("VM_MESSAGE_END_COMPUTATION");
 		default:
 			cerr << "Unknown Message" << endl;
 			return string("Unknown");
@@ -194,17 +198,28 @@ void vm_thread_function(void *data) {
 			cout << "problem id not first message" << endl;
 		}
 	}
-	out.size = 4*sizeof(uint64_t);
-	out.type = VM_MESSAGE_START_COMPUTATION;
-	out.param1 = 20;
-	try {
-		boost::asio::write(socket, boost::asio::buffer((void*)&out,5*sizeof(uint64_t)));
-		cout << "VM " << id << " sent START_COMPUTATION" <<  endl;
-	} catch (std::exception& e) {
-		cerr << "Connection to the Simulator lost" << endl;
+	while (readMessageFromVM(socket, &in, -1) == 1) {
+		cout << getStringMessage(in.type) << " received " << endl;
+		switch(in.type) {
+			case VM_MESSAGE_START_COMPUTATION: 
+				// next test can be to start a thread with a timer
+				out.size = 4*sizeof(uint64_t);
+				out.type = VM_MESSAGE_END_COMPUTATION;
+				out.param1 = 22;
+				usleep(20000); // 2ms
+				try {
+					boost::asio::write(socket, boost::asio::buffer((void*)&out,5*sizeof(uint64_t)));
+					cout << "VM " << id << " sent END_COMPUTATION" <<  endl;
+				} catch (std::exception& e) {
+					cerr << "Connection to the Simulator lost" << endl;
+				}	
+				break;
+			default:
+				break;
+		}
+				
 	}
 	//getchar();
-	getchar();
 	socket.close();
 	cout << "VMEmulator "<< id << " end" << endl;
 

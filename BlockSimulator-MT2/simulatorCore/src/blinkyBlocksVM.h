@@ -20,7 +20,7 @@ using boost::asio::ip::tcp;
 namespace BlinkyBlocks {
 
 #define VM_MESSAGE_MAXLENGHT 512
-typedef uint64_t MessageUnit;
+typedef uint64_t messageType;
 
 class BlinkyBlocksBlock;
 
@@ -121,6 +121,9 @@ public:
 	
 	void asyncReadMessageHandler(const boost::system::error_code& error, std::size_t bytes_transferred);
 
+	inline static bool isInDebuggingMode() {
+			return debugging;
+	}
 };
 
 	inline void createVMServer(int p) { BlinkyBlocksVM::createServer(p); };

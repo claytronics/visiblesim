@@ -82,6 +82,7 @@ void BlinkyBlocksWorld::addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlo
 	if (blockId == -1) {
 		// En supposant que les blocs sont ordonnees:
 		//blockId = (buildingBlocksMap.rbegin())->second->blockId;
+		
 		map<int, BaseSimulator::BuildingBlock*>::iterator it;
 			for(it = buildingBlocksMap.begin(); 
 					it != buildingBlocksMap.end(); it++) {

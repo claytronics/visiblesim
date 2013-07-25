@@ -32,7 +32,7 @@ protected:
 	boost::thread *schedulerThread;
 	int schedulerMode;
 	
-	set<int> undefinedBlocksSet;
+	set<int> EndComputationBlocksSet;
 
 public:
 
@@ -63,31 +63,31 @@ public:
 	void pause(int timestamp);
 	void unPause();
 	
-	void addUndefinedBlock(int id) {
-		undefinedBlocksSet.insert(id);
+	void addEndComputationBlock(int id) {
+		EndComputationBlocksSet.insert(id);
 	}
-	void removeUndefinedBlock(int id) {
-		undefinedBlocksSet.erase(id);
+	void removeEndComputationBlock(int id) {
+		EndComputationBlocksSet.erase(id);
 	}
-	bool undefinedBlocksSetIsEmpty() {
-		return(undefinedBlocksSet.empty());
+	bool EndComputationBlocksSetIsEmpty() {
+		return(EndComputationBlocksSet.empty());
 	}
 	
-	bool isBlockUndefined(int id) {
-//		printUndefinedBlocksSet();
+	bool hasBlockEndComputation(int id) {
+//		printEndComputationBlocksSet();
 		set<int>::iterator res;
-		res = undefinedBlocksSet.find(id);
-		if (res != undefinedBlocksSet.end()) {
+		res = EndComputationBlocksSet.find(id);
+		if (res != EndComputationBlocksSet.end()) {
 			return(true);
 		} else {
 			return(false);
 		}
 	}
 	
-	void printUndefinedBlocksSet() {
-		set<int>::iterator it = undefinedBlocksSet.begin();
+	void printEndComputationBlocksSet() {
+		set<int>::iterator it = EndComputationBlocksSet.begin();
 		cout << "undefined Blocks set : ";
-		while (it != undefinedBlocksSet.end()) {
+		while (it != EndComputationBlocksSet.end()) {
 			cout << (*it) << " ";
 			it++;
 		}
@@ -104,6 +104,8 @@ public:
 	}
 	
 	bool schedule(Event *ev);
+	
+	inline int getMode() { return schedulerMode; }
 		
 };
 

@@ -29,7 +29,7 @@ Event::Event(uint64_t t) {
 	nbLivingEvents++;
 	date = t;
 	eventType = EVENT_GENERIC;
-	randomNumber = -1;
+	priority = PRIORITY_EVENT_GENERIC;
 	EVENT_CONSTRUCTOR_INFO();
 }
 
@@ -39,7 +39,7 @@ Event::Event(Event *ev) {
 	nbLivingEvents++;
 	date = ev->date;
 	eventType = ev->eventType;
-	randomNumber = ev->randomNumber;
+	priority = ev->priority;
 	EVENT_CONSTRUCTOR_INFO();
 }
 
@@ -71,6 +71,7 @@ BlockEvent::BlockEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock) : Eve
 	concernedBlock = conBlock;
 	randomNumber = conBlock->getNextRandomNumber();
 	eventType = BLOCKEVENT_GENERIC;
+	priority = PRIORITY_BLOCKEVENT_GENERIC;
 }
 
 BlockEvent::BlockEvent(BlockEvent *ev) : Event(ev) {	
@@ -95,7 +96,7 @@ const string BlockEvent::getEventName() {
 CodeStartEvent::CodeStartEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_CODE_START;
-	randomNumber = -3;
+	priority = PRIORITY_EVENT_CODE_START;
 }
 CodeStartEvent::~CodeStartEvent() {
 	EVENT_DESTRUCTOR_INFO();
@@ -121,7 +122,7 @@ const string CodeStartEvent::getEventName() {
 CodeEndSimulationEvent::CodeEndSimulationEvent(uint64_t t): Event(t) {
 	eventType = EVENT_END_SIMULATION;
 	EVENT_CONSTRUCTOR_INFO();
-	randomNumber = -3;
+	priority = PRIORITY_EVENT_END_SIMULATION;
 }
 
 CodeEndSimulationEvent::~CodeEndSimulationEvent() {
@@ -146,6 +147,7 @@ const string CodeEndSimulationEvent::getEventName() {
 ProcessLocalEvent::ProcessLocalEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_PROCESS_LOCAL_EVENT;
+	priority = PRIORITY_EVENT_PROCESS_LOCAL_EVENT;
 }
 ProcessLocalEvent::~ProcessLocalEvent() {
 	EVENT_DESTRUCTOR_INFO();
@@ -169,7 +171,7 @@ const string ProcessLocalEvent::getEventName() {
 NetworkInterfaceStartTransmittingEvent::NetworkInterfaceStartTransmittingEvent(uint64_t t, P2PNetworkInterface *ni):Event(t) {
 	eventType = EVENT_NI_START_TRANSMITTING;
 	interface = ni;
-	randomNumber = ni->hostBlock->getNextRandomNumber();
+	priority = PRIORITY_EVENT_NI_START_TRANSMITTING; // ni->hostBlock->getNextRandomNumber();
 	EVENT_CONSTRUCTOR_INFO();
 }
 NetworkInterfaceStartTransmittingEvent::~NetworkInterfaceStartTransmittingEvent() {
@@ -194,7 +196,7 @@ const string NetworkInterfaceStartTransmittingEvent::getEventName() {
 NetworkInterfaceStopTransmittingEvent::NetworkInterfaceStopTransmittingEvent(uint64_t t, P2PNetworkInterface *ni):Event(t) {
 	eventType = EVENT_NI_STOP_TRANSMITTING;
 	interface = ni;
-	randomNumber = ni->hostBlock->getNextRandomNumber();
+	priority = PRIORITY_EVENT_NI_STOP_TRANSMITTING; // ni->hostBlock->getNextRandomNumber();
 	EVENT_CONSTRUCTOR_INFO();
 }
 NetworkInterfaceStopTransmittingEvent::~NetworkInterfaceStopTransmittingEvent() {
@@ -229,7 +231,7 @@ NetworkInterfaceReceiveEvent::NetworkInterfaceReceiveEvent(uint64_t t, P2PNetwor
 	eventType = EVENT_NI_RECEIVE;
 	interface = ni;
 	message = mes;
-	randomNumber = ni->hostBlock->getNextRandomNumber();
+	priority = PRIORITY_EVENT_NI_RECEIVE; // ni->hostBlock->getNextRandomNumber();
 	EVENT_CONSTRUCTOR_INFO();
 }
 
@@ -256,7 +258,7 @@ NetworkInterfaceEnqueueOutgoingEvent::NetworkInterfaceEnqueueOutgoingEvent(uint6
 	eventType = EVENT_NI_ENQUEUE_OUTGOING_MESSAGE;
 	message = MessagePtr(mes);
 	sourceInterface = ni;
-	randomNumber = ni->hostBlock->getNextRandomNumber();
+	priority = PRIORITY_EVENT_NI_ENQUEUE_OUTGOING_MESSAGE; //ni->hostBlock->getNextRandomNumber();
 	EVENT_CONSTRUCTOR_INFO();
 }
 

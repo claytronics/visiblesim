@@ -56,7 +56,9 @@ int BlinkyBlocksDebugger::sendMsg(int id, int size, uint64_t *message) {
 	} else if (id == -1) {
 		// send to all vm
 		return getWorld()->broadcastVMMessage(size, message);
-	} 
+	} else {
+		return 0;
+	}
 }
 
 void BlinkyBlocksDebugger::pauseSim(int timestamp) {

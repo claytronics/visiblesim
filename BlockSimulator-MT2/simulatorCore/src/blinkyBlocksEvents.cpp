@@ -19,7 +19,7 @@ namespace BlinkyBlocks {
 VMSetIdEvent::VMSetIdEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_SET_ID;
-	randomNumber = -2;
+	priority = PRIORITY_EVENT_SET_ID;
 }
 
 VMSetIdEvent::VMSetIdEvent(VMSetIdEvent *ev) : BlockEvent(ev) {
@@ -48,7 +48,7 @@ const string VMSetIdEvent::getEventName() {
 VMStopEvent::VMStopEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_STOP;
-	randomNumber = -2;
+	priority = PRIORITY_EVENT_STOP;
 }
 
 VMStopEvent::VMStopEvent(VMStopEvent *ev) : BlockEvent(ev) {
@@ -79,7 +79,7 @@ VMAddNeighborEvent::VMAddNeighborEvent(uint64_t t, BlinkyBlocksBlock *conBlock, 
 	eventType = EVENT_ADD_NEIGHBOR;
 	face = f;
 	target = ta;
-	randomNumber = -1;
+	priority = PRIORITY_EVENT_ADD_NEIGHBOR;
 }
 
 VMAddNeighborEvent::VMAddNeighborEvent(VMAddNeighborEvent *ev) : BlockEvent(ev) {
@@ -112,6 +112,7 @@ VMRemoveNeighborEvent::VMRemoveNeighborEvent(uint64_t t, BlinkyBlocksBlock *conB
 	eventType = EVENT_REMOVE_NEIGHBOR;
 	face = f;
 	randomNumber = -1;
+	priority = PRIORITY_EVENT_REMOVE_NEIGHBOR;
 }
 
 VMRemoveNeighborEvent::VMRemoveNeighborEvent(VMRemoveNeighborEvent *ev) : BlockEvent(ev) {
@@ -141,6 +142,7 @@ const string VMRemoveNeighborEvent::getEventName() {
 VMTapEvent::VMTapEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_TAP;
+	priority = PRIORITY_EVENT_TAP;
 }
 
 VMTapEvent::VMTapEvent(VMTapEvent *ev) : BlockEvent(ev) {
@@ -170,6 +172,7 @@ const string VMTapEvent::getEventName() {
 VMAccelEvent::VMAccelEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t xx, uint64_t yy, uint64_t zz): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_ACCEL;
+	priority = PRIORITY_EVENT_ACCEL;
 	x = xx;
 	y = yy;
 	z = zz;
@@ -204,6 +207,7 @@ const string VMAccelEvent::getEventName() {
 VMShakeEvent::VMShakeEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t f): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_SHAKE;
+	priority = PRIORITY_EVENT_SHAKE;
 	force = f;
 }
 
@@ -234,6 +238,7 @@ const string VMShakeEvent::getEventName() {
 VMDebugMessageEvent::VMDebugMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, VMDebugMessage *mes): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_DEBUG_MESSAGE;
+	priority = PRIORITY_EVENT_DEBUG_MESSAGE;
 	message = VMDebugMessagePtr(mes);
 }
 
@@ -265,6 +270,7 @@ const string VMDebugMessageEvent::getEventName() {
 VMDebugPauseSimEvent::VMDebugPauseSimEvent(uint64_t t): Event(t) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_DEBUG_PAUSE_SIMULATION;
+	priority = PRIORITY_EVENT_DEBUG_PAUSE_SIMULATION;
 }
 
 VMDebugPauseSimEvent::VMDebugPauseSimEvent(VMDebugPauseSimEvent *ev) : Event(ev) {
@@ -295,6 +301,7 @@ const string VMDebugPauseSimEvent::getEventName() {
 VMStartComputationEvent::VMStartComputationEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t dur): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_VM_START_COMPUTATION;
+	priority = PRIORITY_EVENT_VM_START_COMPUTATION;
 	duration = dur;
 }
 
@@ -324,6 +331,7 @@ const string VMStartComputationEvent::getEventName() {
 
 VMEndComputationEvent::VMEndComputationEvent(uint64_t t, BlinkyBlocksBlock *conBlock) : BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
+	priority = PRIORITY_EVENT_VM_END_COMPUTATION;
 	eventType = EVENT_VM_END_COMPUTATION;
 }
 
@@ -343,68 +351,6 @@ void VMEndComputationEvent::consumeBlockEvent() {
 
 const string VMEndComputationEvent::getEventName() {
 	return("VMEndComputation Event");
-}
-
-//===========================================================================================================
-//
-//          VMWaitForCommandEvent  (class)
-//
-//===========================================================================================================
-
-VMWaitForCommandEvent::VMWaitForCommandEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t tt): BlockEvent(t, conBlock) {
-	EVENT_CONSTRUCTOR_INFO();
-	eventType = EVENT_VM_WAIT_FOR_COMMAND;
-	timeOut = tt;
-}
-
-VMWaitForCommandEvent::VMWaitForCommandEvent(VMWaitForCommandEvent *ev) : BlockEvent(ev) {
-	EVENT_CONSTRUCTOR_INFO();
-	timeOut = ev->timeOut;
-}
-
-VMWaitForCommandEvent::~VMWaitForCommandEvent() {
-	EVENT_DESTRUCTOR_INFO();
-}
-
-void VMWaitForCommandEvent::consumeBlockEvent() {
-	EVENT_CONSUME_INFO();
-	concernedBlock->scheduleLocalEvent(EventPtr(new VMWaitForCommandEvent(this)));
-}
-
-const string VMWaitForCommandEvent::getEventName() {
-	return("VMWaitForCommand Event");
-}
-
-//===========================================================================================================
-//
-//          VMTimeOutWaitForCommandEvent  (class)
-//
-//===========================================================================================================
-
-VMTimeOutWaitForCommandEvent::VMTimeOutWaitForCommandEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
-	EVENT_CONSTRUCTOR_INFO();
-	eventType = EVENT_VM_TIMEOUT_WAIT_FOR_COMMAND;
-	cancelled = false;
-}
-
-VMTimeOutWaitForCommandEvent::VMTimeOutWaitForCommandEvent(VMTimeOutWaitForCommandEvent *ev) : BlockEvent(ev) {
-	EVENT_CONSTRUCTOR_INFO();
-	cancelled = ev->cancelled;
-}
-
-VMTimeOutWaitForCommandEvent::~VMTimeOutWaitForCommandEvent() {
-	EVENT_DESTRUCTOR_INFO();
-}
-
-void VMTimeOutWaitForCommandEvent::consumeBlockEvent() {
-	EVENT_CONSUME_INFO();
-	if (!cancelled) {
-		concernedBlock->scheduleLocalEvent(EventPtr(new VMTimeOutWaitForCommandEvent(this)));
-	}
-}
-
-const string VMTimeOutWaitForCommandEvent::getEventName() {
-	return("VMTimeOutWaitForCommand Event");
 }
 
 } // BlinkyBlocks namespace

@@ -15,6 +15,7 @@
 #include <boost/shared_ptr.hpp>
 #include "buildingBlock.h"
 #include "uniqueEventsId.h"
+#include "eventsPriority.h"
 #include "network.h"
 
 using namespace std;
@@ -54,7 +55,7 @@ public:
 	int id;				// unique ID of the event (mainly for debugging purpose)
 	uint64_t date;		// time at which the event will be processed. 0 means simulation start
 	int eventType;		// see the various types at the beginning of this file
-	int randomNumber;
+	int priority;
 
 	Event(uint64_t t);
 	Event(Event *ev);
@@ -84,6 +85,7 @@ protected:
 	virtual const string getEventName();
 	
 public:
+	int randomNumber;
 	BaseSimulator::BuildingBlock* getConcernedBlock() {return concernedBlock;};
 	virtual void consumeBlockEvent() = 0;
 	virtual void consume() {

@@ -10,7 +10,6 @@
 
 #include "blinkyBlocksBlock.h"
 #include "events.h"
-#include "uniqueEventsId.h"
 #include "blinkyBlocksDebugger.h"
 
 namespace BlinkyBlocks {
@@ -242,42 +241,6 @@ public:
 	~VMEndComputationEvent();
 	void consumeBlockEvent();
 	const virtual string getEventName();
-};
-
-//===========================================================================================================
-//
-//          VMWaitForCommandEvent  (class)
-//
-//===========================================================================================================
-
-class VMWaitForCommandEvent : public BlockEvent {
-public:
-	uint64_t timeOut;
-
-	VMWaitForCommandEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint64_t tt);
-	VMWaitForCommandEvent(VMWaitForCommandEvent *ev);
-	~VMWaitForCommandEvent();
-	void consumeBlockEvent();
-	const virtual string getEventName();
-};
-
-
-//===========================================================================================================
-//
-//          VMTimeOutWaitForCommandEvent  (class)
-//
-//===========================================================================================================
-
-class VMTimeOutWaitForCommandEvent : public BlockEvent {
-public:
-	bool cancelled;
-	
-	VMTimeOutWaitForCommandEvent(uint64_t, BlinkyBlocksBlock *conBlock);
-	VMTimeOutWaitForCommandEvent(VMTimeOutWaitForCommandEvent *ev);
-	~VMTimeOutWaitForCommandEvent();
-	void consumeBlockEvent();
-	const virtual string getEventName();
-	void cancel() { cancelled = true;};
 };
 
 } // BlinkyBlocks namespace

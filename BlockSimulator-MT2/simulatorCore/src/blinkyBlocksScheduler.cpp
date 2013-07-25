@@ -48,6 +48,7 @@ void BlinkyBlocksScheduler::deleteScheduler() {
 	delete((BlinkyBlocksScheduler*)scheduler);
 }
 
+/*
 static bool sortEvents(multimap<uint64_t, EventPtr>::iterator f, multimap<uint64_t, EventPtr>::iterator s) {
 	BaseSimulator::BuildingBlock *b1 = f->second->getConcernedBlock();
 	BaseSimulator::BuildingBlock *b2 = s->second->getConcernedBlock();
@@ -55,7 +56,7 @@ static bool sortEvents(multimap<uint64_t, EventPtr>::iterator f, multimap<uint64
 		return true;
 	}
 	return (b1->blockId*rand() > b2->blockId*rand());
-}
+} */
 
 void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	
@@ -80,40 +81,11 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 		case SCHEDULER_MODE_FASTEST:
 			cout << "START SCHEDULER FASTEST MODE" << endl;
 			while (!eventsMap.empty()) {
-				while (!undefinedBlocksSetIsEmpty()) {
-					waitForOneVMMessage();
-				}
-				//lock(); necessary ?
-				//if (eventsMap.empty()) { continue; }//unlock(); continue; };
-								
+				lock();						
 				first = eventsMap.begin();		
-				pev = (*first).second;
-				/*
-				cout << "nb events: " << eventsMap.count(pev->date) << endl;
-				if (eventsMap.count(pev->date) > 1) {
-					// Election of the priority event
-					std::pair<multimap<uint64_t, EventPtr>::iterator,multimap<uint64_t, EventPtr>::iterator> range = eventsMap.equal_range(pev->date);
-					srand (seed++);
-					// Does not work, multimap::iterator are not RandomAccessIterator
-					//sort(range.first, range.second, sortEvents);
-					if (range.first->second->getConcernedBlock() != NULL) {
-						first = range.first;
-						for(multimap<uint64_t, EventPtr>::iterator it = range.first; it != range.second; it++) {
-							cout << pev->eventType << endl;
-							BaseSimulator::BuildingBlock *bb = it->second->getConcernedBlock();
-							if (bb == NULL || pev->eventType == EVENT_CODE_START || pev->eventType == EVENT_SET_ID) { 
-								first = it;
-								cout << "break" << endl;
-								break;
-							}
-							if (bb->blockId*(rand()%100) < first->second->getConcernedBlock()->blockId*(rand()%100)) {
-								first = it;
-							}
-						}
-					}
-				}*/
+				pev = (*first).second;				
 				currentDate = pev->date;
-				//unlock();
+				unlock();
 				//cout << "consume " << pev->eventType << endl;
 				pev->consume();
 				lock();
@@ -250,7 +222,7 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 
 	EventPtr pev(ev);
 
-	OUTPUT << "BlinkyBlocksScheduler: Schedule a " << pev->getEventName() << " (" << ev->id << ") with " << ev->randomNumber << endl;
+	OUTPUT << "BlinkyBlocksScheduler: Schedule a " << pev->getEventName() << " (" << ev->id << ") with " << ev->priority << endl;
 	//MODIF NICO : cette ligne me spam trop l'affichage^^
 	//~ trace(info.str());
 
@@ -279,14 +251,19 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 			//multimap<uint64_t, EventPtr>::iterator it = eventsMap.find(pev->date);
 			std::pair<multimap<uint64_t, EventPtr>::iterator,multimap<uint64_t, EventPtr>::iterator> range = eventsMap.equal_range(pev->date);
 			multimap<uint64_t, EventPtr>::iterator it = range.first;
-			while (it != range.second) {
-				if (it->second->randomNumber >= pev->randomNumber) {
-					break;
+			if (pev->getConcernedBlock() != NULL) {
+				while (it != range.second) {
+					if (it->second->getConcernedBlock() == NULL) {
+						continue;
+					}
+					if (it->second->priority >= pev->priority) {
+						break;
+					}
+					it++;
 				}
-				it++;
-			}
-			if (it == range.second) {
-				it--;
+				if (it == range.second) {
+					it--;
+				}
 			}
 			//advance (it, rand() % eventsMap.count(pev->date));
 			eventsMap.insert(it, pair<uint64_t, EventPtr>(pev->date,pev));

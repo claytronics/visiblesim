@@ -51,19 +51,17 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 
 	// Wait for an incoming connection	
 	socket = boost::shared_ptr<tcp::socket>(new tcp::socket(*ios));	
-	acceptor->accept(*(socket.get()));
-	
-	
+	acceptor->accept(*(socket.get()));	
 	OUTPUT << "VM "<< hostBlock->blockId << " connected" << endl;
 	// Send the id to the block
 	if (debugging) {
 		// to do it right now
 		//VMSetIdEvent ev(BaseSimulator::getScheduler()->now(), (BlinkyBlocksBlock*)hostBlock);
 		//hostBlock->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), (BlinkyBlocksBlock*)hostBlock)));
-		BaseSimulator::getScheduler()->schedule(new VMSetIdEvent(BaseSimulator::getScheduler()->now(), (BlinkyBlocksBlock*)hostBlock));
+		BlinkyBlocks::getScheduler()->schedule(new VMSetIdEvent(BaseSimulator::getScheduler()->now(), bb));
 	} else {
 		// schedule it, so that it will only happen once the scheduler starts
-		BaseSimulator::getScheduler()->schedule(new VMSetIdEvent(BaseSimulator::getScheduler()->now(), (BlinkyBlocksBlock*)hostBlock));
+		BlinkyBlocks::getScheduler()->schedule(new VMSetIdEvent(BaseSimulator::getScheduler()->now(), bb));
 	}
 }
 
