@@ -165,6 +165,36 @@ int readMessageFromVM(tcp::socket &socket, VMMessage_t *buffer, int id) {
 	return 1;
 }
 
+static int currentTime = 0;
+
+void sendMessageThread(tcp::socket *s, int id) {
+	VMMessage_t out;
+	tcp::socket& socket = *s;
+	out.size = 8*sizeof(uint64_t);
+	out.type = VM_MESSAGE_SEND_MESSAGE;
+	out.timestamp = currentTime;
+	out.sourcenode = id;
+	out.param1 = Right; // face: right
+	out.param3 = 255; // green
+	out.param4 = 0;
+	out.param5 = 0;
+	for (int j = 0; j < 2; j++) {
+		for (int i = 1; i < 6; i++) {
+			if (i == id) {
+				continue;
+			}
+			out.param2 = i;
+			try {
+				boost::asio::write(socket, boost::asio::buffer((void*)&out,9*sizeof(uint64_t)));
+				cout << "VM " << id << " sent message (color) on face right" <<  endl;
+			} catch (std::exception& e) {
+				cerr << "Connection to the Simulator lost" << endl;
+			}
+		}
+		usleep(20000);
+	}
+}
+
 void vm_thread_function(void *data) {	
 	boost::asio::io_service ios;
 	boost::asio::ip::tcp::resolver resolver(ios);
@@ -198,6 +228,7 @@ void vm_thread_function(void *data) {
 			cout << "problem id not first message" << endl;
 		}
 	}
+	new boost::thread(boost::bind(sendMessageThread,&socket,id));
 	while (readMessageFromVM(socket, &in, -1) == 1) {
 		cout << getStringMessage(in.type) << " received " << endl;
 		switch(in.type) {
@@ -212,7 +243,7 @@ void vm_thread_function(void *data) {
 					cout << "VM " << id << " sent END_COMPUTATION" <<  endl;
 				} catch (std::exception& e) {
 					cerr << "Connection to the Simulator lost" << endl;
-				}	
+				}
 				break;
 			default:
 				break;

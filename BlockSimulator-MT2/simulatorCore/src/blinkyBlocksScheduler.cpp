@@ -79,20 +79,22 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 
 	switch (schedulerMode) {
 		case SCHEDULER_MODE_FASTEST:
-			cout << "START SCHEDULER FASTEST MODE" << endl;
+			//cout << "START SCHEDULER FASTEST MODE" << endl;
 			while (!eventsMap.empty()) {
 				lock();						
 				first = eventsMap.begin();		
-				pev = (*first).second;				
+				pev = (*first).second;			
 				currentDate = pev->date;
 				unlock();
-				//cout << "consume " << pev->eventType << endl;
+				//cout << "consume " << pev->date << endl;
 				pev->consume();
 				lock();
 				eventsMap.erase(first);
 				eventsMapSize--;
 				unlock();
+				checkForReceivedVMMessages();
 				}
+			//cout << "eventsMap empty!" << endl;
 			break;
 		case SCHEDULER_MODE_REALTIME:
 			OUTPUT << "Realtime mode scheduler\n";
@@ -223,6 +225,7 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 	EventPtr pev(ev);
 
 	OUTPUT << "BlinkyBlocksScheduler: Schedule a " << pev->getEventName() << " (" << ev->id << ") with " << ev->priority << endl;
+	//cout << "BlinkyBlocksScheduler: Schedule a " << pev->getEventName() << " (" << ev->id << ") with " << ev->priority << "for " << pev->date << endl;
 	//MODIF NICO : cette ligne me spam trop l'affichage^^
 	//~ trace(info.str());
 
@@ -247,27 +250,32 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 		eventsMap.insert(pair<uint64_t, EventPtr>(pev->date,pev));
 		break;
 	case SCHEDULER_MODE_FASTEST:
-		if (eventsMap.count(pev->date) > 1) {
+		if (eventsMap.count(pev->date) > 1 && pev->getConcernedBlock() != NULL) {
 			//multimap<uint64_t, EventPtr>::iterator it = eventsMap.find(pev->date);
 			std::pair<multimap<uint64_t, EventPtr>::iterator,multimap<uint64_t, EventPtr>::iterator> range = eventsMap.equal_range(pev->date);
 			multimap<uint64_t, EventPtr>::iterator it = range.first;
-			if (pev->getConcernedBlock() != NULL) {
-				while (it != range.second) {
-					if (it->second->getConcernedBlock() == NULL) {
-						continue;
-					}
-					if (it->second->priority >= pev->priority) {
-						break;
-					}
+			while (it != range.second) {
+				if (it->second->getConcernedBlock() == NULL) {
 					it++;
+					continue;
 				}
-				if (it == range.second) {
-					it--;
+				BlockEvent *bev1 = (BlockEvent*) it->second.get();
+				BlockEvent *bev2 = (BlockEvent*) it->second.get();					
+				if (bev1->randomNumber >= bev2->randomNumber) {
+					break;
 				}
+				it++;
+			}
+			if (it == range.second) {
+				it--;
 			}
 			//advance (it, rand() % eventsMap.count(pev->date));
 			eventsMap.insert(it, pair<uint64_t, EventPtr>(pev->date,pev));
 		} else {
+			if (pev->getConcernedBlock() == NULL) {
+				//cout << "not a block event: " << pev->getEventName() << endl;
+				//cout << "date " << pev->date << endl;
+			}
 			eventsMap.insert(pair<uint64_t, EventPtr>(pev->date,pev));	
 		}
 		break;
@@ -280,7 +288,7 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 	if (largestEventsMapSize < eventsMapSize) largestEventsMapSize = eventsMapSize;
 
 	unlock();
-
+	//cout << "schedule end" << endl;
 	return(true);
 }
 

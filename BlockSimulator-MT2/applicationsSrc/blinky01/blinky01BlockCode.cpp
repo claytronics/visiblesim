@@ -163,7 +163,7 @@ void Blinky01BlockCode::handleNewMessage() {
 			break;
 		case VM_MESSAGE_END_COMPUTATION: // format: <size> <timestamp> <src> <command> <duration>
 			//OUTPUT << bb->blockId << " END COMPUTATION MESSAGE" << endl;
-			cout << bb->blockId << " END COMPUTATION MESSAGE" << endl;
+			//cout << bb->blockId << " END COMPUTATION MESSAGE" << endl;
 			BlinkyBlocks::getScheduler()->addEndComputationBlock(bb->blockId);
 			break;
 		default:
@@ -177,7 +177,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
 	OUTPUT << "Blinky01BlockCode: process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
-	//cout << "Blinky01BlockCode: process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
+	//cout << "Blinky01BlockCode: "<< bb->blockId << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
 	/*cout << "block " << bb->blockId << "random value:" << endl;
 	std::cout << "Random value: " << generator()%1000 << std::endl;
 	std::cout << "Random value: " << generator()%1000 << std::endl;
@@ -246,6 +246,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			VMDataMessage *m = (VMDataMessage*) (boost::static_pointer_cast<NetworkInterfaceReceiveEvent>(pev))->message.get();
 			//cout << "message receive by " << bb->blockId << ":" << m->message[0] << " " << m->message[1] << " " << m->message[2] << " " << m->message[3] << " " << m->message[4] << " " << m->message[5] << " " << m->message[6] << endl;
 			bb->vm->sendMessage(m->size(), m->message);
+			//cout << "message received from " << m->sourceInterface->hostBlock->blockId << endl;
 			info << "message received from " << m->sourceInterface->hostBlock->blockId;
 			BlinkyBlocks::getScheduler()->trace(info.str(),hostBlock->blockId);
 			}
@@ -299,7 +300,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			info.str("");
 			info << "starting computation (will last for " << duration << ")" ;
 			BlinkyBlocks::getScheduler()->trace(info.str(),hostBlock->blockId);
-			cout << "blinky01BlockCode " << bb->blockId << " starting computation (will last for " << duration << ")" << endl;
+			//cout << "blinky01BlockCode " << bb->blockId << " starting computation (will last for " << duration << ")" << endl;
 			BlinkyBlocks::getScheduler()->schedule(new VMEndComputationEvent(BlinkyBlocks::getScheduler()->now()+duration, bb));
 			}
 			break;
@@ -308,18 +309,18 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			static int i[5];
 			computing = false;
 			info.str("");
-			cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << bb->blockId << " wait for end message " << endl;		
+			//cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << bb->blockId << " wait for end message " << endl;		
 			while (!BlinkyBlocks::getScheduler()->hasBlockEndComputation(hostBlock->blockId)) {
 					//sleep(1);
 					BlinkyBlocks::waitForOneVMMessage();
+					//BlinkyBlocks::checkForReceivedVMMessages();
 			}
-			//BlinkyBlocks::getScheduler()->addEndComputationBlock(hostBlock->blockId);
 			info << "finished its computation" << endl;
-			cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << " finished computation " << endl;
+			//cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << " finished computation " << endl;
 			BlinkyBlocks::getScheduler()->trace(info.str(),hostBlock->blockId);
 			BlinkyBlocks::getScheduler()->removeEndComputationBlock(hostBlock->blockId);
 			// Test purpose
-			if (i[hostBlock->blockId]<3) {
+			if (i[hostBlock->blockId] < 3) {
 				BlinkyBlocks::getScheduler()->schedule(new VMStartComputationEvent(BlinkyBlocks::getScheduler()->now()+1, bb, 20));
 				i[hostBlock->blockId]++;
 			}
