@@ -10,6 +10,7 @@
 
 #include "blinkyBlocksBlock.h"
 #include "events.h"
+#include "network.h"
 #include "blinkyBlocksDebugger.h"
 
 namespace BlinkyBlocks {
@@ -99,7 +100,7 @@ public:
 	const virtual string getEventName();
 };
 
-/*
+
 //===========================================================================================================
 //
 //          VMSetColorEvent  (class)
@@ -110,12 +111,30 @@ class VMSetColorEvent : public BlockEvent {
 public:
 
 	VMSetColorEvent(uint64_t, BlinkyBlocksBlock *conBlock);
-	VMSetColorEvent(VMTapEvent *ev);
+	VMSetColorEvent(VMSetColorEvent *ev);
 	~VMSetColorEvent();
 	void consumeBlockEvent();
 	const virtual string getEventName();
 };
-*/
+
+//===========================================================================================================
+//
+//          VMSendMessageEvent  (class)
+//
+//===========================================================================================================
+
+class VMSendMessageEvent : public BlockEvent {
+public:
+	MessagePtr message;
+	P2PNetworkInterface *sourceInterface;
+
+	VMSendMessageEvent(uint64_t, BlinkyBlocksBlock *conBlock, Message *mes, P2PNetworkInterface *ni);
+	VMSendMessageEvent(VMSendMessageEvent *ev);
+	~VMSendMessageEvent();
+	void consumeBlockEvent();
+	const virtual string getEventName();
+};
+
 
 //===========================================================================================================
 //

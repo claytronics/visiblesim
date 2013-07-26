@@ -94,7 +94,13 @@ VMDataMessage::VMDataMessage(uint64_t src, uint64_t* m): Message() {
 			break;
 	}*/
 }
-	
+
+VMDataMessage::VMDataMessage(VMDataMessage *m) : Message() {
+	uint64_t size = m->message[0] + sizeof(uint64_t);
+	message = new uint64_t[size/sizeof(uint64_t)];
+	memcpy(message, m->message, size);
+}
+
 VMDataMessage::~VMDataMessage() {
 	delete[] message;
 }
@@ -151,7 +157,7 @@ void Blinky01BlockCode::handleNewMessage() {
 				return;
 			}
 			//cout << bb->blockId << "-->" << interface->hostBlock->blockId << endl;
-			BaseSimulator::getScheduler()->schedule(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
+			BlinkyBlocks::getScheduler()->schedule(new VMSendMessageEvent(BaseSimulator::getScheduler()->now(), bb,
 					new VMDataMessage(hostBlock->blockId, message), interface));
 					/*BaseSimulator::getScheduler()->scheduleLock(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
 					new VMDataMessage(hostBlock->blockId, size, message), interface));*/
@@ -239,6 +245,19 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			message[2] = BaseSimulator::getScheduler()->now(); // timestamp
 			message[3] = bb->blockId; // souce node
 			bb->vm->sendMessage(4*sizeof(uint64_t), message);
+			}
+			break;
+		case EVENT_SET_COLOR:
+			{
+				
+			}
+			break;
+		case EVENT_SEND_MESSAGE:
+			{
+			VMDataMessage *message = new VMDataMessage((VMDataMessage*)(boost::static_pointer_cast<VMSendMessageEvent>(pev))->message.get());
+			P2PNetworkInterface *interface = (boost::static_pointer_cast<VMSendMessageEvent>(pev))->sourceInterface;
+			BlinkyBlocks::getScheduler()->schedule(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
+				message, interface));
 			}
 			break;
 		case EVENT_RECEIVE_MESSAGE: /*EVENT_NI_RECEIVE: */

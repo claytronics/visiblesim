@@ -162,6 +162,69 @@ const string VMTapEvent::getEventName() {
 	return("VMTap Event");
 }
 
+//===========================================================================================================
+//
+//          VMSetColorEvent  (class)
+//
+//===========================================================================================================
+
+VMSetColorEvent::VMSetColorEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_SET_COLOR;
+	priority = PRIORITY_EVENT_SET_COLOR;
+}
+
+VMSetColorEvent::VMSetColorEvent(VMSetColorEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+VMSetColorEvent::~VMSetColorEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void VMSetColorEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMSetColorEvent(this)));
+}
+
+const string VMSetColorEvent::getEventName() {
+	return("VMSetColor Event");
+}
+
+//===========================================================================================================
+//
+//          VMSendMessageEvent  (class)
+//
+//===========================================================================================================
+
+VMSendMessageEvent::VMSendMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, Message *mes, P2PNetworkInterface *ni):BlockEvent(t, conBlock) {
+	eventType = EVENT_SEND_MESSAGE;
+	message = MessagePtr(mes);
+	sourceInterface = ni;
+	priority = PRIORITY_EVENT_SEND_MESSAGE;
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+VMSendMessageEvent::VMSendMessageEvent(VMSendMessageEvent *ev) : BlockEvent(ev) {
+	message = ev->message;
+	sourceInterface = ev->sourceInterface;
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+VMSendMessageEvent::~VMSendMessageEvent() {
+	message.reset();
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void VMSendMessageEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMSendMessageEvent(this)));
+}
+
+const string VMSendMessageEvent::getEventName() {
+	return("VMSendMessage Event");
+}
+
 
 //===========================================================================================================
 //
@@ -322,6 +385,7 @@ void VMStartComputationEvent::consumeBlockEvent() {
 const string VMStartComputationEvent::getEventName() {
 	return("VMStartComputation Event");
 }
+
 
 //===========================================================================================================
 //
