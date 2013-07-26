@@ -5,7 +5,7 @@
 #include "blinkyBlocksWorld.h"
 #include "blinkyBlocksBlock.h"
 #include "blinkyBlocksVM.h"
-#include "debug_simPrompt.hpp"
+#include "Debugger/debug_Simprompt.hpp"
 #include <stdio.h>
 
 namespace BlinkyBlocks {
@@ -27,7 +27,7 @@ BlinkyBlocksDebugger *BlinkyBlocksDebugger::debugger=NULL;
 BlinkyBlocksDebugger::BlinkyBlocksDebugger() {
 	if (debugger == NULL) {
 		debugger = this;		
-		debuggerMessageHandler = initDebugger(&sendMessage, &pauseSimulation, &unPauseSimulation, &quit);
+		debuggerMessageHandler = debugger::initDebugger(&sendMessage, &pauseSimulation, &unPauseSimulation, &quit);
 	} else {
 		ERRPUT << "\033[1;31m" << "Only one Debugger instance can be created, aborting !" << "\033[0m" << endl;
 		exit(EXIT_FAILURE);
@@ -61,9 +61,9 @@ int BlinkyBlocksDebugger::sendMsg(int id, int size, uint64_t *message) {
 	}
 }
 
-void BlinkyBlocksDebugger::pauseSim(int timestamp) {
+void BlinkyBlocksDebugger::pauseSim() {
 	cout << "Simulator paused" << endl;
-	getScheduler()->schedule(new VMDebugPauseSimEvent(timestamp));
+	getScheduler()->schedule(new VMDebugPauseSimEvent(BlinkyBlocks::getScheduler()->now()));
 }
 
 void BlinkyBlocksDebugger::unPauseSim() {

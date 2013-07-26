@@ -59,7 +59,7 @@ public:
 	~BlinkyBlocksDebugger();
 	
 	int sendMsg(int id, int size, uint64_t *message);
-	void pauseSim(int timestamp);
+	void pauseSim();
 	void unPauseSim();
 	
 	static BlinkyBlocksDebugger* getDebugger() {
@@ -87,9 +87,9 @@ inline void deleteDebugger() { BlinkyBlocksDebugger::deleteDebugger(); }
 
 inline BlinkyBlocksDebugger* getDebugger() { return(BlinkyBlocksDebugger::getDebugger()); }
 	
-inline int sendMessage(int id, int size, uint64_t *message) { return getDebugger()->sendMsg(id, size, message); }
+inline int sendMessage(int id, uint64_t *message, int size) { return getDebugger()->sendMsg(id, size, message); }
 
-inline void pauseSimulation(int timestamp) { getDebugger()->pauseSim(timestamp); }
+inline void pauseSimulation(void) { getDebugger()->pauseSim(); }
 
 inline void unPauseSimulation() { getDebugger()->unPauseSim(); }
 

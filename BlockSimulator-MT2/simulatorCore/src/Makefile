@@ -1,4 +1,6 @@
 TINYXMLSRCS = TinyXML/tinyxml.cpp TinyXML/tinyxmlerror.cpp TinyXML/tinyxmlparser.cpp
+
+DEBUGGER = Debugger/debug_Simhandler.cpp Debugger/debug_Simprompt.cpp Debugger/types.cpp
 # Note : when using TIXML_USE_STL flag, TinyXML/tinystr.cpp produce no code, so I removed it from the source list as ar was complaining
 
 BASESIMULATOR_SRCS = $(TINYXMLSRCS) simulator.cpp buildingBlock.cpp blockCode.cpp scheduler.cpp world.cpp network.cpp events.cpp glBlock.cpp interface.cpp openglViewer.cpp shaders.cpp vecteur.cpp matrice44.cpp camera.cpp objLoader.cpp vertexArray.cpp trace.cpp
@@ -10,7 +12,7 @@ multiCoresEvents.cpp
 MULTICORES_OBJS = $(MULTICORES_SRCS:.cpp=.o) $(BASESIMULATOR_OBJS)
 MULTICORES_DEPS = $(MULTICORES_SRCS:.cpp=.depends) $(BASESIMULATOR_DEPS)
 
-BLINKYBLOCKS_SRCS = blinkyBlocksSimulator.cpp blinkyBlocksBlock.cpp blinkyBlocksBlockCode.cpp blinkyBlocksScheduler.cpp blinkyBlocksWorld.cpp blinkyBlocksGlBlock.cpp blinkyBlocksEvents.cpp blinkyBlocksDebugger.cpp blinkyBlocksVM.cpp debug_simPrompt.cpp debug_simHandler.cpp
+BLINKYBLOCKS_SRCS = $(DEBUGGER) blinkyBlocksSimulator.cpp blinkyBlocksBlock.cpp blinkyBlocksBlockCode.cpp blinkyBlocksScheduler.cpp blinkyBlocksWorld.cpp blinkyBlocksGlBlock.cpp blinkyBlocksEvents.cpp blinkyBlocksDebugger.cpp blinkyBlocksVM.cpp
 BLINKYBLOCKS_OBJS = $(BLINKYBLOCKS_SRCS:.cpp=.o) $(BASESIMULATOR_OBJS)
 BLINKYBLOCKS_DEPS = $(BLINKYBLOCKS_SRCS:.cpp=.depends) $(BASESIMULATOR_DEPS)
 

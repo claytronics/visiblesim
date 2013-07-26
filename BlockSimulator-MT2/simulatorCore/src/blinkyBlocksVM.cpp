@@ -39,8 +39,8 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 		dup2(fd, 2);
 		close(fd);
 		if (debugging) {
+			//char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", (char*) "-D", (char*) "SIM", NULL };
 			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", NULL };
-			//char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", (char*)"-S", NULL }			OUTPUT << "debugging mode!" << endl;
 			execv(vmPath.c_str(), const_cast<char**>(cmd));
 		} else {
 			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", NULL };
