@@ -34,7 +34,8 @@ class BlockCode;
 //
 //===========================================================================================================
 
-enum State {Stopped = 0, Removed = 1, Alive = 2};
+// alive state must be associated to a number >= 2
+enum State {Stopped = 0, Removed = 1, Alive = 2, Computing = 3};
 
 class BuildingBlock {
 protected:

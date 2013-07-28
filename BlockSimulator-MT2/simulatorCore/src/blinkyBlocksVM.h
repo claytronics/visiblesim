@@ -9,9 +9,10 @@
 #define BLINKYBLOCKSVM_H_
 
 #include <iostream>
+#include <queue>
+#include <inttypes.h>
 #include <boost/asio.hpp>
 #include <boost/shared_ptr.hpp>
-#include <inttypes.h>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 
 using namespace std;
@@ -30,6 +31,7 @@ public:
 	uint64_t message[VM_MESSAGE_MAXLENGHT];
 	
 	VMMessage() { };
+	VMMessage(const VMMessage &m);
 	VMMessage(int size) { };
 	~VMMessage() { };
 };
@@ -51,10 +53,12 @@ protected:
 	boost::shared_ptr<tcp::socket> socket;
 	/* buffer used to receive tcp message */
 	VMMessage inBuffer;
+	/* queue used to store incoming message when necessary*/
+	queue<VMMessage> inQueue;
 	/* Mutex used when sending message */
 	boost::interprocess::interprocess_mutex mutex_send;
 	
-	tcp::socket& getSocket() { assert(socket != NULL); return *(socket.get()); };
+	tcp::socket& getSocket() {assert(socket != NULL); return *(socket.get()); };
 	/* kill the associated VM program (and wait for the effective end) */
 	void terminate();
 	/* close the socket associated to the VM program */
@@ -120,7 +124,8 @@ public:
 	};
 	
 	void asyncReadMessageHandler(const boost::system::error_code& error, std::size_t bytes_transferred);
-
+	void handleQueuedMessages();
+	
 	inline static bool isInDebuggingMode() {
 			return debugging;
 	}

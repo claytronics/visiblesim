@@ -109,8 +109,9 @@ public:
 
 class VMSetColorEvent : public BlockEvent {
 public:
+	Vecteur color;
 
-	VMSetColorEvent(uint64_t, BlinkyBlocksBlock *conBlock);
+	VMSetColorEvent(uint64_t, BlinkyBlocksBlock *conBlock, float r, float g, float b, float a);
 	VMSetColorEvent(VMSetColorEvent *ev);
 	~VMSetColorEvent();
 	void consumeBlockEvent();
@@ -248,16 +249,32 @@ public:
 
 //===========================================================================================================
 //
-//          VMEndComputationEvent  (class)
+//          VMExpectedEndComputationEvent  (class)
 //
 //===========================================================================================================
 
-class VMEndComputationEvent : public BlockEvent {
+class VMExpectedEndComputationEvent : public BlockEvent {
 public:
 
-	VMEndComputationEvent(uint64_t, BlinkyBlocksBlock *conBlock);
-	VMEndComputationEvent(VMEndComputationEvent *ev);
-	~VMEndComputationEvent();
+	VMExpectedEndComputationEvent(uint64_t, BlinkyBlocksBlock *conBlock);
+	VMExpectedEndComputationEvent(VMExpectedEndComputationEvent *ev);
+	~VMExpectedEndComputationEvent();
+	void consumeBlockEvent();
+	const virtual string getEventName();
+};
+
+//===========================================================================================================
+//
+//          VMEffectiveEndComputationEvent  (class)
+//
+//===========================================================================================================
+
+class VMEffectiveEndComputationEvent : public BlockEvent {
+public:
+
+	VMEffectiveEndComputationEvent(uint64_t, BlinkyBlocksBlock *conBlock);
+	VMEffectiveEndComputationEvent(VMEffectiveEndComputationEvent *ev);
+	~VMEffectiveEndComputationEvent();
 	void consumeBlockEvent();
 	const virtual string getEventName();
 };

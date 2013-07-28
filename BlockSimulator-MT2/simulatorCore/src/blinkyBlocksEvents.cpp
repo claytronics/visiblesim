@@ -168,14 +168,16 @@ const string VMTapEvent::getEventName() {
 //
 //===========================================================================================================
 
-VMSetColorEvent::VMSetColorEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
+VMSetColorEvent::VMSetColorEvent(uint64_t t, BlinkyBlocksBlock *conBlock, float r, float g, float b, float a): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_SET_COLOR;
 	priority = PRIORITY_EVENT_SET_COLOR;
+	color = Vecteur(r, g, b, a);
 }
 
 VMSetColorEvent::VMSetColorEvent(VMSetColorEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
+	color = ev->color;
 }
 
 VMSetColorEvent::~VMSetColorEvent() {
@@ -389,32 +391,63 @@ const string VMStartComputationEvent::getEventName() {
 
 //===========================================================================================================
 //
-//          VMEndComputationEvent  (class)
+//          VMExpectedEndComputationEvent  (class)
 //
 //===========================================================================================================
 
-VMEndComputationEvent::VMEndComputationEvent(uint64_t t, BlinkyBlocksBlock *conBlock) : BlockEvent(t, conBlock) {
+VMExpectedEndComputationEvent::VMExpectedEndComputationEvent(uint64_t t, BlinkyBlocksBlock *conBlock) : BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	priority = PRIORITY_EVENT_VM_END_COMPUTATION;
-	eventType = EVENT_VM_END_COMPUTATION;
+	eventType = EVENT_VM_EXPECTED_END_COMPUTATION;
 }
 
-VMEndComputationEvent::VMEndComputationEvent(VMEndComputationEvent *ev) : BlockEvent(ev) {
+VMExpectedEndComputationEvent::VMExpectedEndComputationEvent(VMExpectedEndComputationEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 }
 
-VMEndComputationEvent::~VMEndComputationEvent() {
+VMExpectedEndComputationEvent::~VMExpectedEndComputationEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMEndComputationEvent::consumeBlockEvent() {
+void VMExpectedEndComputationEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
-	concernedBlock->scheduleLocalEvent(EventPtr(new VMEndComputationEvent(this)));
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMExpectedEndComputationEvent(this)));
 	return;
 }
 
-const string VMEndComputationEvent::getEventName() {
-	return("VMEndComputation Event");
+const string VMExpectedEndComputationEvent::getEventName() {
+	return("VMExpectedEndComputation Event");
 }
+
+//===========================================================================================================
+//
+//          VMEffectiveEndComputationEvent  (class)
+//
+//===========================================================================================================
+
+VMEffectiveEndComputationEvent::VMEffectiveEndComputationEvent(uint64_t t, BlinkyBlocksBlock *conBlock) : BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	priority = PRIORITY_EVENT_VM_END_COMPUTATION;
+	eventType = EVENT_VM_EFFECTIVE_END_COMPUTATION;
+}
+
+VMEffectiveEndComputationEvent::VMEffectiveEndComputationEvent(VMEffectiveEndComputationEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+VMEffectiveEndComputationEvent::~VMEffectiveEndComputationEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void VMEffectiveEndComputationEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMEffectiveEndComputationEvent(this)));
+	return;
+}
+
+const string VMEffectiveEndComputationEvent::getEventName() {
+	return("VMEffectiveEndComputation Event");
+}
+
 
 } // BlinkyBlocks namespace

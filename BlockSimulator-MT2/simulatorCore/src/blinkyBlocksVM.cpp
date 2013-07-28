@@ -23,6 +23,10 @@ string BlinkyBlocksVM::vmPath;
 string BlinkyBlocksVM::programPath;
 bool BlinkyBlocksVM::debugging = false;
 
+VMMessage::VMMessage(const VMMessage &m) {
+	memcpy(message, m.message, m.message[0]+sizeof(uint64_t));
+}
+
 BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 	assert(ios != NULL && acceptor != NULL);
 	hostBlock = bb;
@@ -93,6 +97,7 @@ void BlinkyBlocksVM::closeSocket() {
 }
 
 void BlinkyBlocksVM::asyncReadMessageHandler(const boost::system::error_code& error, std::size_t bytes_transferred) {
+	BlinkyBlocksBlockCode *bbc = (BlinkyBlocksBlockCode*)hostBlock->blockCode;
 	OUTPUT << "handler called" << endl;
 	if(error) {
 		ERRPUT << "an error occurred while receiving a tcp message from VM " << hostBlock->blockId << " (socket closed ?) " <<endl;
@@ -104,7 +109,11 @@ void BlinkyBlocksVM::asyncReadMessageHandler(const boost::system::error_code& er
 	} catch (std::exception& e) {
 		ERRPUT << "connection to the VM "<< hostBlock->blockId << " lost" << endl;
 	}
-    ((BlinkyBlocksBlockCode*)hostBlock->blockCode)->handleNewMessage();
+	if (bbc->mustBeQueued()) {
+		inQueue.push(inBuffer);
+	} else {
+		bbc->handleNewMessage(inBuffer.message);
+	}
     this->asyncReadMessage();
 }
   
@@ -136,6 +145,15 @@ void BlinkyBlocksVM::sendMessage(uint64_t size, uint64_t* message){
 		ERRPUT << "connection to the VM "<< hostBlock->blockId << " lost" << endl;
 	}
 	mutex_send.unlock();
+}
+
+void BlinkyBlocksVM::handleQueuedMessages() {
+	BlinkyBlocksBlockCode *bbc = (BlinkyBlocksBlockCode*)hostBlock->blockCode;
+	while (!inQueue.empty()) {
+		VMMessage &m = inQueue.front();
+		bbc->handleNewMessage(m.message);
+		inQueue.pop();
+	}
 }
 
 }

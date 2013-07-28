@@ -32,8 +32,6 @@ protected:
 	boost::thread *schedulerThread;
 	int schedulerMode;
 	
-	set<int> EndComputationBlocksSet;
-
 public:
 
 	boost::interprocess::interprocess_semaphore *sem_schedulerStart;
@@ -62,38 +60,7 @@ public:
 	void stop();	
 	void pause(int timestamp);
 	void unPause();
-	
-	void addEndComputationBlock(int id) {
-		EndComputationBlocksSet.insert(id);
-	}
-	void removeEndComputationBlock(int id) {
-		EndComputationBlocksSet.erase(id);
-	}
-	bool EndComputationBlocksSetIsEmpty() {
-		return(EndComputationBlocksSet.empty());
-	}
-	
-	bool hasBlockEndComputation(int id) {
-//		printEndComputationBlocksSet();
-		set<int>::iterator res;
-		res = EndComputationBlocksSet.find(id);
-		if (res != EndComputationBlocksSet.end()) {
-			return(true);
-		} else {
-			return(false);
-		}
-	}
-	
-	void printEndComputationBlocksSet() {
-		set<int>::iterator it = EndComputationBlocksSet.begin();
-		cout << "undefined Blocks set : ";
-		while (it != EndComputationBlocksSet.end()) {
-			cout << (*it) << " ";
-			it++;
-		}
-		cout << endl;
-	}
-	
+		
 	// NOT TESTED
 	bool isPaused() {
 		bool r = sem_schedulerStart->try_wait();

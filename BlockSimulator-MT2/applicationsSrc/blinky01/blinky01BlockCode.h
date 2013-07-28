@@ -24,6 +24,7 @@ public:
 class Blinky01BlockCode : public BlinkyBlocks::BlinkyBlocksBlockCode {
 private:
 	bool computing;
+	int endComputingTime;
 	
 public:
 
@@ -32,7 +33,8 @@ public:
 
 	void startup();
 	void processLocalEvent(EventPtr pev);
-	void handleNewMessage();
+	void handleNewMessage(uint64_t *message);
+	bool mustBeQueued();
 	
 	static BlinkyBlocks::BlinkyBlocksBlockCode *buildNewBlockCode(BlinkyBlocks::BlinkyBlocksBlock *host);
 };

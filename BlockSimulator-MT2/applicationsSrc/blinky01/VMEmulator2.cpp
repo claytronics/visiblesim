@@ -218,7 +218,7 @@ void vm_thread_function(void *data) {
 	}
 
 	VMMessage_t in, out;
-	int id;	
+	int id, duration, endDate;
 	cout << "VMEmulator start" << endl;
 	if (readMessageFromVM(socket, &in, -1) == 1) {
 		if (in.type == VM_MESSAGE_SET_ID) {
@@ -228,16 +228,57 @@ void vm_thread_function(void *data) {
 			cout << "problem id not first message" << endl;
 		}
 	}
-	new boost::thread(boost::bind(sendMessageThread,&socket,id));
+	currentTime++;
+	//new boost::thread(boost::bind(sendMessageThread,&socket,id));
 	while (readMessageFromVM(socket, &in, -1) == 1) {
 		cout << getStringMessage(in.type) << " received " << endl;
 		switch(in.type) {
-			case VM_MESSAGE_START_COMPUTATION: 
+			case VM_MESSAGE_START_COMPUTATION:
+				duration = in.param1;
+				endDate = currentTime + duration;
+				out.size = 8*sizeof(uint64_t);
+				out.type = VM_MESSAGE_SEND_MESSAGE;
+				out.sourcenode = id;
+				out.param1 = Right; // face: right
+				out.param3 = 255; // green
+				out.param4 = 0;
+				out.param5 = 0;
+				for (int j = 0; j < 2; j++) {
+					for (int i = 1; i < 6; i++) {
+						if (i == id) {
+							continue;
+						}
+						out.param2 = i;
+						out.timestamp = currentTime++;
+						try {
+							boost::asio::write(socket, boost::asio::buffer((void*)&out,9*sizeof(uint64_t)));
+							cout << "VM " << id << " sent message (color) on face right" <<  endl;
+						} catch (std::exception& e) {
+							cerr << "Connection to the Simulator lost" << endl;
+						}
+					}
+				}
+				// SET COLOR
+				out.size = 7*sizeof(uint64_t);
+				out.type = VM_MESSAGE_SET_COLOR;
+				out.param1 = 0;
+				out.param2 = 0;
+				out.param3 = 255;
+				out.param4 = 0;
+				try {
+					boost::asio::write(socket, boost::asio::buffer((void*)&out,8*sizeof(uint64_t)));
+					cout << "VM " << id << " sent SET_COLOR(after receiving a message)" <<  endl;
+				} catch (std::exception& e) {
+					cerr << "Connection to the Simulator lost" << endl;
+				}
+				// End Computation
+				currentTime = std::max(currentTime, endDate+1);
 				// next test can be to start a thread with a timer
 				out.size = 4*sizeof(uint64_t);
-				out.type = VM_MESSAGE_END_COMPUTATION;
-				out.param1 = 22;
-				usleep(20000); // 2ms
+				out.type = VM_MESSAGE_END_COMPUTATION;				
+				out.timestamp =  currentTime;
+				out.param1 =  duration;
+				//usleep(20000); // 2ms
 				try {
 					boost::asio::write(socket, boost::asio::buffer((void*)&out,5*sizeof(uint64_t)));
 					cout << "VM " << id << " sent END_COMPUTATION" <<  endl;

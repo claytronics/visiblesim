@@ -20,7 +20,8 @@ public:
 	BlinkyBlocksBlockCode(BlinkyBlocksBlock *host);
 	virtual ~BlinkyBlocksBlockCode();
 
-	virtual void handleNewMessage() {}
+	virtual void handleNewMessage(uint64_t *message) {}
+	virtual bool mustBeQueued() {return false;}
 
 	//static BlinkyBlocksBlockCode* buildNewBlockCode(BlinkyBlocksBlock *host);
 	virtual void processLocalEvent(EventPtr pev) = 0;

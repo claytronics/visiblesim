@@ -168,7 +168,7 @@ void BlinkyBlocksWorld::linkBlocks() {
 }
 
 void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
-	if (bb->state == Alive ) {
+	if (bb->state >= Alive ) {
 		// cut links between bb and others
 		for(int i=0; i<6; i++) {
 			P2PNetworkInterface *bbi = bb->getInterface(NeighborDirection::Direction(i));
@@ -460,7 +460,7 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		for(it = buildingBlocksMap.begin(); 
 				it != buildingBlocksMap.end(); it++) {
 			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-			if (bb->state == Alive) {
+			if (bb->state >= Alive) {
 			//bb->vm->sendMessage(size, message);
 				// To change, everything is not debug message!
 				//getScheduler()->schedule(new VMDebugMessageEvent(getScheduler()->now(), bb, new VMDebugMessage(size, message)));
@@ -477,11 +477,11 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 			for(it = buildingBlocksMap.begin(); 
 					it != buildingBlocksMap.end(); it++) {
 				BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-				if (bb->state == Alive ) bb->stop();
+				if (bb->state >= Alive ) bb->stop();
 			}
 		} else {			
 			BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(bId);
-			if(bb->state == Alive) {
+			if(bb->state >= Alive) {
 				// cut links between bb and others
 				for(int i=0; i<6; i++) {
 					P2PNetworkInterface *bbi = bb->getInterface(NeighborDirection::Direction(i));
