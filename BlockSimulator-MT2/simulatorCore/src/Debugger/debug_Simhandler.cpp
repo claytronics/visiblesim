@@ -251,13 +251,21 @@ namespace debugger {
         message_type debugFlag =  DEBUG;
         size_t size = content.length() + 1;
         size_t bufSize = MAXLENGTH*SIZE;
-        message_type msgSize = bufSize;
+        message_type msgSize = bufSize-SIZE;
+        utils::byte anotherIndicator = 0;
+        message_type timeStamp = 0;
+        message_type nodeId = 0;
 
 
-
-        /*same as above for first three fields*/
         utils::pack<message_type>(&msgSize,1,msg,bufSize,&pos);
         utils::pack<message_type>(&debugFlag,1,msg,bufSize,&pos);
+        /*timestamp*/
+        utils::pack<message_type>(&timeStamp,1,msg,bufSize,&pos);
+        /*VM ID*/
+        utils::pack<message_type>(&nodeId,1,msg,bufSize,&pos);
+        /*indicate if another message is coming*/
+        utils::pack<utils::byte>(&anotherIndicator,1,msg,bufSize,&pos);
+
         utils::pack<int>(&msgEncode,1,msg,bufSize,&pos);
         utils::pack<size_t>(&size,1,msg,bufSize,&pos);
 
@@ -306,6 +314,9 @@ namespace debugger {
         message_type size;
         message_type debugFlag;
         size_t specSize;
+         utils::byte anotherIndicator;
+        message_type nodeId;
+        message_type timeStamp;
 
         while(!messageQueue->empty()){
             /*process each message until empty*/
@@ -315,6 +326,10 @@ namespace debugger {
             /*unpack the message into readable form*/
             utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&size,1);
             utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&debugFlag,1);
+            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&timeStamp,1);
+            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&nodeId,1);
+            utils::unpack<utils::byte>(msg,MAXLENGTH*SIZE,&pos,
+                                        &anotherIndicator,1);
             utils::unpack<int>(msg,MAXLENGTH*SIZE,&pos,&instruction,1);
             utils::unpack<size_t>(msg,MAXLENGTH*SIZE,&pos,&specSize,1);
             utils::unpack<char>(msg,MAXLENGTH*SIZE,&pos,
