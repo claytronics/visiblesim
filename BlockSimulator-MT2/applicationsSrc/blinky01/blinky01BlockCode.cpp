@@ -135,7 +135,7 @@ void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
 	OUTPUT << "Blinky01BlockCode: type: " << getStringMessage(message[1]) << " size: " << message[0] << endl;
 	//uint64_t* message = bb->vm->getBufferPtr()->message;
-	cout << " message received " << message[1] << endl;
+	//cout << " message received " << message[1] << endl;
 	switch (message[1]) {
 		case VM_MESSAGE_SET_COLOR:			
 			{
@@ -167,10 +167,10 @@ void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 			}
 			break;
 		case VM_MESSAGE_DEBUG:
-			memmove(message, message+4, message[0]-4*sizeof(uint64_t));
+			//memmove(message, message+4, message[0]-4*sizeof(uint64_t));
 			// debug message handler
 			handleDebugMessage(message);
-			cout << "debug message received" << endl;
+			//cout << "debug message received" << endl;
 			break;
 		case VM_MESSAGE_END_COMPUTATION: // format: <size> <command> <timestamp> <src> <duration>
 			//OUTPUT << bb->blockId << " END COMPUTATION MESSAGE" << endl;

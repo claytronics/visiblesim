@@ -36,12 +36,12 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 	pid = fork();	
 	if(pid < 0) {ERRPUT << "Error when starting the VM" << endl;}
     if(pid == 0) {
-		/*stringstream output;
+		stringstream output;
 		output << "VM" << hostBlock->blockId << ".log";
 		int fd = open(output.str().c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
 		dup2(fd, 1);
 		dup2(fd, 2);
-		close(fd);*/
+		close(fd);
 		if (debugging) {
 			//./meld -f  /home/ubuntu/Bureau/CMU/meld/examples/ends.m -c sl -D SIM
 			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", (char*) "-D", (char*) "SIM", NULL };
@@ -90,8 +90,7 @@ void BlinkyBlocksVM::closeSocket() {
 
 void BlinkyBlocksVM::asyncReadMessageHandler(const boost::system::error_code& error, std::size_t bytes_transferred) {
 	BlinkyBlocksBlockCode *bbc = (BlinkyBlocksBlockCode*)hostBlock->blockCode;
-	OUTPUT << "handler called" << endl;	
-	cout << "handler 2 called" << endl;
+	OUTPUT << "handler called" << endl;
 	if(error) {
 		ERRPUT << "an error occurred while receiving a tcp message from VM " << hostBlock->blockId << " (socket closed ?) " <<endl;
 		return;

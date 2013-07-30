@@ -39,7 +39,7 @@ int BlinkyBlocksDebugger::sendMsg(int id, int size, uint64_t *message) {
 	
 	/*BaseSimulator::getScheduler()->scheduleLock(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
 					new VMDataMessage(hostBlock->blockId, size, message), interface));*/
-	cout << "ID: " << id << endl;
+	//cout << "ID: " << id << endl;
 	//uint64_t m[VM_MESSAGE_MAXLENGHT];
 	//m[0] = message[0] + 4*sizeof(uint64_t);
 	//m[1] = 16; // DEBUG FLAG

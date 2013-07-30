@@ -33,7 +33,7 @@ namespace debugger {
     static bool isDebug = false;
     static bool isSimDebug = false;
     static bool isPausedAtBreakpoint = false;
-
+	static bool okayToBroadcastPause = true;
     /*number of messages the Master expects to recieve*/
     int numberExpected = 0;
 
@@ -156,7 +156,7 @@ namespace debugger {
 
             /*process of master debugger in MPI DEBUGGINGMODE*/
             if (instruction == CONTINUE || instruction == UNPAUSE){
-
+				okayToBroadcastPause = true;
                 /*continue a paused system by broadcasting an UNPAUSE signal*/
                 unPauseSimulation();
                 numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
@@ -212,14 +212,24 @@ namespace debugger {
         /*print the output and then tell all other VMs to pause*/
         if (instruction == BREAKFOUND){
             printf("%s",specification.c_str());
-        /*print content from a VM*/
-            sendMsg(-1,PAUSE,"",BROADCAST);
+			/*print content from a VM*/
+            if(okayToBroadcastPause) {
+				sendMsg(-1,PAUSE,"",BROADCAST);
+				okayToBroadcastPause = false;
+			}
             pauseSimulation();
         } else if (instruction == PRINTCONTENT){
             printf("%s",specification.c_str());
         } else if (instruction == TERMINATE){
             printf("PROGRAM FINISHED\n");
             exit(0);
+        } else if (instruction == PAUSE){
+
+            /*prints more information*/
+            //if (verboseMode){
+                printf("%s",specification.c_str());
+            //}
+
         }
     }
 
@@ -253,12 +263,20 @@ namespace debugger {
         size_t size = content.length() +1;
         size_t bufSize = MAXLENGTH*SIZE;
         message_type msgSize = bufSize-SIZE;
+        utils::byte anotherIndicator = 0;
+        message_type timeStamp = 0;
+        message_type nodeId = 0;
 
 
-
-        /*same as above for first three fields*/
         utils::pack<message_type>(&msgSize,1,msg,bufSize,&pos);
         utils::pack<message_type>(&debugFlag,1,msg,bufSize,&pos);
+        /*timestamp*/
+        utils::pack<message_type>(&timeStamp,1,msg,bufSize,&pos);
+        /*VM ID*/
+        utils::pack<message_type>(&nodeId,1,msg,bufSize,&pos);
+        /*indicate if another message is coming*/
+        utils::pack<utils::byte>(&anotherIndicator,1,msg,bufSize,&pos);
+
         utils::pack<int>(&msgEncode,1,msg,bufSize,&pos);
         utils::pack<size_t>(&size,1,msg,bufSize,&pos);
 
@@ -307,11 +325,13 @@ namespace debugger {
         message_type size;
         message_type debugFlag;
         size_t specSize;
+         utils::byte anotherIndicator;
+        message_type nodeId;
+        message_type timeStamp;
 
-		BlinkyBlocks::waitForOneVMMessage();
-		//cout << "stop wait" << endl;
+		BlinkyBlocks::checkForReceivedVMMessages();
+		
         while(!messageQueue->empty()){
-			cout << "sim queue not empty" << endl;
             /*process each message until empty*/
             /*extract the message*/
             msg = (utils::byte*)messageQueue->front();
@@ -319,6 +339,10 @@ namespace debugger {
             /*unpack the message into readable form*/
             utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&size,1);
             utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&debugFlag,1);
+            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&timeStamp,1);
+            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&nodeId,1);
+            utils::unpack<utils::byte>(msg,MAXLENGTH*SIZE,&pos,
+                                        &anotherIndicator,1);
             utils::unpack<int>(msg,MAXLENGTH*SIZE,&pos,&instruction,1);
             utils::unpack<size_t>(msg,MAXLENGTH*SIZE,&pos,&specSize,1);
             utils::unpack<char>(msg,MAXLENGTH*SIZE,&pos,
