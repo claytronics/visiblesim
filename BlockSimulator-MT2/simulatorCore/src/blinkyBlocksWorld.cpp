@@ -464,6 +464,7 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 			//bb->vm->sendMessage(size, message);
 				// To change, everything is not debug message!
 				//getScheduler()->schedule(new VMDebugMessageEvent(getScheduler()->now(), bb, new VMDebugMessage(size, message)));
+				//message[3] = bb->blockId; // not relevant
 				bb->vm->sendMessage(size, message);
 				aliveBlocks++;
 			}

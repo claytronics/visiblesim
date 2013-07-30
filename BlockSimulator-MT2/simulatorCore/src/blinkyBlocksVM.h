@@ -20,7 +20,8 @@ using boost::asio::ip::tcp;
 
 namespace BlinkyBlocks {
 
-#define VM_MESSAGE_MAXLENGHT 512
+//#define VM_MESSAGE_MAXLENGHT 512
+#define VM_MESSAGE_MAXLENGHT 544 // debugger
 typedef uint64_t messageType;
 
 class BlinkyBlocksBlock;
@@ -118,8 +119,13 @@ public:
 
 	static void waitForOneMessage() {
 		if (ios != NULL) {
+			//boost::system::error_code ec;
 			ios->run_one();
+			//cout << ios->run_one(ec) << endl;
+			//cout << ec << endl;
 			ios->reset();
+		} else {
+			cout << "ios is null" <<endl;
 		}
 	};
 	

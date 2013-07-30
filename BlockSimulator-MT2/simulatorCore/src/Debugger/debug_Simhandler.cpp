@@ -10,6 +10,7 @@
 #include "debug_Simhandler.hpp"
 #include "serialization.hpp"
 #include "types.hpp"
+#include "blinkyBlocksVM.h"
 
 using namespace std;
 using namespace debugger;
@@ -157,8 +158,8 @@ namespace debugger {
             if (instruction == CONTINUE || instruction == UNPAUSE){
 
                 /*continue a paused system by broadcasting an UNPAUSE signal*/
-                numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
                 unPauseSimulation();
+                numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
 
             } else if (instruction == DUMP) {
 
@@ -249,9 +250,9 @@ namespace debugger {
         utils::byte* msg = (utils::byte*)new message_type[MAXLENGTH];
         int pos = 0;
         message_type debugFlag =  DEBUG;
-        size_t size = content.length() + 1;
+        size_t size = content.length() +1;
         size_t bufSize = MAXLENGTH*SIZE;
-        message_type msgSize = bufSize;
+        message_type msgSize = bufSize-SIZE;
 
 
 
@@ -307,7 +308,10 @@ namespace debugger {
         message_type debugFlag;
         size_t specSize;
 
+		BlinkyBlocks::waitForOneVMMessage();
+		//cout << "stop wait" << endl;
         while(!messageQueue->empty()){
+			cout << "sim queue not empty" << endl;
             /*process each message until empty*/
             /*extract the message*/
             msg = (utils::byte*)messageQueue->front();

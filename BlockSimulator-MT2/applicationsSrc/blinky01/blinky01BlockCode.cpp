@@ -123,16 +123,19 @@ void Blinky01BlockCode::startup() {
 	stringstream info;
 	info << "  Starting Blinky01BlockCode in block " << hostBlock->blockId;
 	BlinkyBlocks::getScheduler()->trace(info.str(),hostBlock->blockId);
+	// Send the ID without being first scheduled
+	bb->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), bb)));
 	if (BlinkyBlocks::getScheduler()->getMode() == SCHEDULER_MODE_FASTEST) {
 		BlinkyBlocks::getScheduler()->schedule(new VMStartComputationEvent(BaseSimulator::getScheduler()->now()+1, bb, 20));
 	}
-	((BlinkyBlocksBlock*)hostBlock)->vm->asyncReadMessage();
+	//((BlinkyBlocksBlock*)hostBlock)->vm->asyncReadMessage();
 }
 
 void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
 	OUTPUT << "Blinky01BlockCode: type: " << getStringMessage(message[1]) << " size: " << message[0] << endl;
 	//uint64_t* message = bb->vm->getBufferPtr()->message;
+	cout << " message received " << message[1] << endl;
 	switch (message[1]) {
 		case VM_MESSAGE_SET_COLOR:			
 			{
@@ -164,8 +167,10 @@ void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 			}
 			break;
 		case VM_MESSAGE_DEBUG:
+			memmove(message, message+4, message[0]-4*sizeof(uint64_t));
 			// debug message handler
 			handleDebugMessage(message);
+			cout << "debug message received" << endl;
 			break;
 		case VM_MESSAGE_END_COMPUTATION: // format: <size> <command> <timestamp> <src> <duration>
 			//OUTPUT << bb->blockId << " END COMPUTATION MESSAGE" << endl;
@@ -310,8 +315,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		case EVENT_DEBUG_MESSAGE:
 			{
 			// forward the debugging message
-			VMDebugMessage *m = (VMDebugMessage*) (boost::static_pointer_cast<VMDebugMessageEvent>(pev))->message.get();
-			bb->vm->sendMessage(m->size, m->message);
+			//VMDebugMessage *m = (VMDebugMessage*) (boost::static_pointer_cast<VMDebugMessageEvent>(pev))->message.get();
+			//bb->vm->sendMessage(m->size, m->message);
 			}
 			break;
 		case EVENT_VM_START_COMPUTATION:
