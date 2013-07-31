@@ -132,8 +132,8 @@ void BlinkyBlocksVM::sendMessage(uint64_t size, uint64_t* message){
 		return;
 	}
 	if (!idSent) {
+		idSent = true;
 		hostBlock->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), hostBlock)));
-		idSent = true;	
 	}
 	mutex_send.lock();
 	try {
