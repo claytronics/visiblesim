@@ -167,10 +167,14 @@ void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 			}
 			break;
 		case VM_MESSAGE_DEBUG:
+			{
+			uint64_t *m = new uint64_t[message[0]+sizeof(uint64_t)];
+			memcpy(m, message, message[0]+sizeof(uint64_t));
 			//memmove(message, message+4, message[0]-4*sizeof(uint64_t));
 			// debug message handler
-			handleDebugMessage(message);
+			handleDebugMessage(m);
 			//cout << "debug message received" << endl;
+			}
 			break;
 		case VM_MESSAGE_END_COMPUTATION: // format: <size> <command> <timestamp> <src> <duration>
 			//OUTPUT << bb->blockId << " END COMPUTATION MESSAGE" << endl;
