@@ -37,6 +37,9 @@ namespace debugger {
     /*number of messages the Master expects to recieve*/
     int numberExpected = 0;
 
+    bool verboseMode = false;
+    bool serializationMode = false;
+
     /**********************************************************************/
 
     /* I/0 SPECIFICATION PARSING */
@@ -131,6 +134,16 @@ namespace debugger {
 
     /*********************************************************************/
 
+   void setFlags(string specification){
+        ostringstream msg;
+        for (int i = 0; i < specification.length(); i++){
+            if ((uint)specification[i] == 'V'){
+                verboseMode = true;
+            } else if ((uint)specification[i] == 'S'){
+                serializationMode = true;
+            }
+        }
+    }
 
     void debugController(int instruction, string specification){
 
@@ -187,6 +200,7 @@ namespace debugger {
                 numberExpected = sendMsg(-1,PRINTLIST,"",BROADCAST);
 
             } else if (instruction == MODE) {
+                setFlags(specification);
                 numberExpected = sendMsg(-1,MODE,specification,
                                          BROADCAST);
             }
@@ -215,9 +229,9 @@ namespace debugger {
         } else if (instruction == PAUSE){
 
             /*prints more information*/
-            //if (verboseMode){
+            if (verboseMode){
                 printf("%s",specification.c_str());
-            //}
+            }
 
         }
     }
@@ -293,7 +307,6 @@ namespace debugger {
 
         if (broadcast){
 
-            cout << "debugger broadcasted" << endl;
             return debugSendMsg(-1,msg,msgSize);
 
         } else {

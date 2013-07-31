@@ -36,12 +36,12 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 	pid = fork();
 	if(pid < 0) {ERRPUT << "Error when starting the VM" << endl;}
     if(pid == 0) {
-        /*	stringstream output;
+        stringstream output;
 		output << "VM" << hostBlock->blockId << ".log";
 		int fd = open(output.str().c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
 		dup2(fd, 1);
 		dup2(fd, 2);
-		close(fd);*/
+		close(fd);
 		if (debugging) {
 			//./meld -f  /home/ubuntu/Bureau/CMU/meld/examples/ends.m -c sl -D SIM
 			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", (char*) "-D", (char*) "SIM", NULL };
@@ -132,8 +132,8 @@ void BlinkyBlocksVM::sendMessage(uint64_t size, uint64_t* message){
 		return;
 	}
 	if (!idSent) {
-		hostBlock->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), hostBlock)));
 		idSent = true;
+		hostBlock->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), hostBlock)));
 	}
 	mutex_send.lock();
 	try {
