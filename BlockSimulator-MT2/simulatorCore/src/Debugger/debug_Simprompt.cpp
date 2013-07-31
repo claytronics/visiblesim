@@ -160,11 +160,13 @@ namespace debugger {
       help();
       retVal = NOTHING;
     } else if (command == "run"|| command == "r") {
-      retVal = CONTINUE;
+      retVal = RUN;
     } else if (command == "dump"||command == "d") {
       retVal = DUMP;
     } else if (command == "print" || command == "p"){
       retVal = PRINTLIST;
+    } else if (command == "mode" || command == "m"){
+        retVal = MODE;
     } else if (command == "remove" || command == "rm"){
       retVal = REMOVE;
     } else if (command == "continue"||command == "c"){

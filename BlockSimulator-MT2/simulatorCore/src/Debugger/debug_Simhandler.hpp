@@ -27,6 +27,8 @@ namespace debugger {
     const int DEBUGMPI = 0;
     const int TERMINATE = 10;
     const int PRINTLIST = 11;
+    const int RUN = 12;
+    const int MODE = 13;
 
     typedef uint64_t message_type;
 

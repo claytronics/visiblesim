@@ -132,32 +132,15 @@ namespace debugger {
     /*********************************************************************/
 
 
-    /*DEBUG CONTROLLER -- main controller of pausing/unpausing/dumping VMs*/
-    /*execute instruction based on encoding and specification
-     *call from the debug_prompt -- There are two different sides to
-     *this function:  There is one side that handles sending messages to
-     *processes in which these process will recieve that message
-     *The other side pertains to the processes that are controlled by the
-     *the master process.  They will change their system state and give
-     *feed back to the master process (see debugger::display())
-     *When the master sends a message, it will expect to see a certain
-     *amount of messages sent back*/
     void debugController(int instruction, string specification){
 
         string type;
         string name;
         string node;
 
-        /*for use of numberExpected see debug_prompt.cpp, run()*/
-
-        /*if MPI debugging and the master process:
-         *send a  message instead of changing the system state
-         *as normally done in normal debugging*/
-
-            /*process of master debugger in MPI DEBUGGINGMODE*/
             if (instruction == CONTINUE || instruction == UNPAUSE){
 				okayToBroadcastPause = true;
-                /*continue a paused system by broadcasting an UNPAUSE signal*/
+                /*continue a paused system by broadcasting an CONTINUE signal*/
                 unPauseSimulation();
                 numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
 
@@ -171,8 +154,8 @@ namespace debugger {
                 } else {
 
                     /*send to a specific VM to dump content*/
-                    numberExpected = sendMsg(atoi(specification.c_str()),
-                                             DUMP,specification);
+                    sendMsg(atoi(specification.c_str()),DUMP,specification);
+                    numberExpected = 1;
                 }
 
                 /*handle the breakpoints in the lists*/
@@ -183,14 +166,13 @@ namespace debugger {
                 if (node == ""){
 
                     /*broadcast the message if the node is not specified*/
-                    numberExpected = sendMsg(-1,instruction,specification,
-                                             BROADCAST);
+                    numberExpected = sendMsg(-1,instruction,specification,BROADCAST);
 
                 } else {
 
                     /*send break/remove to a specific node */
-                    numberExpected = sendMsg(atoi(node.c_str()),
-                                             instruction,specification);
+                    sendMsg(atoi(node.c_str()),instruction,specification);
+                    numberExpected = 1;
 
                 }
 
@@ -304,6 +286,7 @@ namespace debugger {
 
         if (broadcast){
 
+            cout << "debugger broadcasted" << endl;
             return debugSendMsg(-1,msg,msgSize);
 
         } else {
@@ -330,7 +313,7 @@ namespace debugger {
         message_type timeStamp;
 
 		BlinkyBlocks::checkForReceivedVMMessages();
-		
+
         while(!messageQueue->empty()){
             /*process each message until empty*/
             /*extract the message*/
