@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <iostream>
 #include <string>
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "debug_Simprompt.hpp"
@@ -66,6 +67,7 @@ namespace debugger {
       }
 
       if (expectingMessage){
+          usleep(10000);
           receiveMsg();
       }
 

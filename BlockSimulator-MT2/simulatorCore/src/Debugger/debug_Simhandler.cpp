@@ -219,8 +219,8 @@ namespace debugger {
             if(okayToBroadcastPause) {
 				sendMsg(-1,PAUSE,"",BROADCAST);
 				okayToBroadcastPause = false;
-			}
-            pauseSimulation();
+                pauseSimulation();
+            }
         } else if (instruction == PRINTCONTENT){
             printf("%s",specification.c_str());
         } else if (instruction == TERMINATE){
