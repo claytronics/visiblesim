@@ -120,7 +120,7 @@ namespace debugger {
           }
 
       if (command != BREAKPOINT && command!=DUMP
-          && command != REMOVE){
+          && command != REMOVE && command != MODE){
         debugController(command, build);
         lastInstruction = command;
         lastBuild = build;
@@ -129,7 +129,8 @@ namespace debugger {
     }
 
     /*if not enough info - these  types must have a specification*/
-    if ((command == BREAKPOINT||command == DUMP||command == REMOVE)&&
+    if ((command == BREAKPOINT||command == DUMP||command == REMOVE||
+            command == MODE)&&
         wordCount == 1){
       cout << "Please specify- type help for options" << endl;
       return false;
@@ -137,7 +138,8 @@ namespace debugger {
 
     /*handle breakpointsand dumps*/
     if (wordCount == 2){
-        if (command == BREAKPOINT||command == DUMP||command == REMOVE){
+        if (command == BREAKPOINT||command == DUMP||command == REMOVE
+            ||command == MODE){
         debugController(command,build);
         } else
         debugController(command,"");

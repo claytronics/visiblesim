@@ -143,7 +143,11 @@ namespace debugger {
                 /*continue a paused system by broadcasting an CONTINUE signal*/
                 unPauseSimulation();
                 numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
-
+            } else if (instruction == RUN){
+                okayToBroadcastPause = true;
+                /*continue a paused system by broadcasting an CONTINUE signal*/
+                unPauseSimulation();
+                numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
             } else if (instruction == DUMP) {
 
                 /*broadcast the message to all VMs*/
@@ -182,6 +186,9 @@ namespace debugger {
                 /*broadcast  a pause message*/
                 numberExpected = sendMsg(-1,PRINTLIST,"",BROADCAST);
 
+            } else if (instruction == MODE) {
+                numberExpected = sendMsg(-1,MODE,specification,
+                                         BROADCAST);
             }
 
     }

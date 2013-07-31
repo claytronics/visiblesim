@@ -57,7 +57,7 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 	socket = boost::shared_ptr<tcp::socket>(new tcp::socket(*ios));
 	acceptor->accept(*(socket.get()));
 	OUTPUT << "VM "<< hostBlock->blockId << " connected" << endl;
-
+	idSent = false;
 	asyncReadMessage();
 }
 
@@ -130,6 +130,10 @@ void BlinkyBlocksVM::sendMessage(uint64_t size, uint64_t* message){
 	if (socket == NULL) {
 		ERRPUT << "the simulator is not connected to the VM "<< hostBlock->blockId << endl;
 		return;
+	}
+	if (!idSent) {
+		hostBlock->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), hostBlock)));
+		idSent = true;
 	}
 	mutex_send.lock();
 	try {
