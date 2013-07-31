@@ -51,7 +51,7 @@ int BlinkyBlocksDebugger::sendMsg(int id, int size, uint64_t *message) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) getWorld()->getBlockById(id);
 		if (bb != NULL) {
 			//getScheduler()->schedule(new VMDebugMessageEvent(getScheduler()->now(), bb, new VMDebugMessage(size, message)));
-			bb->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), bb)));
+			//bb->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), bb)));
 			bb->vm->sendMessage(size, message);
 			//cout << "debug sent: size" << size << "content size" << message[0] << endl;
 			return 1;

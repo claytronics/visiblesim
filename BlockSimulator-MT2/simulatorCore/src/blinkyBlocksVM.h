@@ -58,6 +58,8 @@ protected:
 	queue<VMMessage> inQueue;
 	/* Mutex used when sending message */
 	boost::interprocess::interprocess_mutex mutex_send;
+	/* True if the id was sent */
+	bool idSent;
 	
 	tcp::socket& getSocket() {assert(socket != NULL); return *(socket.get()); };
 	/* kill the associated VM program (and wait for the effective end) */
