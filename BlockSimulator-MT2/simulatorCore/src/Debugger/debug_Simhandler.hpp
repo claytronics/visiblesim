@@ -29,6 +29,7 @@ namespace debugger {
     const int PRINTLIST = 11;
     const int RUN = 12;
     const int MODE = 13;
+    const int TIMEOUT = 14;
 
     typedef uint64_t message_type;
 
