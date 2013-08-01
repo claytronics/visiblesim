@@ -52,6 +52,8 @@ namespace debugger {
     int sendMsg(int destination, int msgType,
                  std::string content, bool broadcast = false);
     void messageQueueInsert(message_type* msg);
+    
+    message_type* pack(int msgEncode, string content);
 }
 
 #endif

@@ -349,7 +349,7 @@ VMDebugPauseSimEvent::~VMDebugPauseSimEvent() {
 void VMDebugPauseSimEvent::consume() {
 	EVENT_CONSUME_INFO();
 	OUTPUT << "pause sim degin" << endl;
-	getScheduler()->sem_schedulerStart->wait();
+	getScheduler()->setState(PAUSED);
 	OUTPUT << "pause sim end" << endl;
 }
 

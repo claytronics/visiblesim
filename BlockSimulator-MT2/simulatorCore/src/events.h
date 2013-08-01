@@ -89,7 +89,7 @@ public:
 	BaseSimulator::BuildingBlock* getConcernedBlock() {return concernedBlock;};
 	virtual void consumeBlockEvent() = 0;
 	virtual void consume() {
-		if (concernedBlock->state >= BaseSimulator::Alive) {
+		if (concernedBlock->state >= BaseSimulator::ALIVE) {
 			this->consumeBlockEvent();
 		}
 	};

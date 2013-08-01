@@ -49,19 +49,19 @@ int BlinkyBlocksDebugger::sendMsg(int id, int size, uint64_t *message) {
 	//cout << m[0] << "," << m[1] << "," << m[2] << "," << m[3] << "," << m[4] << endl;
 	if (id > 0) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) getWorld()->getBlockById(id);
-		if (bb != NULL) {
+		if (bb != NULL && bb->state >= ALIVE) {
 			//getScheduler()->schedule(new VMDebugMessageEvent(getScheduler()->now(), bb, new VMDebugMessage(size, message)));
 			//bb->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), bb)));
 			bb->vm->sendMessage(size, message);
 			//cout << "debug sent: size" << size << "content size" << message[0] << endl;
 			return 1;
 		} else {
-			uint64_t fakeMessage[7];
+			/*uint64_t fakeMessage[7];
 			fakeMessage[0] = 4*sizeof(uint64_t);
 			fakeMessage[1] = 16; // VM_DEBUG_MESSAGE
 			fakeMessage[2] = 5; // PRINTCONTENT
-			sprintf((char*)&fakeMessage[3], "Node %d does not exist.\n", id);
-			debuggerMessageHandler(fakeMessage);
+			sprintf((char*)&fakeMessage[3], "Node %d does not exist.\n", id);*/
+			debuggerMessageHandler(debugger::pack(debugger::PRINTCONTENT, "node does not exist\n"));
 			return 0;
 		}
 	} else if (id == -1) {
@@ -72,9 +72,19 @@ int BlinkyBlocksDebugger::sendMsg(int id, int size, uint64_t *message) {
 	}
 }
 
+void BlinkyBlocksDebugger::unPauseDebugger() {
+	debugger::debugController(debugger::CONTINUE, "");
+	//debugger::handle_command(string("run"));
+}
+
+void BlinkyBlocksDebugger::terminateDebugger() {
+	//debugger::debugController(debugger::TERMINATE, "");
+	//debugger::handle_command("quit");
+}
+
 void BlinkyBlocksDebugger::pauseSim() {
 	cout << "Simulator paused" << endl;
-	getScheduler()->schedule(new VMDebugPauseSimEvent(BlinkyBlocks::getScheduler()->now()));
+	getScheduler()->pause(BlinkyBlocks::getScheduler()->now()+1);
 }
 
 void BlinkyBlocksDebugger::unPauseSim() {

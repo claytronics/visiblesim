@@ -32,7 +32,7 @@ BuildingBlock::BuildingBlock(int bId) {
 		blockId = bId;
 	}
 	P2PNetworkInterfaceNextLocalId = 0;
-	state = Alive;
+	state = ALIVE;
 	generator = boost::rand48(50*blockId);
 }
 

@@ -23,6 +23,8 @@ using namespace std;
 
 namespace BaseSimulator {
 
+enum SchedulerState {NOTSTARTED = 0, ENDED = 1, PAUSED = 2, RUNNING = 3};
+
 class Scheduler {
 protected:
 	static Scheduler *scheduler;
@@ -33,7 +35,8 @@ protected:
 	int eventsMapSize, largestEventsMapSize;
 	boost::interprocess::interprocess_mutex mutex_schedule;
 	boost::interprocess::interprocess_mutex mutex_trace;
-
+	SchedulerState state;
+	
 	Scheduler();
 	virtual ~Scheduler();
 
@@ -67,6 +70,8 @@ public:
 	virtual void start(int) {};
 	// stop for good
 	virtual void stop() {};
+	
+	void setState (SchedulerState s) { state = s; };
 };
 
 inline void deleteScheduler() {

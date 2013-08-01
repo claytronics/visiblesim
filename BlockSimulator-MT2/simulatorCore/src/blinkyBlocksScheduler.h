@@ -16,7 +16,6 @@
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include "trace.h"
-#include <set>
 
 using namespace boost;
 
@@ -58,7 +57,7 @@ public:
 	
 	// stop for good
 	void stop();	
-	void pause(int timestamp);
+	void pause(uint64_t date);
 	void unPause();
 		
 	// NOT TESTED

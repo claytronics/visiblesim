@@ -168,7 +168,7 @@ void BlinkyBlocksWorld::linkBlocks() {
 }
 
 void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
-	if (bb->state >= Alive ) {
+	if (bb->state >= ALIVE ) {
 		// cut links between bb and others
 		for(int i=0; i<6; i++) {
 			P2PNetworkInterface *bbi = bb->getInterface(NeighborDirection::Direction(i));
@@ -192,7 +192,7 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 		//getScheduler()->removeEventsToBlock(bb);
 		
 		bb->stop(); // schedule stop event, set stopped state
-		bb->setState(Removed);
+		bb->setState(REMOVED);
 		linkBlocks();
 	}
 	// remove the associated glBlock
@@ -460,7 +460,7 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		for(it = buildingBlocksMap.begin(); 
 				it != buildingBlocksMap.end(); it++) {
 			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-			if (bb->state >= Alive) {
+			if (bb->state >= ALIVE) {
 				bb->vm->sendMessage(size, message);
 				aliveBlocks++;
 			}
@@ -474,11 +474,11 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 			for(it = buildingBlocksMap.begin(); 
 					it != buildingBlocksMap.end(); it++) {
 				BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-				if (bb->state >= Alive ) bb->stop();
+				if (bb->state >= ALIVE ) bb->stop();
 			}
 		} else {			
 			BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(bId);
-			if(bb->state >= Alive) {
+			if(bb->state >= ALIVE) {
 				// cut links between bb and others
 				for(int i=0; i<6; i++) {
 					P2PNetworkInterface *bbi = bb->getInterface(NeighborDirection::Direction(i));
@@ -496,7 +496,7 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 				iz = int(bb->position.pt[2]);
 				setGridPtr(ix,iy,iz,NULL);
 				bb->stop(); // schedule stop event, set stopped state
-				bb->setState(Stopped);
+				bb->setState(STOPPED);
 				linkBlocks();
 			}
 		}

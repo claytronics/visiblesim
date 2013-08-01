@@ -79,6 +79,10 @@ public:
 	void handleDebugMessage(uint64_t* m) {
 		debuggerMessageHandler(m);
 	}
+	
+	void unPauseDebugger();
+	void terminateDebugger();
+	
 };
 
 inline void createDebugger() { BlinkyBlocksDebugger::createDebugger(); }
