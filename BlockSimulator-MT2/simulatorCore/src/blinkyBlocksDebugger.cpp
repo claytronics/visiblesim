@@ -27,7 +27,7 @@ BlinkyBlocksDebugger *BlinkyBlocksDebugger::debugger=NULL;
 
 BlinkyBlocksDebugger::BlinkyBlocksDebugger() {
 	if (debugger == NULL) {
-		debugger = this;		
+		debugger = this;
 		debuggerMessageHandler = debugger::initDebugger(&sendMessage, &pauseSimulation, &unPauseSimulation, &quit);
 	} else {
 		ERRPUT << "\033[1;31m" << "Only one Debugger instance can be created, aborting !" << "\033[0m" << endl;
@@ -36,7 +36,7 @@ BlinkyBlocksDebugger::BlinkyBlocksDebugger() {
 }
 
 int BlinkyBlocksDebugger::sendMsg(int id, int size, uint64_t *message) {
-	
+
 	/*BaseSimulator::getScheduler()->scheduleLock(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
 					new VMDataMessage(hostBlock->blockId, size, message), interface));*/
 	//cout << "ID: " << id << endl;
@@ -84,7 +84,7 @@ void BlinkyBlocksDebugger::terminateDebugger() {
 
 void BlinkyBlocksDebugger::pauseSim() {
 	cout << "Simulator paused" << endl;
-	getScheduler()->pause(BlinkyBlocks::getScheduler()->now()+1);
+	getScheduler()->pause(BlinkyBlocks::getScheduler()->now());
 }
 
 void BlinkyBlocksDebugger::unPauseSim() {
