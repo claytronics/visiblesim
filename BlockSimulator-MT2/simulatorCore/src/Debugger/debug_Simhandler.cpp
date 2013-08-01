@@ -237,8 +237,13 @@ namespace debugger {
                 printf("%s",specification.c_str());
             }
         } else if (instruction == TIMEOUT){
-            printf("%s",specification.c_str());
-            numberExpected = 1;
+            if (numberExpected != 0){
+                printf("%s",specification.c_str());
+                numberExpected = 1;
+                sendMsg(-1,PAUSE,"",BROADCAST);
+            } else {
+                numberExpected++;
+            }
         }
     }
 
