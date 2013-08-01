@@ -34,6 +34,9 @@ namespace debugger {
     static bool isSimDebug = false;
     static bool isPausedAtBreakpoint = false;
 	static bool okayToBroadcastPause = true;
+
+    static bool okayToPauseSimulation = false;
+
     /*number of messages the Master expects to recieve*/
     int numberExpected = 0;
 
@@ -153,11 +156,13 @@ namespace debugger {
 
             if (instruction == CONTINUE || instruction == UNPAUSE){
 				okayToBroadcastPause = true;
+                okayToPauseSimulation = true;
                 /*continue a paused system by broadcasting an CONTINUE signal*/
                 unPauseSimulation();
                 numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
             } else if (instruction == RUN){
                 okayToBroadcastPause = true;
+                okayToPauseSimulation = true;
                 /*continue a paused system by broadcasting an CONTINUE signal*/
                 unPauseSimulation();
                 numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
@@ -219,7 +224,6 @@ namespace debugger {
             if(okayToBroadcastPause) {
 				sendMsg(-1,PAUSE,"",BROADCAST);
 				okayToBroadcastPause = false;
-                pauseSimulation();
             }
         } else if (instruction == PRINTCONTENT){
             printf("%s",specification.c_str());
@@ -355,6 +359,9 @@ namespace debugger {
 
             debugMasterController(instruction,spec);
             numberExpected--;
+
+            if (numberExpected == 0 && okayToPauseSimulation)
+                pauseSimulation();
 
             /*set up the variables and buffers for next message*/
             memset(specification,0,MAXLENGTH*SIZE);
