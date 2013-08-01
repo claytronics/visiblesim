@@ -191,7 +191,7 @@ void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 bool Blinky01BlockCode::mustBeQueued() {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
 	uint64_t* message = bb->vm->getBufferPtr()->message;
-	if(hostBlock->state == Computing) {
+	if(hostBlock->state == COMPUTING) {
 		return message[1] == VM_MESSAGE_SEND_MESSAGE or message[1] ==  VM_MESSAGE_SET_COLOR;
 	} else {
 		return false;
@@ -329,7 +329,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			uint64_t duration;
 
 			computing = true;
-			bb->state = Computing;
+			bb->state = COMPUTING;
 			duration = (boost::static_pointer_cast<VMStartComputationEvent>(pev))->duration;
 			
 			message[0] = 4*sizeof(uint64_t);	
@@ -365,7 +365,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			{
 			static int i[5];
 			//cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << " effective end of computation " << endl;
-			bb->state = Alive;
+			bb->state = ALIVE;
 			bb->vm->handleQueuedMessages();
 			// Test purpose
 			if (i[hostBlock->blockId] < 3) {

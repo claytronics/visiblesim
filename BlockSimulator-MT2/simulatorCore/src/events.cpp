@@ -131,6 +131,7 @@ CodeEndSimulationEvent::~CodeEndSimulationEvent() {
 
 void CodeEndSimulationEvent::consume() {
 	EVENT_CONSUME_INFO();
+	BaseSimulator::getScheduler()->setState(BaseSimulator::ENDED);
 }
 
 const string CodeEndSimulationEvent::getEventName() {

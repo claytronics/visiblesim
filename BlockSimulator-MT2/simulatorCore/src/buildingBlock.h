@@ -35,7 +35,7 @@ class BlockCode;
 //===========================================================================================================
 
 // alive state must be associated to a number >= 2
-enum State {Stopped = 0, Removed = 1, Alive = 2, Computing = 3};
+enum BlockState {STOPPED = 0, REMOVED = 1, ALIVE = 2, COMPUTING = 3};
 
 class BuildingBlock {
 protected:
@@ -49,7 +49,7 @@ protected:
 public:
 	int blockId;
 	BlockCode *blockCode;
-	State state;
+	BlockState state;
 	boost::rand48 generator;
 
 	BuildingBlock(int bId);
@@ -72,7 +72,7 @@ public:
 	
 	virtual void stop() {};
 	int getState() { return state; };
-	virtual void setState(int s) { state = State(s); };
+	virtual void setState(BlockState s) { state = s; };
 	
 	int getNextRandomNumber();
 };
