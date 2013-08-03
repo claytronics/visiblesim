@@ -174,8 +174,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			}
 			break;
 		case EVENT_STOP:
-			{			
-			BlinkyBlocksBlock::State s = (boost::static_pointer_cast<VMStopEvent>(pev))->nextState;
+			{
+			if( bb->vm == NULL) {return;}
 			if(BlinkyBlocksVM::isInDebuggingMode()) {
 				getDebugger()->sendTerminateMsg(bb->blockId);
 			} else {
@@ -187,7 +187,6 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 				bb->vm->sendMessage(4*sizeof(uint64_t), message);
 			}
 			bb->stopVM();
-			bb->setState(s);
 			}
 			break;
 		case EVENT_ADD_NEIGHBOR:

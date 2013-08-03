@@ -152,7 +152,8 @@ void BlinkyBlocksBlock::removeNeighbor(P2PNetworkInterface *ni) {
   
 void BlinkyBlocksBlock::stop(uint64_t date, State s) {
 	OUTPUT << "Simulator: stop scheduled" << endl;
-	getScheduler()->schedule(new VMStopEvent(getScheduler()->now(), this, s));
+	setState(s);
+	getScheduler()->schedule(new VMStopEvent(getScheduler()->now(), this));
 }
 
 }

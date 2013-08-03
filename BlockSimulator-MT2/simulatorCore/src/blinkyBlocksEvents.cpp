@@ -45,16 +45,14 @@ const string VMSetIdEvent::getEventName() {
 //
 //===========================================================================================================
 
-VMStopEvent::VMStopEvent(uint64_t t, BlinkyBlocksBlock *conBlock, BuildingBlock::State s): BlockEvent(t, conBlock) {
+VMStopEvent::VMStopEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_STOP;
 	priority = PRIORITY_EVENT_STOP;
-	nextState = s;
 }
 
 VMStopEvent::VMStopEvent(VMStopEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
-	nextState = ev->nextState;
 }
 
 VMStopEvent::~VMStopEvent() {
@@ -63,7 +61,8 @@ VMStopEvent::~VMStopEvent() {
 
 void VMStopEvent::consume() {
 	EVENT_CONSUME_INFO();
-	concernedBlock->scheduleLocalEvent(EventPtr(new VMStopEvent(this)));
+	//concernedBlock->scheduleLocalEvent(EventPtr(new VMStopEvent(this)));
+	concernedBlock->blockCode->processLocalEvent(EventPtr(new VMStopEvent(this)));
 }
 
 const string VMStopEvent::getEventName() {

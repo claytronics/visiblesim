@@ -40,9 +40,8 @@ public:
 
 class VMStopEvent : public BlockEvent {
 public:
-	BuildingBlock::State nextState;
 
-	VMStopEvent(uint64_t, BlinkyBlocksBlock *conBlock, BuildingBlock::State s);
+	VMStopEvent(uint64_t, BlinkyBlocksBlock *conBlock);
 	VMStopEvent(VMStopEvent *ev);
 	~VMStopEvent();
 	void consumeBlockEvent() {};
