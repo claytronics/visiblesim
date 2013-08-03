@@ -31,8 +31,9 @@ using boost::asio::ip::tcp;
 #define VM_MESSAGE_SHAKE						15
 #define VM_MESSAGE_DEBUG						16
 
-#define VM_MESSAGE_START_COMPUTATION 			20
-#define VM_MESSAGE_END_COMPUTATION 				21
+#define VM_SET_DETERMINISTIC_MODE				20
+#define VM_MESSAGE_START_COMPUTATION 			21
+#define VM_MESSAGE_END_COMPUTATION 				22
 
 string getStringMessage(uint64_t t) {
 	switch(t) {
