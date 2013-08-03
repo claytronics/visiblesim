@@ -86,11 +86,15 @@ BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, BlinkyBlocksBlockCode *(*blinkyBlo
 
 BlinkyBlocksBlock::~BlinkyBlocksBlock() {
 	OUTPUT << "BlinkyBlocksBlock destructor " << blockId << endl;
-	//delete[] tabInterfaces;
 	stopVM();
 }
 
 void BlinkyBlocksBlock::stopVM() {
+	// BUG: debugger kills the VM (exit(0)) => the socket is not free correctly
+	if(BlinkyBlocksVM::isInDebuggingMode()) {
+		vm = NULL;
+		return;
+	}
 	if (vm != NULL) {
 		delete vm;
 		vm = NULL;
@@ -123,39 +127,32 @@ NeighborDirection::Direction BlinkyBlocksBlock::getDirection(P2PNetworkInterface
 	return NeighborDirection::Direction(0);
 }
 
-void BlinkyBlocksBlock::tap() {
-	getScheduler()->schedule(new VMTapEvent(getScheduler()->now(), this));
-	//getScheduler()->scheduleLock(new VMTapEvent(getScheduler()->now(), this));
+void BlinkyBlocksBlock::tap(uint64_t date) {	
 	OUTPUT << "tap scheduled" << endl;
+	getScheduler()->schedule(new VMTapEvent(date, this));
 }
   
-void BlinkyBlocksBlock::accel(int x, int y, int z) {
-	getScheduler()->schedule(new VMAccelEvent(getScheduler()->now(), this, x, y, z));
-	//getScheduler()->scheduleLock(new VMAccelEvent(getScheduler()->now(), this, x, y, z));
+void BlinkyBlocksBlock::accel(uint64_t date, int x, int y, int z) {
+	getScheduler()->schedule(new VMAccelEvent(date, this, x, y, z));
 }
 	
-void BlinkyBlocksBlock::shake(int f) {
+void BlinkyBlocksBlock::shake(uint64_t date, int f) {
 	getScheduler()->schedule(new VMShakeEvent(getScheduler()->now(), this, f));
-	//getScheduler()->scheduleLock(new VMShakeEvent(getScheduler()->now(), this, f));
 }
   
 void BlinkyBlocksBlock::addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target) {
 	OUTPUT << "Simulator: "<< blockId << " add neighbor " << target->blockId << " on " << NeighborDirection::getString(getDirection(ni)) << endl;
 	getScheduler()->schedule(new VMAddNeighborEvent(getScheduler()->now(), this, NeighborDirection::getOpposite(getDirection(ni)), target->blockId));
-	//getScheduler()->scheduleLock(new VMAddNeighborEvent(getScheduler()->now(), this, getDirection(ni), target->blockId));
 }
 
 void BlinkyBlocksBlock::removeNeighbor(P2PNetworkInterface *ni) {
 	OUTPUT << "Simulator: "<< blockId << " remove neighbor on " << NeighborDirection::getString(getDirection(ni)) << endl;
 	getScheduler()->schedule(new VMRemoveNeighborEvent(getScheduler()->now(), this, NeighborDirection::getOpposite(getDirection(ni))));
-	//getScheduler()->scheduleLock(new VMRemoveNeighborEvent(getScheduler()->now(), this, getDirection(ni)));
 }
   
-void BlinkyBlocksBlock::stop() {
-	OUTPUT << "Simulator: stop VM" << endl;
-	setState(STOPPED);
-	getScheduler()->schedule(new VMStopEvent(getScheduler()->now(), this));
-	//getScheduler()->scheduleLock(new VMStopEvent(getScheduler()->now(), this));
+void BlinkyBlocksBlock::stop(uint64_t date, State s) {
+	OUTPUT << "Simulator: stop scheduled" << endl;
+	getScheduler()->schedule(new VMStopEvent(getScheduler()->now(), this, s));
 }
 
 }

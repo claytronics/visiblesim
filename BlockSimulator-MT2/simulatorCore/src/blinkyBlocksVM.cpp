@@ -62,19 +62,12 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 }
 
 BlinkyBlocksVM::~BlinkyBlocksVM() {
-	OUTPUT << "VM "<< hostBlock->blockId << " destroyed" << endl;
-	closeSocket();
-	terminate();
-}
-
-void BlinkyBlocksVM::stop() {
+	OUTPUT << "VM "<< hostBlock->blockId << " destructor" << endl;
 	closeSocket();
 	terminate();
 }
 
 void BlinkyBlocksVM::terminate() {
-	//kill(pid, SIGKILL);
-	//waitpid(pid, NULL, WNOHANG);
 	waitpid(pid, NULL, 0);
 }
 
@@ -102,7 +95,6 @@ void BlinkyBlocksVM::asyncReadMessageHandler(const boost::system::error_code& er
 		ERRPUT << "connection to the VM "<< hostBlock->blockId << " lost" << endl;
 	}
 	if (bbc->mustBeQueued()) {
-		cout << "queued" << endl;
 		inQueue.push(inBuffer);
 	} else {
 		bbc->handleNewMessage(inBuffer.message);

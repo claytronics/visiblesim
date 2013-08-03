@@ -156,7 +156,7 @@ void GlutContext::mouseFunc(int button,int state,int x,int y) {
 					GlBlock *glb = BaseSimulator::getWorld()->getBlockByNum(n-1);
 					GlBlock *glbs = BaseSimulator::getWorld()->getSelectedBlock();
 					if (glbs != NULL && glbs == glb) {
-						BaseSimulator::getWorld()->tapBlock(glb->blockId);
+						BaseSimulator::getWorld()->tapBlock(BaseSimulator::getScheduler()->now(), glb->blockId);
 					}
 				} else
 				if (state==GLUT_UP) {
@@ -388,7 +388,7 @@ int GlutContext::processHits(GLint hits, GLuint *buffer) {
 
 void GlutContext::mainLoop() {
 	glutMainLoop();
-	getScheduler()->stop();
+	getScheduler()->stop(BaseSimulator::getScheduler()->now());
 	deleteContext();
 }
 

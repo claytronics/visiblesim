@@ -80,10 +80,6 @@ public:
 	~BlinkyBlocksVM();
 
 	VMMessage*  getBufferPtr() { return &inBuffer;};
-
-	/*static void setVmPath(string p) { vmPath = p; };
-	static void setProgramPath(string p) { programPath = p; };
-	static void setDebugging(bool d) { debugging = d;};*/
 	
 	static void setConfiguration(string v, string p, bool d) {
 		vmPath = v;

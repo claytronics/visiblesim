@@ -15,21 +15,7 @@
 #include <boost/asio.hpp> 
 #include <stdexcept>
 
-/* Inside VM:
-enum face_t {
-   INVALID_FACE = -1,
-   BOTTOM = 0,
-   NORTH = 1,
-   EAST = 2,
-   WEST = 3,
-   SOUTH = 4,
-   TOP = 5
-};
-*/
 namespace BlinkyBlocks {
-
-//enum NeighborDirection { Front=0, Back, Left, Right, Top, Bottom };
-// if we consider that the NORTH in the Back at the beginning:
 
 class NeighborDirection {
 public:
@@ -75,12 +61,12 @@ public:
 	void stopVM();
 
 	/* schedule the appropriate event for this action */
-	void tap();
-	void accel(int x, int y, int z);	
-	void shake(int f);	
+	void tap(uint64_t date);
+	void accel(uint64_t date, int x, int y, int z);	
+	void shake(uint64_t date, int f);	
 	void addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target);
 	void removeNeighbor(P2PNetworkInterface *ni);	
-	void stop();
+	void stop(uint64_t date, State s);
 
 };
 

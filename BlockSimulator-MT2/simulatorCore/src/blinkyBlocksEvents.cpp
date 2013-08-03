@@ -45,14 +45,16 @@ const string VMSetIdEvent::getEventName() {
 //
 //===========================================================================================================
 
-VMStopEvent::VMStopEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
+VMStopEvent::VMStopEvent(uint64_t t, BlinkyBlocksBlock *conBlock, BuildingBlock::State s): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_STOP;
 	priority = PRIORITY_EVENT_STOP;
+	nextState = s;
 }
 
 VMStopEvent::VMStopEvent(VMStopEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
+	nextState = ev->nextState;
 }
 
 VMStopEvent::~VMStopEvent() {
@@ -349,7 +351,7 @@ VMDebugPauseSimEvent::~VMDebugPauseSimEvent() {
 void VMDebugPauseSimEvent::consume() {
 	EVENT_CONSUME_INFO();
 	OUTPUT << "pause sim degin" << endl;
-	getScheduler()->setState(PAUSED);
+	getScheduler()->setState(Scheduler::PAUSED);
 	OUTPUT << "pause sim end" << endl;
 }
 
