@@ -86,6 +86,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 				unlock();
 				checkForReceivedVMMessages();
 				}
+				cout << "scheduler end..." << endl;
 			break;
 		case SCHEDULER_MODE_REALTIME:
 			OUTPUT << "Realtime mode scheduler\n";
