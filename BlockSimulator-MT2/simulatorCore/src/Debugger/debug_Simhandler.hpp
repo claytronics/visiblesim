@@ -53,7 +53,7 @@ namespace debugger {
     int sendMsg(int destination, int msgType,
                  std::string content, bool broadcast = false);
     void messageQueueInsert(message_type* msg);
-
+    void handlePauseCommand(void);
     message_type* pack(int msgEncode, std::string content);
 }
 

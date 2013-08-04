@@ -148,6 +148,14 @@ namespace debugger {
         }
     }
 
+
+    void handlePauseCommand(void){
+
+        sendMsg(-1,PAUSE,"",BROADCAST);
+        okayToBroadcastPause = false;
+
+    }
+
     void debugController(int instruction, string specification){
 
         string type;
