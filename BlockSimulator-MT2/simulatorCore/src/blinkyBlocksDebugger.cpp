@@ -54,7 +54,7 @@ int BlinkyBlocksDebugger::sendMsg(int id, int size, uint64_t *message) {
 		int x = getWorld()->broadcastDebugMessage(size, message);
 		// Bricolage en attendant un reel algorithme
 		cur_timeout++;
-		boost::thread(boost::bind(&BlinkyBlocksDebugger::timeOut, this, cur_timeout));
+		//boost::thread(boost::bind(&BlinkyBlocksDebugger::timeOut, this, cur_timeout));
 		return x;
 	} else {
 		return 0;
