@@ -227,6 +227,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			{
 			Vecteur color = (boost::static_pointer_cast<VMSetColorEvent>(pev))->color;
 			bb->setColor(color);
+			//cout << bb->blockId << "SET_COLOR_EVENT" << endl;
 			}
 			break;
 		case EVENT_SEND_MESSAGE:
@@ -306,7 +307,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			info << "finished its computation" << endl;
 			//cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << " finished computation at " << endComputingTime << endl;
 			BlinkyBlocks::getScheduler()->trace(info.str(),hostBlock->blockId);
-			BlinkyBlocks::getScheduler()->schedule(new VMEffectiveEndComputationEvent(endComputingTime, bb));
+			BlinkyBlocks::getScheduler()->schedule(new VMEffectiveEndComputationEvent(endComputingTime+1, bb));
 			}
 			break;
 		case EVENT_VM_EFFECTIVE_END_COMPUTATION:
