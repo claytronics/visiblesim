@@ -70,19 +70,7 @@ void BlinkyBlocksWorld::deleteWorld() {
 
 void BlinkyBlocksWorld::addBlock(int blockId, BlinkyBlocksBlockCode *(*blinkyBlockCodeBuildingFunction)(BlinkyBlocksBlock*),const Vecteur &pos,const Vecteur &col) {
 
-	/* Now blocks aren't any more deleted, we can't continue to use this way
-	if (blockId==-1) {// rechercher un blockID valide
-		vector <GlBlock*>::const_iterator ci = tabGlBlocks.begin();
-		while (ci!=tabGlBlocks.end()) {
-			if ((*ci)->blockId>blockId) blockId=(*ci)->blockId;
-			ci++;
-		}
-		blockId++;
-	}*/ 
-	if (blockId == -1) {
-		// En supposant que les blocs sont ordonnees:
-		//blockId = (buildingBlocksMap.rbegin())->second->blockId;
-		
+	if (blockId == -1) {		
 		map<int, BaseSimulator::BuildingBlock*>::iterator it;
 			for(it = buildingBlocksMap.begin(); 
 					it != buildingBlocksMap.end(); it++) {
@@ -168,7 +156,7 @@ void BlinkyBlocksWorld::linkBlocks() {
 }
 
 void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
-	if (bb->state >= Alive ) {
+	if (bb->getState() >= BlinkyBlocksBlock::ALIVE ) {
 		// cut links between bb and others
 		for(int i=0; i<6; i++) {
 			P2PNetworkInterface *bbi = bb->getInterface(NeighborDirection::Direction(i));
@@ -191,8 +179,7 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 		// remove event from the list
 		//getScheduler()->removeEventsToBlock(bb);
 		
-		bb->stop(); // schedule stop event, set stopped state
-		bb->setState(Removed);
+		bb->stop(getScheduler()->now(), BlinkyBlocksBlock::REMOVED); // schedule stop event, set REMOVED state
 		linkBlocks();
 	}
 	// remove the associated glBlock
@@ -423,7 +410,7 @@ void BlinkyBlocksWorld::menuChoice(int n) {
 		} break;
 		case 3 : {
 			BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(tabGlBlocks[numSelectedBlock]->blockId);
-			stopBlock(bb->blockId);
+			stopBlock(getScheduler()->now(), bb->blockId);
 		} break;
 	}
 }
@@ -439,49 +426,48 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
     else if (name=="face_back") numSelectedFace=NeighborDirection::Back;
 }
 
-	void BlinkyBlocksWorld::tapBlock(int bId) {
+	void BlinkyBlocksWorld::tapBlock(uint64_t date, int bId) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*)getBlockById(bId);
-		bb->tap();
+		bb->tap(date);
 	}
 	
-	void BlinkyBlocksWorld::accelBlock(int bId, int x, int y, int z) {
+	void BlinkyBlocksWorld::accelBlock(uint64_t date, int bId, int x, int y, int z) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*)getBlockById(bId);
-		bb->accel(x,y,z);
+		bb->accel(date, x,y,z);
 	}
 	
-	void BlinkyBlocksWorld::shakeBlock(int bId, int f) {
+	void BlinkyBlocksWorld::shakeBlock(uint64_t date, int bId, int f) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*)getBlockById(bId);
-		bb->shake(f);	
+		bb->shake(date, f);	
 	}
 	
-	int BlinkyBlocksWorld::broadcastVMMessage(int size, uint64_t* message) {
+	int BlinkyBlocksWorld::broadcastDebugMessage(int size, uint64_t* message) {
 		map<int, BaseSimulator::BuildingBlock*>::iterator it;
 		int aliveBlocks = 0;
 		for(it = buildingBlocksMap.begin(); 
 				it != buildingBlocksMap.end(); it++) {
 			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-			if (bb->state >= Alive) {
-			//bb->vm->sendMessage(size, message);
-				// To change, everything is not debug message!
-				//getScheduler()->schedule(new VMDebugMessageEvent(getScheduler()->now(), bb, new VMDebugMessage(size, message)));
-				bb->vm->sendMessage(size, message);
-				aliveBlocks++;
+			if (bb->getState() >= BlinkyBlocksBlock::ALIVE) {
+				aliveBlocks += getDebugger()->sendMsg(bb->blockId, size, message);
 			}
 		}
 		return aliveBlocks;
 	}
 	
-	void BlinkyBlocksWorld::stopBlock(int bId) {
+	void BlinkyBlocksWorld::stopBlock(uint64_t date, int bId) {
 		if (bId < 0) {
+			// Delete the block	without deleting the links
 			map<int, BaseSimulator::BuildingBlock*>::iterator it;
 			for(it = buildingBlocksMap.begin(); 
 					it != buildingBlocksMap.end(); it++) {
 				BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-				if (bb->state >= Alive ) bb->stop();
+				if (bb->getState() >= BlinkyBlocksBlock::ALIVE ) 
+					bb->stop(date, BlinkyBlocksBlock::STOPPED);
 			}
-		} else {			
+		} else {
+			// Delete all the links and then the block		
 			BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(bId);
-			if(bb->state >= Alive) {
+			if(bb->getState() >= BlinkyBlocksBlock::ALIVE) {
 				// cut links between bb and others
 				for(int i=0; i<6; i++) {
 					P2PNetworkInterface *bbi = bb->getInterface(NeighborDirection::Direction(i));
@@ -498,16 +484,15 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 				iy = int(bb->position.pt[1]);
 				iz = int(bb->position.pt[2]);
 				setGridPtr(ix,iy,iz,NULL);
-				bb->stop(); // schedule stop event, set stopped state
-				bb->setState(Stopped);
+				bb->stop(date, BlinkyBlocksBlock::STOPPED); // schedule stop event, set STOPPED state
 				linkBlocks();
 			}
 		}
 	}
 	
 	void BlinkyBlocksWorld::createHelpWindow() {
-		if (GlutContext::helpWindow) delete GlutContext::helpWindow;
-
+		if (GlutContext::helpWindow) 
+			delete GlutContext::helpWindow;
 		GlutContext::helpWindow = new GlutHelpWindow(NULL,10,40,540,480,"../../simulatorCore/blinkyBlocksHelp.txt");
 	}
 

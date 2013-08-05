@@ -23,6 +23,8 @@ namespace debugger {
     extern void (*pauseSimulation)(void);
     extern void (*unPauseSimulation)(void);
     extern void (*quitDebugger)(void);
+    
+    void joinThread();
 
 }
 

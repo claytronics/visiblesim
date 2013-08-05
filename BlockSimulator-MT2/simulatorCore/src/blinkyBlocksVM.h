@@ -20,7 +20,8 @@ using boost::asio::ip::tcp;
 
 namespace BlinkyBlocks {
 
-#define VM_MESSAGE_MAXLENGHT 512
+//#define VM_MESSAGE_MAXLENGHT 512
+#define VM_MESSAGE_MAXLENGHT 544 // debugger
 typedef uint64_t messageType;
 
 class BlinkyBlocksBlock;
@@ -57,6 +58,8 @@ protected:
 	queue<VMMessage> inQueue;
 	/* Mutex used when sending message */
 	boost::interprocess::interprocess_mutex mutex_send;
+	/* True if the id was sent */
+	bool idSent;
 	
 	tcp::socket& getSocket() {assert(socket != NULL); return *(socket.get()); };
 	/* kill the associated VM program (and wait for the effective end) */
@@ -77,10 +80,6 @@ public:
 	~BlinkyBlocksVM();
 
 	VMMessage*  getBufferPtr() { return &inBuffer;};
-
-	/*static void setVmPath(string p) { vmPath = p; };
-	static void setProgramPath(string p) { programPath = p; };
-	static void setDebugging(bool d) { debugging = d;};*/
 	
 	static void setConfiguration(string v, string p, bool d) {
 		vmPath = v;
@@ -118,8 +117,13 @@ public:
 
 	static void waitForOneMessage() {
 		if (ios != NULL) {
+			//boost::system::error_code ec;
 			ios->run_one();
+			//cout << ios->run_one(ec) << endl;
+			//cout << ec << endl;
 			ios->reset();
+		} else {
+			cout << "ios is null" <<endl;
 		}
 	};
 	

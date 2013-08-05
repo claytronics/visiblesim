@@ -27,6 +27,9 @@ namespace debugger {
     const int DEBUGMPI = 0;
     const int TERMINATE = 10;
     const int PRINTLIST = 11;
+    const int RUN = 12;
+    const int MODE = 13;
+    const int TIMEOUT = 14;
 
     typedef uint64_t message_type;
 
@@ -50,6 +53,8 @@ namespace debugger {
     int sendMsg(int destination, int msgType,
                  std::string content, bool broadcast = false);
     void messageQueueInsert(message_type* msg);
+
+    message_type* pack(int msgEncode, std::string content);
 }
 
 #endif

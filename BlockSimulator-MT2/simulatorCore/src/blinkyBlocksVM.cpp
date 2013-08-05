@@ -33,56 +33,41 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 	OUTPUT << "VM "<< hostBlock->blockId << " constructor" << endl;
 	// Start the VM
 	pid = 0;
-	pid = fork();	
+	pid = fork();
 	if(pid < 0) {ERRPUT << "Error when starting the VM" << endl;}
     if(pid == 0) {
-		stringstream output;
+        stringstream output;
 		output << "VM" << hostBlock->blockId << ".log";
 		int fd = open(output.str().c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
 		dup2(fd, 1);
 		dup2(fd, 2);
 		close(fd);
 		if (debugging) {
-			//char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", (char*) "-D", (char*) "SIM", NULL };
-			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", NULL };
+			//./meld -f  /home/ubuntu/Bureau/CMU/meld/examples/ends.m -c sl -D SIM
+			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", (char*) "-D", (char*) "SIM", NULL };
+			//char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", NULL };
 			execv(vmPath.c_str(), const_cast<char**>(cmd));
 		} else {
 			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", NULL };
-			OUTPUT << "no debugging mode!" << endl;	
+			OUTPUT << "no debugging mode!" << endl;
 			execv(vmPath.c_str(), const_cast<char**>(cmd));
 		}
 	}
-
-	// Wait for an incoming connection	
-	socket = boost::shared_ptr<tcp::socket>(new tcp::socket(*ios));	
-	acceptor->accept(*(socket.get()));	
+	// Wait for an incoming connection
+	socket = boost::shared_ptr<tcp::socket>(new tcp::socket(*ios));
+	acceptor->accept(*(socket.get()));
 	OUTPUT << "VM "<< hostBlock->blockId << " connected" << endl;
-	// Send the id to the block
-	if (debugging) {
-		// to do it right now
-		//VMSetIdEvent ev(BaseSimulator::getScheduler()->now(), (BlinkyBlocksBlock*)hostBlock);
-		//hostBlock->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), (BlinkyBlocksBlock*)hostBlock)));
-		BlinkyBlocks::getScheduler()->schedule(new VMSetIdEvent(BaseSimulator::getScheduler()->now(), bb));
-	} else {
-		// schedule it, so that it will only happen once the scheduler starts
-		BlinkyBlocks::getScheduler()->schedule(new VMSetIdEvent(BaseSimulator::getScheduler()->now(), bb));
-	}
+	idSent = false;
+	asyncReadMessage();
 }
 
 BlinkyBlocksVM::~BlinkyBlocksVM() {
-	OUTPUT << "VM "<< hostBlock->blockId << " destroyed" << endl;
-	closeSocket();
-	terminate();
-}
-
-void BlinkyBlocksVM::stop() {
+	OUTPUT << "VM "<< hostBlock->blockId << " destructor" << endl;
 	closeSocket();
 	terminate();
 }
 
 void BlinkyBlocksVM::terminate() {
-	//kill(pid, SIGKILL);
-	//waitpid(pid, NULL, WNOHANG);
 	waitpid(pid, NULL, 0);
 }
 
@@ -116,7 +101,7 @@ void BlinkyBlocksVM::asyncReadMessageHandler(const boost::system::error_code& er
 	}
     this->asyncReadMessage();
 }
-  
+
 void BlinkyBlocksVM::asyncReadMessage() {
 	if (socket == NULL) {
 		ERRPUT << "the simulator is not connected to the VM "<< hostBlock->blockId << endl;
@@ -124,7 +109,7 @@ void BlinkyBlocksVM::asyncReadMessage() {
 	}
 	try {
 	inBuffer.message[0] = 0;
-	boost::asio::async_read(getSocket(), 
+	boost::asio::async_read(getSocket(),
 		boost::asio::buffer(inBuffer.message, sizeof(uint64_t)),
 		boost::bind(&BlinkyBlocksVM::asyncReadMessageHandler, this, boost::asio::placeholders::error,
 		boost::asio::placeholders::bytes_transferred));
@@ -132,11 +117,15 @@ void BlinkyBlocksVM::asyncReadMessage() {
 		ERRPUT << "connection to the VM "<< hostBlock->blockId << " lost" << endl;
 	}
 }
-  
+
 void BlinkyBlocksVM::sendMessage(uint64_t size, uint64_t* message){
 	if (socket == NULL) {
 		ERRPUT << "the simulator is not connected to the VM "<< hostBlock->blockId << endl;
 		return;
+	}
+	if (!idSent) {
+		idSent = true;
+		hostBlock->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), hostBlock)));
 	}
 	mutex_send.lock();
 	try {

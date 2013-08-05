@@ -4,6 +4,7 @@
 #include <pthread.h>
 #include <iostream>
 #include <string>
+#include <unistd.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include "debug_Simprompt.hpp"
@@ -15,7 +16,7 @@ namespace debugger {
     /*to store the last input in the debugger*/
     int lastInstruction = 0;
     string lastBuild = "";
-
+	pthread_t tid = 0;
 
     int (*debugSendMsg)(int,message_type*,int);
     void (*pauseSimulation)(void);
@@ -29,11 +30,7 @@ namespace debugger {
                       void (*unPauseSim)(void),
                       void (*quitDebug)(void),
                       std::ostream& o, std::istream& i){
-
-
-        pthread_t tid;
-
-
+						  
         cin.rdbuf(i.rdbuf());
         cout.rdbuf(o.rdbuf());
 
@@ -66,6 +63,7 @@ namespace debugger {
       }
 
       if (expectingMessage){
+          usleep(10000);
           receiveMsg();
       }
 
@@ -120,7 +118,7 @@ namespace debugger {
           }
 
       if (command != BREAKPOINT && command!=DUMP
-          && command != REMOVE){
+          && command != REMOVE && command != MODE){
         debugController(command, build);
         lastInstruction = command;
         lastBuild = build;
@@ -129,7 +127,8 @@ namespace debugger {
     }
 
     /*if not enough info - these  types must have a specification*/
-    if ((command == BREAKPOINT||command == DUMP||command == REMOVE)&&
+    if ((command == BREAKPOINT||command == DUMP||command == REMOVE||
+            command == MODE)&&
         wordCount == 1){
       cout << "Please specify- type help for options" << endl;
       return false;
@@ -137,7 +136,8 @@ namespace debugger {
 
     /*handle breakpointsand dumps*/
     if (wordCount == 2){
-        if (command == BREAKPOINT||command == DUMP||command == REMOVE){
+        if (command == BREAKPOINT||command == DUMP||command == REMOVE
+            ||command == MODE){
         debugController(command,build);
         } else
         debugController(command,"");
@@ -160,19 +160,22 @@ namespace debugger {
       help();
       retVal = NOTHING;
     } else if (command == "run"|| command == "r") {
-      retVal = CONTINUE;
+      retVal = RUN;
     } else if (command == "dump"||command == "d") {
       retVal = DUMP;
     } else if (command == "print" || command == "p"){
       retVal = PRINTLIST;
+    } else if (command == "mode" || command == "m"){
+        retVal = MODE;
     } else if (command == "remove" || command == "rm"){
       retVal = REMOVE;
     } else if (command == "continue"||command == "c"){
       retVal = CONTINUE;
     } else if (command == "quit"||command == "q"){
-      quitDebugger();
+      sendMsg(-1,TERMINATE,"",true);
       delete messageQueue;
-      exit(0);
+      quitDebugger();
+      pthread_exit(NULL);
     } else {
       cout << "unknown command: type 'help' for options " << endl;
       retVal = NOTHING;
@@ -204,5 +207,9 @@ namespace debugger {
     cout << "\t-Press Enter to use last Input" << endl;
     cout << endl;
     cout << "*******************************************************************" << endl;
+  }
+  
+  void joinThread() {
+	pthread_join(tid, NULL); 
   }
 }

@@ -7,6 +7,9 @@
 #include "blinkyBlocksVM.h"
 #include "Debugger/debug_Simprompt.hpp"
 #include <stdio.h>
+#include <boost/thread/thread.hpp>
+#include <boost/bind.hpp>
+
 
 namespace BlinkyBlocks {
 
@@ -20,13 +23,13 @@ VMDebugMessage::~VMDebugMessage() {
 	delete[] message;
 }
 
-//void (*debuggerMessageHandler)(uint64_t*) = NULL; // extern
-
 BlinkyBlocksDebugger *BlinkyBlocksDebugger::debugger=NULL;
+bool BlinkyBlocksDebugger::threadHasFinished = false;
+int cur_timeout = 0;
 
 BlinkyBlocksDebugger::BlinkyBlocksDebugger() {
 	if (debugger == NULL) {
-		debugger = this;		
+		debugger = this;
 		debuggerMessageHandler = debugger::initDebugger(&sendMessage, &pauseSimulation, &unPauseSimulation, &quit);
 	} else {
 		ERRPUT << "\033[1;31m" << "Only one Debugger instance can be created, aborting !" << "\033[0m" << endl;
@@ -34,28 +37,25 @@ BlinkyBlocksDebugger::BlinkyBlocksDebugger() {
 	}
 }
 
+
 int BlinkyBlocksDebugger::sendMsg(int id, int size, uint64_t *message) {
-	
-	/*BaseSimulator::getScheduler()->scheduleLock(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
-					new VMDataMessage(hostBlock->blockId, size, message), interface));*/
+
 	if (id > 0) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) getWorld()->getBlockById(id);
-		if (bb != NULL) {
-			//getScheduler()->schedule(new VMDebugMessageEvent(getScheduler()->now(), bb, new VMDebugMessage(size, message)));
+		if (bb != NULL && bb->state >= BlinkyBlocksBlock::ALIVE && bb->vm != NULL) {
 			bb->vm->sendMessage(size, message);
 			return 1;
 		} else {
-			uint64_t fakeMessage[7];
-			fakeMessage[0] = 4*sizeof(uint64_t);
-			fakeMessage[1] = 16; // VM_DEBUG_MESSAGE
-			fakeMessage[2] = 5; // PRINTCONTENT
-			sprintf((char*)&fakeMessage[3], "Node %d does not exist.\n", id);
-			debuggerMessageHandler(fakeMessage);
+			debuggerMessageHandler(debugger::pack(debugger::PRINTCONTENT, "node does not exist\n"));
 			return 0;
 		}
 	} else if (id == -1) {
 		// send to all vm
-		return getWorld()->broadcastVMMessage(size, message);
+		int x = getWorld()->broadcastDebugMessage(size, message);
+		// Bricolage en attendant un reel algorithme
+		cur_timeout++;
+		boost::thread(boost::bind(&BlinkyBlocksDebugger::timeOut, this, cur_timeout));
+		return x;
 	} else {
 		return 0;
 	}
@@ -63,13 +63,32 @@ int BlinkyBlocksDebugger::sendMsg(int id, int size, uint64_t *message) {
 
 void BlinkyBlocksDebugger::pauseSim() {
 	cout << "Simulator paused" << endl;
-	getScheduler()->schedule(new VMDebugPauseSimEvent(BlinkyBlocks::getScheduler()->now()));
+	getScheduler()->pause(BlinkyBlocks::getScheduler()->now());
 }
 
 void BlinkyBlocksDebugger::unPauseSim() {
-	// pas de schedule lock ici, sinon inter-blocage
 	cout << "Simulator unpaused" << endl;
 	getScheduler()->unPause();
 }
+
+void BlinkyBlocksDebugger::timeOut(int num) {
+	//debuggerMessageHandler(debugger::pack(debugger::TIMEOUT, "System appears to be in equilibrium\n"));
+	while(getScheduler()->getState() == Scheduler::NOTSTARTED) {
+		usleep(5000);
+	}	
+	sleep(3);
+	if(num == cur_timeout)
+		debuggerMessageHandler(debugger::pack(debugger::TIMEOUT, "TimeOut to avoid deadlock when system is in equilibrium\n"));
+}
+
+void BlinkyBlocksDebugger::waitForDebuggerEnd() {
+	debugger::joinThread();
+}
+
+void BlinkyBlocksDebugger::sendTerminateMsg(int id) {
+	debugger::sendMsg(id,debugger::TERMINATE,"");
+}
+
+BlinkyBlocksDebugger::~BlinkyBlocksDebugger() {};
 
 }

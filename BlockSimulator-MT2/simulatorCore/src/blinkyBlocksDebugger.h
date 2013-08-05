@@ -18,24 +18,6 @@ using namespace std;
 
 namespace BlinkyBlocks {
 
-/* -------------------------------------------------------------------*/
-/* To be removed later, just for testing purpose */
-/*inline void handleMessage (uint64_t *message) {
-		cout << "message handler debugger" << endl;
-};
-
-inline void (*initDebugger(void (*send)(int, int, uint64_t*), 
-					void (*pause)(int), 
-					void (*unPause)(void) ))(uint64_t*) {
-	cout << "init debugger" << endl;
-	return handleMessage;
-	
-};*/
-
-/* -------------------------------------------------------------------*/
-
-//typedef
-
 class VMDebugMessage {
 public:
 	int size; // in bytes
@@ -54,6 +36,7 @@ protected:
 	static BlinkyBlocksDebugger *debugger;
 
 public:
+	static bool threadHasFinished;
 	
 	BlinkyBlocksDebugger();
 	~BlinkyBlocksDebugger();
@@ -79,6 +62,13 @@ public:
 	void handleDebugMessage(uint64_t* m) {
 		debuggerMessageHandler(m);
 	}
+	
+	void timeOut(int num);
+	
+	void waitForDebuggerEnd();
+	
+	void sendTerminateMsg(int id);
+	
 };
 
 inline void createDebugger() { BlinkyBlocksDebugger::createDebugger(); }
@@ -95,7 +85,11 @@ inline void unPauseSimulation() { getDebugger()->unPauseSim(); }
 
 inline void handleDebugMessage(uint64_t* m) { getDebugger()->handleDebugMessage(m); }
 
-inline void quit() { glutLeaveMainLoop(); }
+inline void quit() {
+					BlinkyBlocksDebugger::threadHasFinished = true;
+					if(getScheduler()->getState() != Scheduler::ENDED)
+						glutLeaveMainLoop(); 
+					}
 
 }
 

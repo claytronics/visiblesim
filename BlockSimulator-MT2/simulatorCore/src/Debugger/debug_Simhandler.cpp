@@ -10,6 +10,7 @@
 #include "debug_Simhandler.hpp"
 #include "serialization.hpp"
 #include "types.hpp"
+#include "blinkyBlocksVM.h"
 
 using namespace std;
 using namespace debugger;
@@ -32,9 +33,15 @@ namespace debugger {
     static bool isDebug = false;
     static bool isSimDebug = false;
     static bool isPausedAtBreakpoint = false;
+	static bool okayToBroadcastPause = true;
+
+    static bool okayToPauseSimulation = false;
 
     /*number of messages the Master expects to recieve*/
     int numberExpected = 0;
+
+    bool verboseMode = false;
+    bool serializationMode = false;
 
     /**********************************************************************/
 
@@ -130,36 +137,35 @@ namespace debugger {
 
     /*********************************************************************/
 
+   void setFlags(string specification){
+        ostringstream msg;
+        for (int i = 0; i < specification.length(); i++){
+            if ((uint)specification[i] == 'V'){
+                verboseMode = true;
+            } else if ((uint)specification[i] == 'S'){
+                serializationMode = true;
+            }
+        }
+    }
 
-    /*DEBUG CONTROLLER -- main controller of pausing/unpausing/dumping VMs*/
-    /*execute instruction based on encoding and specification
-     *call from the debug_prompt -- There are two different sides to
-     *this function:  There is one side that handles sending messages to
-     *processes in which these process will recieve that message
-     *The other side pertains to the processes that are controlled by the
-     *the master process.  They will change their system state and give
-     *feed back to the master process (see debugger::display())
-     *When the master sends a message, it will expect to see a certain
-     *amount of messages sent back*/
     void debugController(int instruction, string specification){
 
         string type;
         string name;
         string node;
 
-        /*for use of numberExpected see debug_prompt.cpp, run()*/
-
-        /*if MPI debugging and the master process:
-         *send a  message instead of changing the system state
-         *as normally done in normal debugging*/
-
-            /*process of master debugger in MPI DEBUGGINGMODE*/
             if (instruction == CONTINUE || instruction == UNPAUSE){
-
-                /*continue a paused system by broadcasting an UNPAUSE signal*/
-                numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
+				okayToBroadcastPause = true;
+                okayToPauseSimulation = true;
+                /*continue a paused system by broadcasting an CONTINUE signal*/
                 unPauseSimulation();
-
+                numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
+            } else if (instruction == RUN){
+                okayToBroadcastPause = true;
+                okayToPauseSimulation = true;
+                /*continue a paused system by broadcasting an CONTINUE signal*/
+                unPauseSimulation();
+                numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
             } else if (instruction == DUMP) {
 
                 /*broadcast the message to all VMs*/
@@ -170,8 +176,8 @@ namespace debugger {
                 } else {
 
                     /*send to a specific VM to dump content*/
-                    numberExpected = sendMsg(atoi(specification.c_str()),
-                                             DUMP,specification);
+                    sendMsg(atoi(specification.c_str()),DUMP,specification);
+                    numberExpected = 1;
                 }
 
                 /*handle the breakpoints in the lists*/
@@ -182,14 +188,13 @@ namespace debugger {
                 if (node == ""){
 
                     /*broadcast the message if the node is not specified*/
-                    numberExpected = sendMsg(-1,instruction,specification,
-                                             BROADCAST);
+                    numberExpected = sendMsg(-1,instruction,specification,BROADCAST);
 
                 } else {
 
                     /*send break/remove to a specific node */
-                    numberExpected = sendMsg(atoi(node.c_str()),
-                                             instruction,specification);
+                    sendMsg(atoi(node.c_str()),instruction,specification);
+                    numberExpected = 1;
 
                 }
 
@@ -199,6 +204,10 @@ namespace debugger {
                 /*broadcast  a pause message*/
                 numberExpected = sendMsg(-1,PRINTLIST,"",BROADCAST);
 
+            } else if (instruction == MODE) {
+                setFlags(specification);
+                numberExpected = sendMsg(-1,MODE,specification,
+                                         BROADCAST);
             }
 
     }
@@ -211,14 +220,30 @@ namespace debugger {
         /*print the output and then tell all other VMs to pause*/
         if (instruction == BREAKFOUND){
             printf("%s",specification.c_str());
-        /*print content from a VM*/
-            sendMsg(-1,PAUSE,"",BROADCAST);
-            pauseSimulation();
+			/*print content from a VM*/
+            if(okayToBroadcastPause) {
+				sendMsg(-1,PAUSE,"",BROADCAST);
+				okayToBroadcastPause = false;
+            }
         } else if (instruction == PRINTCONTENT){
             printf("%s",specification.c_str());
         } else if (instruction == TERMINATE){
             printf("PROGRAM FINISHED\n");
             exit(0);
+        } else if (instruction == PAUSE){
+
+            /*prints more information*/
+            if (verboseMode){
+                printf("%s",specification.c_str());
+            }
+        } else if (instruction == TIMEOUT){
+            if (numberExpected != 0){
+                printf("%s",specification.c_str());
+                numberExpected = 1;
+                sendMsg(-1,PAUSE,"",BROADCAST);
+            } else {
+                numberExpected++;
+            }
         }
     }
 
@@ -249,15 +274,23 @@ namespace debugger {
         utils::byte* msg = (utils::byte*)new message_type[MAXLENGTH];
         int pos = 0;
         message_type debugFlag =  DEBUG;
-        size_t size = content.length() + 1;
+        size_t size = content.length() +1;
         size_t bufSize = MAXLENGTH*SIZE;
-        message_type msgSize = bufSize;
+        message_type msgSize = bufSize-SIZE;
+        utils::byte anotherIndicator = 0;
+        message_type timeStamp = 0;
+        message_type nodeId = 0;
 
 
-
-        /*same as above for first three fields*/
         utils::pack<message_type>(&msgSize,1,msg,bufSize,&pos);
         utils::pack<message_type>(&debugFlag,1,msg,bufSize,&pos);
+        /*timestamp*/
+        utils::pack<message_type>(&timeStamp,1,msg,bufSize,&pos);
+        /*VM ID*/
+        utils::pack<message_type>(&nodeId,1,msg,bufSize,&pos);
+        /*indicate if another message is coming*/
+        utils::pack<utils::byte>(&anotherIndicator,1,msg,bufSize,&pos);
+
         utils::pack<int>(&msgEncode,1,msg,bufSize,&pos);
         utils::pack<size_t>(&size,1,msg,bufSize,&pos);
 
@@ -306,6 +339,11 @@ namespace debugger {
         message_type size;
         message_type debugFlag;
         size_t specSize;
+         utils::byte anotherIndicator;
+        message_type nodeId;
+        message_type timeStamp;
+
+		BlinkyBlocks::checkForReceivedVMMessages();
 
         while(!messageQueue->empty()){
             /*process each message until empty*/
@@ -315,6 +353,10 @@ namespace debugger {
             /*unpack the message into readable form*/
             utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&size,1);
             utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&debugFlag,1);
+            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&timeStamp,1);
+            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&nodeId,1);
+            utils::unpack<utils::byte>(msg,MAXLENGTH*SIZE,&pos,
+                                        &anotherIndicator,1);
             utils::unpack<int>(msg,MAXLENGTH*SIZE,&pos,&instruction,1);
             utils::unpack<size_t>(msg,MAXLENGTH*SIZE,&pos,&specSize,1);
             utils::unpack<char>(msg,MAXLENGTH*SIZE,&pos,
@@ -324,6 +366,9 @@ namespace debugger {
 
             debugMasterController(instruction,spec);
             numberExpected--;
+
+            if (numberExpected == 0 && okayToPauseSimulation)
+                pauseSimulation();
 
             /*set up the variables and buffers for next message*/
             memset(specification,0,MAXLENGTH*SIZE);

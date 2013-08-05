@@ -65,14 +65,17 @@ public:
 	inline virtual Camera *getCamera() { return camera; };
 	virtual void setSelectedFace(int n);
 	virtual void menuChoice(int n);
-	/* Send a message to the VM associated to bId block depending on the handled event */
-	void tapBlock(int bId);
-	void accelBlock(int bId, int x, int y, int z);
-	void shakeBlock(int bId, int f);
 	
-	/* return to how many nodes the message has been sent */
-	int broadcastVMMessage(int size, uint64_t* message);
-	void stopBlock(int bId);
+	/* Sends the appropriate message (tap, ...) to the VM associated to bId block (through the scheduler)*/
+	void tapBlock(uint64_t date, int bId);
+	void accelBlock(uint64_t date, int bId, int x, int y, int z);
+	void shakeBlock(uint64_t date, int bId, int f);	
+	void stopBlock(uint64_t date, int bId);
+	
+	/* Sends directly (not scheduled) a message to all the active VMs of the world.
+	 * Returns to how many nodes the message has been sent.
+	 */
+	int broadcastDebugMessage(int size, uint64_t* message);
 };
 
 inline void createWorld(int slx,int sly,int slz, int argc, char *argv[]) {

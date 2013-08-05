@@ -131,6 +131,7 @@ CodeEndSimulationEvent::~CodeEndSimulationEvent() {
 
 void CodeEndSimulationEvent::consume() {
 	EVENT_CONSUME_INFO();
+	BaseSimulator::getScheduler()->setState(BaseSimulator::Scheduler::ENDED);
 }
 
 const string CodeEndSimulationEvent::getEventName() {
@@ -153,7 +154,7 @@ ProcessLocalEvent::~ProcessLocalEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void ProcessLocalEvent::consume() {
+void ProcessLocalEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
 	concernedBlock->processLocalEvent();
 }

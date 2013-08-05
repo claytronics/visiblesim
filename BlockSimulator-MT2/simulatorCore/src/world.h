@@ -62,9 +62,9 @@ public:
 	virtual Camera *getCamera() { return NULL; };
 	virtual void menuChoice(int) {};
 	/* Notify the bId block that these events happened */
-	virtual void tapBlock(int bId) {};
-	virtual void accelBlock(int bId, int x, int y, int z) {};
-	virtual void shakeBlock(int bId, int f) {};
+	virtual void tapBlock(uint64_t date, int bId) {};
+	virtual void accelBlock(uint64_t date, int bId, int x, int y, int z) {};
+	virtual void shakeBlock(uint64_t date, int bId, int f) {};
 	/* Stop the block execution */
 	void stopSimulation();
 };

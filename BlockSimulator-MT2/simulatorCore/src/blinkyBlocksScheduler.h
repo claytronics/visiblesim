@@ -16,25 +16,24 @@
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include "trace.h"
-#include <set>
 
 using namespace boost;
 
 namespace BlinkyBlocks {
 
 class BlinkyBlocksScheduler : public BaseSimulator::Scheduler {
-protected:
+protected:	
+	boost::thread *schedulerThread;
+	int schedulerMode;
+	
 	BlinkyBlocksScheduler();
 	virtual ~BlinkyBlocksScheduler();
 	void* startPaused(/*void *param */);
 	
-	//boost::interprocess::interprocess_mutex mutex_schedule;
-	boost::thread *schedulerThread;
-	int schedulerMode;
-	
 public:
 
 	boost::interprocess::interprocess_semaphore *sem_schedulerStart;
+	
 	static void createScheduler();
 	static void deleteScheduler();
 	static BlinkyBlocksScheduler* getScheduler() {
@@ -51,14 +50,10 @@ public:
 	void waitForSchedulerEnd() {
 		schedulerThread->join();
 	}
-	
-	//void lock();
-	//void unlock();
-	//bool scheduleLock(Event *ev) {lock(); bool ret = schedule(ev); unlock(); return ret;};
-	
+		
 	// stop for good
-	void stop();	
-	void pause(int timestamp);
+	void stop(uint64_t date);	
+	void pause(uint64_t date);
 	void unPause();
 		
 	// NOT TESTED
