@@ -9,6 +9,8 @@
 #include "blinkyBlocksSimulator.h"
 #include "blinkyBlocksBlockCode.h"
 #include "blinky01BlockCode.h"
+#include "blinkyBlocksDebugger.h"
+#include "blinkyBlocksVM.h"
 #include <trace.h> 
 
 using namespace std;
@@ -16,8 +18,6 @@ using namespace BlinkyBlocks;
 
 int main(int argc, char **argv) {
 	
-
-
 	OUTPUT << "\033[1;33m" << "Starting Blinky Blocks simulation (main) ..." << "\033[0m" << endl;
 
 	createSimulator(argc, argv, Blinky01BlockCode::buildNewBlockCode);
@@ -33,10 +33,12 @@ int main(int argc, char **argv) {
 	BlinkyBlocks::getScheduler()->printInfo();
 	BaseSimulator::getWorld()->printInfo();
 	
+	if (BlinkyBlocks::BlinkyBlocksVM::isInDebuggingMode()) {
+		BlinkyBlocks::getDebugger()->waitForDebuggerEnd();
+	}
 	BlinkyBlocks::getScheduler()->waitForSchedulerEnd();
 	deleteSimulator();
 	
 	OUTPUT << "\033[1;33m" << "end (main)" << "\033[0m" << endl;
-	//exit(0);
 	return(0);
 }

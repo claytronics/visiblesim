@@ -61,7 +61,8 @@ VMStopEvent::~VMStopEvent() {
 
 void VMStopEvent::consume() {
 	EVENT_CONSUME_INFO();
-	concernedBlock->scheduleLocalEvent(EventPtr(new VMStopEvent(this)));
+	//concernedBlock->scheduleLocalEvent(EventPtr(new VMStopEvent(this)));
+	concernedBlock->blockCode->processLocalEvent(EventPtr(new VMStopEvent(this)));
 }
 
 const string VMStopEvent::getEventName() {
@@ -349,7 +350,7 @@ VMDebugPauseSimEvent::~VMDebugPauseSimEvent() {
 void VMDebugPauseSimEvent::consume() {
 	EVENT_CONSUME_INFO();
 	OUTPUT << "pause sim degin" << endl;
-	getScheduler()->setState(PAUSED);
+	getScheduler()->setState(Scheduler::PAUSED);
 	OUTPUT << "pause sim end" << endl;
 }
 

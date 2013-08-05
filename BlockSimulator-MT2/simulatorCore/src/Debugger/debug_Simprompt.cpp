@@ -16,7 +16,7 @@ namespace debugger {
     /*to store the last input in the debugger*/
     int lastInstruction = 0;
     string lastBuild = "";
-
+	pthread_t tid = 0;
 
     int (*debugSendMsg)(int,message_type*,int);
     void (*pauseSimulation)(void);
@@ -30,11 +30,7 @@ namespace debugger {
                       void (*unPauseSim)(void),
                       void (*quitDebug)(void),
                       std::ostream& o, std::istream& i){
-
-
-        pthread_t tid;
-
-
+						  
         cin.rdbuf(i.rdbuf());
         cout.rdbuf(o.rdbuf());
 
@@ -179,7 +175,7 @@ namespace debugger {
       sendMsg(-1,TERMINATE,"",true);
       delete messageQueue;
       quitDebugger();
-      exit(0);
+      pthread_exit(NULL);
     } else {
       cout << "unknown command: type 'help' for options " << endl;
       retVal = NOTHING;
@@ -211,5 +207,9 @@ namespace debugger {
     cout << "\t-Press Enter to use last Input" << endl;
     cout << endl;
     cout << "*******************************************************************" << endl;
+  }
+  
+  void joinThread() {
+	pthread_join(tid, NULL); 
   }
 }

@@ -34,8 +34,6 @@ class BlockCode;
 //
 //===========================================================================================================
 
-// alive state must be associated to a number >= 2
-enum BlockState {STOPPED = 0, REMOVED = 1, ALIVE = 2, COMPUTING = 3};
 
 class BuildingBlock {
 protected:
@@ -46,10 +44,12 @@ protected:
 	list<P2PNetworkInterface*> P2PNetworkInterfaceList;
 
 	list<EventPtr> localEventsList;
-public:
+public:	
+	// alive state must be associated to a number >= 2
+	enum State {STOPPED = 0, REMOVED = 1, ALIVE = 2, COMPUTING = 3};
 	int blockId;
 	BlockCode *blockCode;
-	BlockState state;
+	State state;
 	boost::rand48 generator;
 
 	BuildingBlock(int bId);
@@ -71,9 +71,9 @@ public:
 	virtual void removeNeighbor(P2PNetworkInterface *ni) {};
 	
 	virtual void stop() {};
-	int getState() { return state; };
-	virtual void setState(BlockState s) { state = s; };
 	
+	inline State getState() { return state; }
+	inline void setState(State s) { state = s; }	
 	int getNextRandomNumber();
 };
 

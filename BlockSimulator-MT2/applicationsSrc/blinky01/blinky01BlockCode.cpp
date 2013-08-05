@@ -63,41 +63,13 @@ VMDataMessage::VMDataMessage(uint64_t src, uint64_t* m): Message() {
 	message = new uint64_t[size/sizeof(uint64_t)+1];
 	memcpy(message, m, size);
 	message[1] = VM_MESSAGE_RECEIVE_MESSAGE;
-	//message[2] = 0; // timestamp
-	//message[3] = m[5];
-	//message[5] = m[3];
 	message[5] = src;
 	message[3] = m[5];
-	
-	/*message[3] = src;
-	switch (m[4]) {
-		case Front:
-			message[4] = Back;
-			break;
-		case Back:
-			message[4] = Front;
-			break;
-		case Left:
-			message[4] = Right;
-			break;
-		case Right:
-			message[4] = Left;
-			break;
-		case Top:
-			message[4] = Bottom;
-			break;
-		case Bottom:
-			message[4] = Top;
-			break;
-		default:
-			ERRPUT << "*** ERROR *** : unknown face" << endl;
-			break;
-	}*/
 }
 
 VMDataMessage::VMDataMessage(VMDataMessage *m) : Message() {
 	uint64_t size = m->message[0] + sizeof(uint64_t);
-	message = new uint64_t[size/sizeof(uint64_t)];
+	message = new uint64_t[size/sizeof(uint64_t)+1];
 	memcpy(message, m->message, size);
 }
 
@@ -123,19 +95,14 @@ void Blinky01BlockCode::startup() {
 	stringstream info;
 	info << "  Starting Blinky01BlockCode in block " << hostBlock->blockId;
 	BlinkyBlocks::getScheduler()->trace(info.str(),hostBlock->blockId);
-	// Send the ID without being first scheduled
-	//bb->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), bb)));
 	if (BlinkyBlocks::getScheduler()->getMode() == SCHEDULER_MODE_FASTEST) {
 		BlinkyBlocks::getScheduler()->schedule(new VMStartComputationEvent(BaseSimulator::getScheduler()->now()+1, bb, 20));
 	}
-	//((BlinkyBlocksBlock*)hostBlock)->vm->asyncReadMessage();
 }
 
 void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
 	OUTPUT << "Blinky01BlockCode: type: " << getStringMessage(message[1]) << " size: " << message[0] << endl;
-	//uint64_t* message = bb->vm->getBufferPtr()->message;
-	//cout << " message received " << message[1] << endl;
 	switch (message[1]) {
 		case VM_MESSAGE_SET_COLOR:			
 			{
@@ -146,39 +113,27 @@ void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 			break;
 		case VM_MESSAGE_SEND_MESSAGE:
 			{
-			// format: <size> <command> <timestamp> <src> <face> <content...>
-			
-			//cout << "receive a message: " << message[0] << " " << message[1] << " " << message[2] << " "<< message[3] << " " << message[4] << " " << message[5] << " " << message[6] << endl;
+			// format: <size> <command> <timestamp> <src> <destFace=0: not used> <destId> < <content...>
 			P2PNetworkInterface *interface;
-			//interface = bb->getInterface((NeighborDirection)message[4]);
 			interface = bb->getInterfaceDestId(message[5]);
-			//cout << "dest: " << message[<
-			//message[4] = bb->getDirection(interface);
-			//cout << "message modified: " << message[0] << " " << message[1] << " " << message[2] << " "<< message[3] << " " << message[4] << " " << message[5] << endl;
 			if (interface == NULL) {
 				OUTPUT << "interface not found" << endl;
 				return;
 			}
-			//cout << bb->blockId << "-->" << interface->hostBlock->blockId << endl;
 			BlinkyBlocks::getScheduler()->schedule(new VMSendMessageEvent(BlinkyBlocks::getScheduler()->now(), bb,
 					new VMDataMessage(hostBlock->blockId, message), interface));
-					/*BaseSimulator::getScheduler()->scheduleLock(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now(),
-					new VMDataMessage(hostBlock->blockId, size, message), interface));*/
 			}
 			break;
 		case VM_MESSAGE_DEBUG:
 			{
+			// Copy the message because it will be queued
 			uint64_t *m = new uint64_t[message[0]+sizeof(uint64_t)];
 			memcpy(m, message, message[0]+sizeof(uint64_t));
-			//memmove(message, message+4, message[0]-4*sizeof(uint64_t));
-			// debug message handler
 			handleDebugMessage(m);
-			//cout << "debug message received" << endl;
 			}
 			break;
-		case VM_MESSAGE_END_COMPUTATION: // format: <size> <command> <timestamp> <src> <duration>
-			//OUTPUT << bb->blockId << " END COMPUTATION MESSAGE" << endl;
-			//cout << bb->blockId << " END COMPUTATION MESSAGE" << endl;
+		case VM_MESSAGE_END_COMPUTATION:
+			// format: <size> <command> <timestamp> <src> <duration>
 			computing = false;
 			endComputingTime = (int) message[2];
 			break;
@@ -191,26 +146,20 @@ void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 bool Blinky01BlockCode::mustBeQueued() {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
 	uint64_t* message = bb->vm->getBufferPtr()->message;
-	if(hostBlock->state == COMPUTING) {
+	if(hostBlock->getState() == BlinkyBlocksBlock::COMPUTING) {
 		return message[1] == VM_MESSAGE_SEND_MESSAGE or message[1] ==  VM_MESSAGE_SET_COLOR;
 	} else {
 		return false;
 	}
 }
 
-// WARNING: VMs appear to always use source node...
 void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	stringstream info;
 
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
 	OUTPUT << "Blinky01BlockCode: process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
 	//cout << "Blinky01BlockCode: "<< bb->blockId << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
-	/*cout << "block " << bb->blockId << "random value:" << endl;
-	std::cout << "Random value: " << generator()%1000 << std::endl;
-	std::cout << "Random value: " << generator()%1000 << std::endl;
-	std::cout << "Random value: " << generator()%1000 << std::endl;
-	std::cout << "Random value: " << generator()%1000 << std::endl;*/
-	
+
 	switch (pev->eventType) {
 		case EVENT_SET_ID:
 			{
@@ -226,12 +175,17 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			break;
 		case EVENT_STOP:
 			{
-			uint64_t message[4];
-			message[0] = 3*sizeof(uint64_t);	
-			message[1] = VM_MESSAGE_STOP;
-			message[2] = BaseSimulator::getScheduler()->now();
-			message[3] = hostBlock->blockId;
-			bb->vm->sendMessage(4*sizeof(uint64_t), message);
+			if( bb->vm == NULL) {return;}
+			if(BlinkyBlocksVM::isInDebuggingMode()) {
+				getDebugger()->sendTerminateMsg(bb->blockId);
+			} else {
+				uint64_t message[4];
+				message[0] = 3*sizeof(uint64_t);	
+				message[1] = VM_MESSAGE_STOP;
+				message[2] = BaseSimulator::getScheduler()->now();
+				message[3] = hostBlock->blockId;
+				bb->vm->sendMessage(4*sizeof(uint64_t), message);
+			}
 			bb->stopVM();
 			}
 			break;
@@ -316,20 +270,13 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			bb->vm->sendMessage(5*sizeof(uint64_t), message);
 			}
 			break;
-		case EVENT_DEBUG_MESSAGE:
-			{
-			// forward the debugging message
-			//VMDebugMessage *m = (VMDebugMessage*) (boost::static_pointer_cast<VMDebugMessageEvent>(pev))->message.get();
-			//bb->vm->sendMessage(m->size, m->message);
-			}
-			break;
 		case EVENT_VM_START_COMPUTATION:
 			{
 			uint64_t message[5];
 			uint64_t duration;
 
 			computing = true;
-			bb->state = COMPUTING;
+			bb->setState(BlinkyBlocksBlock::COMPUTING);
 			duration = (boost::static_pointer_cast<VMStartComputationEvent>(pev))->duration;
 			
 			message[0] = 4*sizeof(uint64_t);	
@@ -363,15 +310,9 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			break;
 		case EVENT_VM_EFFECTIVE_END_COMPUTATION:
 			{
-			static int i[5];
 			//cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << " effective end of computation " << endl;
-			bb->state = ALIVE;
+			bb->setState(BlinkyBlocksBlock::ALIVE);
 			bb->vm->handleQueuedMessages();
-			// Test purpose
-			if (i[hostBlock->blockId] < 3) {
-				BlinkyBlocks::getScheduler()->schedule(new VMStartComputationEvent(BlinkyBlocks::getScheduler()->now()+1, bb, 20));
-				i[hostBlock->blockId]++;
-			}
 			}
 			break;
 		default:

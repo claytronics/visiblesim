@@ -211,6 +211,7 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 
 BlinkyBlocksSimulator::~BlinkyBlocksSimulator() {
 	OUTPUT << "\033[1;34m" << "BlinkyBlocksSimulator destructor" << "\033[0m" <<endl;
+	deleteDebugger();
 	deleteVMServer();
 }
 
