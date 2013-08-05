@@ -108,6 +108,7 @@ void GlutContext::reshapeFunc(int w,int h) {
 // fonction associée aux interruptions générées par la souris bouton pressé
 // - x,y : coordonnée du curseur dans la fenêtre
 void GlutContext::motionFunc(int x,int y) {
+	if (mainWindow->mouseFunc(-1,GLUT_DOWN,x,screenHeight - y)>0) return;
 	if (keyboardModifier!=GLUT_ACTIVE_CTRL) { // rotation du point de vue
 		Camera* camera=getWorld()->getCamera();
 		camera->mouseMove(x,y);
@@ -115,7 +116,9 @@ void GlutContext::motionFunc(int x,int y) {
 }
 
 void GlutContext::passiveMotionFunc(int x,int y) {
-	int n=selectFunc(x,y);
+	int n=mainWindow->mouseFunc(-1,-1,x,screenHeight - y);
+	if (n>0) return;
+	n=selectFunc(x,y);
 	if (n) {
 		GlBlock *slct=BaseSimulator::getWorld()->getBlockByNum(n-1);
 		popup->setCenterPosition(x,screenHeight - y);
@@ -124,7 +127,6 @@ void GlutContext::passiveMotionFunc(int x,int y) {
 	} else {
 		popup->show(false);
 	}
-	mainWindow->mouseFunc(-1,-1,x,screenHeight - y);
 	if (popupMenu) popupMenu->mouseFunc(-1,-1,x,screenHeight - y);
 	if (helpWindow) helpWindow->mouseFunc(-1,-1,x,screenHeight - y);
 }
@@ -135,7 +137,7 @@ void GlutContext::passiveMotionFunc(int x,int y) {
 // - state : état des touches du clavier
 // - x,y : coordonnée du curseur dans la fenêtre
 void GlutContext::mouseFunc(int button,int state,int x,int y) {
-	mainWindow->mouseFunc(button,state,x,screenHeight - y);
+	if (mainWindow->mouseFunc(button,state,x,screenHeight - y)>0) return;
 	if (popupMenu) {
 		int n=popupMenu->mouseFunc(button,state,x,screenHeight - y);
 		if (n) {
@@ -188,6 +190,7 @@ void GlutContext::mouseFunc(int button,int state,int x,int y) {
 				// set n-1 block selected block (no selected block if n=0
 				if (n) BaseSimulator::getWorld()->setSelectedBlock(n-1)->toggleHighlight();
 				else BaseSimulator::getWorld()->setSelectedBlock(-1);
+				mainWindow->select(BaseSimulator::getWorld()->getSelectedBlock());
 		  	} else if (button==GLUT_RIGHT_BUTTON) {
 				int n=selectFaceFunc(x,y);
 				if (n) {

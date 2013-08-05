@@ -56,11 +56,38 @@ public :
 	void glDraw();
 };
 
+class BlockDebugData {
+public :
+	int blockId;
+	string str;
+
+	BlockDebugData(int id,const string &s):blockId(id),str(s) {};
+};
+
+class GlutSlider : public GlutWindow {
+	int buttonHeight,buttonY;
+	int dataTextLines,nbreTextLines,dataPosition;
+	bool mouseDown;
+	int currentMousePos;
+public :
+	GlutSlider(GlutWindow *parent,GLuint pid,GLint px,GLint py,GLint ph,const char *titreTexture,int ntl);
+	virtual ~GlutSlider();
+	void setDataTextLines(int dtl) { dataTextLines=dtl; dataPosition=0; update(); };
+	void incDataTextLines() { dataTextLines++; update(); };
+	int getPosition() { return dataPosition; }
+	void setPosition(int pos) { dataPosition=pos; }
+	void glDraw();
+	int mouseFunc(int button,int state,int x,int y);
+protected :
+	void update();
+};
+
 class GlutSlidingMainWindow : public GlutWindow {
 	int openingLevel;
 	GlutButton* buttonOpen, *buttonClose;
-	multimap<int,string> traces;
-	pair<multimap<string, int>::iterator, multimap<string, int>::iterator> selection;
+	multimap<uint64_t,BlockDebugData*> traces;
+	GlutSlider *slider;
+	GlBlock *selectedBlock;
 public :
 	GlutSlidingMainWindow(GLint px,GLint py,GLint pw,GLint ph,const char *titreTexture);
 	virtual ~GlutSlidingMainWindow();
@@ -72,6 +99,7 @@ public :
 	void reshapeFunc(int mw,int mh);
 	void glDraw();
 	void addTrace(int id,const string &str);
+	void select(GlBlock *sb);
 };
 
 class GlutPopupWindow : public GlutWindow {
@@ -114,8 +142,5 @@ public :
 	int mouseFunc(int button,int state,int x,int y);
 	void glDraw();
 };
-
-#define ID_SW_BUTTON_OPEN	1001
-#define ID_SW_BUTTON_CLOSE	1002
 
 #endif /* INTERFACE_H_ */

@@ -45,7 +45,7 @@ void GlBlock::toggleHighlight() {
 
 string GlBlock::getInfo() {
 	char tmp[1024];
-	sprintf(tmp,"%d\nPos=(%.1f,%.1f,%.1f)\nCol=(%4.2f,%4.2f,%4.2f)",blockId,position[0],position[1],position[2],color[0],color[1],color[2]);
+	sprintf(tmp,"%d\nPos=(%.1f,%.1f,%.1f) Col=(%4.1f,%4.1f,%4.1f)",blockId,position[0],position[1],position[2],color[0],color[1],color[2]);
 
 	return string(tmp);
 }
