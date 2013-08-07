@@ -25,8 +25,8 @@
 		<block position="5,5,7"/>
 		<block position="4,5,6"/>
 		<block position="6,5,6"/>
-	
-		<!-- grande croix 
+
+		<!-- grande croix
 		<block position="5,5,8"/>
 		<block position="5,5,9"/>
 
@@ -34,7 +34,7 @@
 		<block position="4,5,7"/>
 		<block position="6,5,7"/>
 		<block position="7,5,7"/>-->
-			
+
 	<!-- Back
 		<block position="5,6,5"/>
 		<block position="5,7,5"/>
