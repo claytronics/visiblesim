@@ -37,6 +37,9 @@ namespace debugger {
 
     static bool okayToPauseSimulation = false;
 
+    static bool printLimitation = true;
+    static bool okayToPrint = true;
+
     /*number of messages the Master expects to recieve*/
     int numberExpected = 0;
 
@@ -162,61 +165,72 @@ namespace debugger {
         string name;
         string node;
 
-            if (instruction == CONTINUE || instruction == UNPAUSE){
-				okayToBroadcastPause = true;
-                okayToPauseSimulation = true;
-                /*continue a paused system by broadcasting an CONTINUE signal*/
-                unPauseSimulation();
-                numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
-            } else if (instruction == RUN){
-                okayToBroadcastPause = true;
-                okayToPauseSimulation = true;
-                /*continue a paused system by broadcasting an CONTINUE signal*/
-                unPauseSimulation();
-                numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
-            } else if (instruction == DUMP) {
 
-                /*broadcast the message to all VMs*/
-                if (specification == "all"){
+        okayToPrint = true;
+        if (instruction == CONTINUE || instruction == UNPAUSE){
+            okayToBroadcastPause = true;
+            okayToPauseSimulation = true;
+            /*continue a paused system by broadcasting an CONTINUE signal*/
+            unPauseSimulation();
+            printLimitation = false;
+            numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
+        } else if (instruction == RUN){
+            okayToBroadcastPause = true;
+            okayToPauseSimulation = true;
+            printLimitation = false;
+            /*continue a paused system by broadcasting an CONTINUE signal*/
+            unPauseSimulation();
+            numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
+        } else if (instruction == DUMP) {
 
-                    numberExpected = sendMsg(-1,DUMP,specification,BROADCAST);
+            /*broadcast the message to all VMs*/
+            if (specification == "all"){
 
-                } else {
+                numberExpected = sendMsg(-1,DUMP,specification,BROADCAST);
 
-                    /*send to a specific VM to dump content*/
-                    sendMsg(atoi(specification.c_str()),DUMP,specification);
-                    numberExpected = 1;
-                }
+                printLimitation = false;
+            } else {
 
-                /*handle the breakpoints in the lists*/
-            } else if (instruction == REMOVE||instruction == BREAKPOINT) {
-
-                /*extract the destination*/
-                node = getNode(specification);
-                if (node == ""){
-
-                    /*broadcast the message if the node is not specified*/
-                    numberExpected = sendMsg(-1,instruction,specification,BROADCAST);
-
-                } else {
-
-                    /*send break/remove to a specific node */
-                    sendMsg(atoi(node.c_str()),instruction,specification);
-                    numberExpected = 1;
-
-                }
-
-
-            } else if (instruction == PRINTLIST) {
-
-                /*broadcast  a pause message*/
-                numberExpected = sendMsg(-1,PRINTLIST,"",BROADCAST);
-
-            } else if (instruction == MODE) {
-                setFlags(specification);
-                numberExpected = sendMsg(-1,MODE,specification,
-                                         BROADCAST);
+                printLimitation = false;
+                /*send to a specific VM to dump content*/
+                sendMsg(atoi(specification.c_str()),DUMP,specification);
+                numberExpected = 1;
             }
+
+            /*handle the breakpoints in the lists*/
+        } else if (instruction == REMOVE||instruction == BREAKPOINT) {
+
+            /*extract the destination*/
+            node = getNode(specification);
+            if (node == ""){
+
+                printLimitation = true;
+                /*broadcast the message if the node is not specified*/
+                numberExpected = sendMsg(-1,instruction,specification,BROADCAST);
+
+            } else {
+
+                printLimitation = true;
+                /*send break/remove to a specific node */
+                sendMsg(atoi(node.c_str()),instruction,specification);
+                numberExpected = 1;
+
+            }
+
+
+        } else if (instruction == PRINTLIST) {
+
+            printLimitation = false;
+            /*broadcast  a pause message*/
+            numberExpected = sendMsg(-1,PRINTLIST,"",BROADCAST);
+
+        } else if (instruction == MODE) {
+
+            printLimitation = true;
+            setFlags(specification);
+            numberExpected = sendMsg(-1,MODE,specification,
+                                     BROADCAST);
+        }
 
     }
 
@@ -234,7 +248,12 @@ namespace debugger {
 				okayToBroadcastPause = false;
             }
         } else if (instruction == PRINTCONTENT){
-            printf("%s",specification.c_str());
+            if (!verboseMode&&printLimitation&&okayToPrint){
+                printf("%s",specification.c_str());
+                okayToPrint  = false;
+            } else if (verboseMode||!printLimitation) {
+                printf("%s",specification.c_str());
+            }
         } else if (instruction == TERMINATE){
             printf("PROGRAM FINISHED\n");
             exit(0);
