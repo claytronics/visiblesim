@@ -65,7 +65,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	state = RUNNING;
 	checkForReceivedVMMessages();
 	//BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
-	int systemStartTime, systemStopTime;
+	uint64_t systemStartTime, systemStopTime, reachedDate;
 	multimap<uint64_t, EventPtr>::iterator first, tmp;
 	EventPtr pev;
 	systemStartTime = (glutGet(GLUT_ELAPSED_TIME))*1000;
@@ -73,6 +73,25 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 
 	switch (schedulerMode) {
 		case SCHEDULER_MODE_FASTEST:
+		while (!eventsMap.empty()) {
+			lock();						
+			first = eventsMap.begin();		
+			pev = (*first).second;
+			while (!getWorld()->dateHasBeenReachedByAll(pev->date)) {
+				waitForOneVMMessage();
+			}
+			currentDate = pev->date;
+			unlock();
+			pev->consume();
+			lock();
+			eventsMap.erase(first);
+			eventsMapSize--;
+			unlock();
+			checkForReceivedVMMessages();
+		}
+		//cout << "scheduler end at "<< now() << "..." << endl;
+		break;
+		case SCHEDULER_MODE_FASTEST2:
 			while (!eventsMap.empty()) {
 				lock();						
 				first = eventsMap.begin();		

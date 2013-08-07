@@ -19,6 +19,8 @@
 
 using namespace boost;
 
+#define SCHEDULER_MODE_FASTEST2 3
+
 namespace BlinkyBlocks {
 
 class BlinkyBlocksScheduler : public BaseSimulator::Scheduler {
@@ -31,7 +33,6 @@ protected:
 	void* startPaused(/*void *param */);
 	
 public:
-
 	boost::interprocess::interprocess_semaphore *sem_schedulerStart;
 	
 	static void createScheduler();
