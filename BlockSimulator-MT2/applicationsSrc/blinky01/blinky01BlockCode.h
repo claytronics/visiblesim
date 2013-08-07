@@ -23,8 +23,8 @@ public:
 
 class Blinky01BlockCode : public BlinkyBlocks::BlinkyBlocksBlockCode {
 private:
-	bool computing;
-	int endComputingTime;
+	bool computing; // deterministic mode 2
+	uint64_t endComputingTime; // deterministic mode 2
 	
 public:
 
@@ -35,7 +35,7 @@ public:
 	void processLocalEvent(EventPtr pev);
 	void handleNewMessage(uint64_t *message);
 	bool mustBeQueued();
-	
+	void handleDeterministicMode();
 	static BlinkyBlocks::BlinkyBlocksBlockCode *buildNewBlockCode(BlinkyBlocks::BlinkyBlocksBlock *host);
 };
 

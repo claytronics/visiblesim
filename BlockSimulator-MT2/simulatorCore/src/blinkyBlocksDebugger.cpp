@@ -89,6 +89,10 @@ void BlinkyBlocksDebugger::sendTerminateMsg(int id) {
 	debugger::sendMsg(id,debugger::TERMINATE,"");
 }
 
+void BlinkyBlocksDebugger::handlePauseRequest() {
+	debugger::handlePauseCommand();
+}
+
 BlinkyBlocksDebugger::~BlinkyBlocksDebugger() {};
 
 }

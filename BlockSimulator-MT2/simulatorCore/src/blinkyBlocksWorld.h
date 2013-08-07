@@ -76,6 +76,8 @@ public:
 	 * Returns to how many nodes the message has been sent.
 	 */
 	int broadcastDebugMessage(int size, uint64_t* message);
+	
+	bool dateHasBeenReachedByAll(uint64_t date);
 };
 
 inline void createWorld(int slx,int sly,int slz, int argc, char *argv[]) {

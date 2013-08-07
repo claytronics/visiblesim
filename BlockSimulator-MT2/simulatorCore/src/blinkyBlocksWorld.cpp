@@ -495,5 +495,39 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 			delete GlutContext::helpWindow;
 		GlutContext::helpWindow = new GlutHelpWindow(NULL,10,40,540,480,"../../simulatorCore/blinkyBlocksHelp.txt");
 	}
+	
+	bool BlinkyBlocksWorld::dateHasBeenReachedByAll(uint64_t date) {
+		static uint64_t minReachedDate = 0;
+		uint64_t min;
+		int alive = 0, hasNoWork = 0;
+		if (date <= minReachedDate) {
+			return true;
+		}
+		map<int, BaseSimulator::BuildingBlock*>::iterator it;
+		for(it = buildingBlocksMap.begin(); 
+				it != buildingBlocksMap.end(); it++) {
+			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;			
+			BlinkyBlocksBlockCode *bc = (BlinkyBlocksBlockCode*) bb->blockCode;
+			if (bb->getState() < BlinkyBlocksBlock::ALIVE) {
+				continue;
+			}
+			alive++;
+			if (!bc->hasWork) {
+				hasNoWork++;
+				continue;
+			}
+			if (alive == 1) {
+				min = bc->currentLocalDate;
+			} else if (bc->currentLocalDate < min) {
+				min = bc->currentLocalDate;
+			}
+		}
+		//cout << "alive: " << alive <<", hasNoWork: " << hasNoWork << endl;
+		if (alive==hasNoWork) {
+			return true;
+		}
+		minReachedDate = min;
+		return (date <= min);
+	}
 
 } // BlinkyBlock namespace

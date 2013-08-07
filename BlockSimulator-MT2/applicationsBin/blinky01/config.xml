@@ -11,7 +11,7 @@
 
 -->
 
-<vm serverport="5000" vmPath="/home/dcampbel/Research/meld/meld" programPath="/home/dcampbel/Research/meld/examples/rainbow.m" debugging="True" />
+<vm serverport="5000" vmPath="/home/ubuntu/Bureau/meld/meld" programPath="/home/ubuntu/Bureau/meld/examples/rainbow.m" debugging="False" />
 
 <world gridsize="10,10,10">
 	<camera target="200,200,200" directionSpherical="0,70,400" angle="45"/>

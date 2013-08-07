@@ -69,6 +69,8 @@ public:
 	
 	void sendTerminateMsg(int id);
 	
+	void handlePauseRequest();
+	
 };
 
 inline void createDebugger() { BlinkyBlocksDebugger::createDebugger(); }

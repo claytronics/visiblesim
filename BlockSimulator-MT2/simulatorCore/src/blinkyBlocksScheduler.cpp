@@ -65,7 +65,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	state = RUNNING;
 	checkForReceivedVMMessages();
 	//BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
-	int systemStartTime, systemStopTime;
+	uint64_t systemStartTime, systemStopTime, reachedDate;
 	multimap<uint64_t, EventPtr>::iterator first, tmp;
 	EventPtr pev;
 	systemStartTime = (glutGet(GLUT_ELAPSED_TIME))*1000;
@@ -73,6 +73,29 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 
 	switch (schedulerMode) {
 		case SCHEDULER_MODE_FASTEST:
+		cout << "SCHEDULER_MODE_FASTEST" << endl;
+		while (!eventsMap.empty()) {
+			do {
+				checkForReceivedVMMessages(); //waitForOneVMMessage();
+				usleep(5000);
+				lock();
+				first = eventsMap.begin();		
+				pev = (*first).second;
+				unlock();
+			} while (!getWorld()->dateHasBeenReachedByAll(pev->date));
+			//cout << "date " << now() << " has been reached" << endl;
+			currentDate = pev->date;
+			unlock();
+			pev->consume();
+			lock();
+			eventsMap.erase(first);
+			eventsMapSize--;
+			unlock();
+			checkForReceivedVMMessages();
+		}
+		cout << "scheduler end at "<< now() << "..." << endl;
+		break;
+		case SCHEDULER_MODE_FASTEST2:
 			while (!eventsMap.empty()) {
 				lock();						
 				first = eventsMap.begin();		
@@ -86,7 +109,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 				unlock();
 				checkForReceivedVMMessages();
 				}
-				cout << "scheduler end..." << endl;
+				//cout << "scheduler end at "<< now() << "..." << endl;
 			break;
 		case SCHEDULER_MODE_REALTIME:
 			OUTPUT << "Realtime mode scheduler\n";
@@ -201,6 +224,7 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 		eventsMap.insert(pair<uint64_t, EventPtr>(pev->date,pev));
 		break;
 	case SCHEDULER_MODE_FASTEST:
+	case SCHEDULER_MODE_FASTEST2:
 		if (eventsMap.count(pev->date) > 1 && pev->getConcernedBlock() != NULL) {
 			std::pair<multimap<uint64_t, EventPtr>::iterator,multimap<uint64_t, EventPtr>::iterator> range = eventsMap.equal_range(pev->date);
 			multimap<uint64_t, EventPtr>::iterator it = range.first;

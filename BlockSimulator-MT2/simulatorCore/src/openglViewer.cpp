@@ -10,7 +10,7 @@
 #include "scheduler.h"
 #include "events.h"
 #include "trace.h"
-#include "Debugger/debug_Simhandler.hpp"
+#include "blinkyBlocksDebugger.h"
 
 //===========================================================================================================
 //
@@ -224,7 +224,7 @@ void GlutContext::keyboardFunc(unsigned char c, int x, int y)
 	//  case 'l' : showLinks = !showLinks; break;
       case 'r' : getScheduler()->start(SCHEDULER_MODE_REALTIME); break;
       //case 'p' : getScheduler()->pauseSimulation(getScheduler()->now()); break;
-      case 'p' : debugger::handlePauseCommand(); break;
+      case 'p' : BlinkyBlocks::getDebugger()->handlePauseRequest(); break;
 	  case 'R' : getScheduler()->start(SCHEDULER_MODE_FASTEST); break;
 	  //case 'u' : getScheduler()->unPauseSimulation(); break;
 	  case 'z' : {
