@@ -23,9 +23,8 @@ public:
 
 class Blinky01BlockCode : public BlinkyBlocks::BlinkyBlocksBlockCode {
 private:
-	bool computing;
-	uint64_t endComputingTime;
-	bool hasWork;
+	bool computing; // deterministic mode 2
+	uint64_t endComputingTime; // deterministic mode 2
 	
 public:
 

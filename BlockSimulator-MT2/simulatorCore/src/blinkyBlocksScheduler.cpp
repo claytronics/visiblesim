@@ -73,13 +73,17 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 
 	switch (schedulerMode) {
 		case SCHEDULER_MODE_FASTEST:
+		cout << "SCHEDULER_MODE_FASTEST" << endl;
 		while (!eventsMap.empty()) {
-			lock();						
-			first = eventsMap.begin();		
-			pev = (*first).second;
-			while (!getWorld()->dateHasBeenReachedByAll(pev->date)) {
-				waitForOneVMMessage();
-			}
+			do {
+				checkForReceivedVMMessages(); //waitForOneVMMessage();
+				usleep(5000);
+				lock();
+				first = eventsMap.begin();		
+				pev = (*first).second;
+				unlock();
+			} while (!getWorld()->dateHasBeenReachedByAll(pev->date));
+			//cout << "date " << now() << " has been reached" << endl;
 			currentDate = pev->date;
 			unlock();
 			pev->consume();
@@ -89,7 +93,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 			unlock();
 			checkForReceivedVMMessages();
 		}
-		//cout << "scheduler end at "<< now() << "..." << endl;
+		cout << "scheduler end at "<< now() << "..." << endl;
 		break;
 		case SCHEDULER_MODE_FASTEST2:
 			while (!eventsMap.empty()) {
@@ -220,6 +224,7 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 		eventsMap.insert(pair<uint64_t, EventPtr>(pev->date,pev));
 		break;
 	case SCHEDULER_MODE_FASTEST:
+	case SCHEDULER_MODE_FASTEST2:
 		if (eventsMap.count(pev->date) > 1 && pev->getConcernedBlock() != NULL) {
 			std::pair<multimap<uint64_t, EventPtr>::iterator,multimap<uint64_t, EventPtr>::iterator> range = eventsMap.equal_range(pev->date);
 			multimap<uint64_t, EventPtr>::iterator it = range.first;

@@ -17,7 +17,9 @@ class BlinkyBlocksBlock;
 
 class BlinkyBlocksBlockCode : public BaseSimulator::BlockCode {
 public:
-	uint64_t currentLocalDate;
+	uint64_t currentLocalDate; // deterministic mode 1
+	bool hasWork; // deterministic mode 1 & 2
+	
 	BlinkyBlocksBlockCode(BlinkyBlocksBlock *host);
 	virtual ~BlinkyBlocksBlockCode();
 
