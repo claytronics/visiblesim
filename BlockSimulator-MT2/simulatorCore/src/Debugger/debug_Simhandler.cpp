@@ -171,7 +171,7 @@ namespace debugger {
             okayToBroadcastPause = true;
             okayToPauseSimulation = true;
             /*continue a paused system by broadcasting an CONTINUE signal*/
-            unPauseSimulation(-1);
+            unPauseSimulation();
             printLimitation = false;
             numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
         } else if (instruction == RUN){
@@ -179,7 +179,7 @@ namespace debugger {
             okayToPauseSimulation = true;
             printLimitation = false;
             /*continue a paused system by broadcasting an CONTINUE signal*/
-            unPauseSimulation(-1);
+            unPauseSimulation();
             numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
         } else if (instruction == DUMP) {
 
@@ -231,7 +231,7 @@ namespace debugger {
             numberExpected = sendMsg(-1,MODE,specification,
                                      BROADCAST);
         } else if (instruction == TIME) {
-            unPauseSimulation(atoi(specification.c_str()));
+            pauseSimulation(atoi(specification.c_str()));
             numberExpected = 1;
         }
 
@@ -396,7 +396,7 @@ namespace debugger {
             numberExpected--;
 
             if (numberExpected == 0 && okayToPauseSimulation)
-                pauseSimulation();
+                pauseSimulation(-1);
 
             /*set up the variables and buffers for next message*/
             memset(specification,0,MAXLENGTH*SIZE);

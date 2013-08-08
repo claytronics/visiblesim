@@ -19,15 +19,15 @@ namespace debugger {
 	pthread_t tid = 0;
 
     int (*debugSendMsg)(int,message_type*,int);
-    void (*pauseSimulation)(void);
-    void (*unPauseSimulation)(int);
+    void (*pauseSimulation)(int);
+    void (*unPauseSimulation)(void);
     void (*quitDebugger)(void);
 
     /*spawn the debbugging prompt as a separate thread to
       controll the main one*/
     ftrp initDebugger(int (*sendMsg)(int,message_type*,int),
-                      void (*pauseSim)(void),
-                      void (*unPauseSim)(int),
+                      void (*pauseSim)(int),
+                      void (*unPauseSim)(void),
                       void (*quitDebug)(void),
                       std::ostream& o, std::istream& i){
 
