@@ -171,7 +171,7 @@ namespace debugger {
             okayToBroadcastPause = true;
             okayToPauseSimulation = true;
             /*continue a paused system by broadcasting an CONTINUE signal*/
-            unPauseSimulation();
+            unPauseSimulation(-1);
             printLimitation = false;
             numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
         } else if (instruction == RUN){
@@ -179,7 +179,7 @@ namespace debugger {
             okayToPauseSimulation = true;
             printLimitation = false;
             /*continue a paused system by broadcasting an CONTINUE signal*/
-            unPauseSimulation();
+            unPauseSimulation(-1);
             numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
         } else if (instruction == DUMP) {
 
@@ -230,6 +230,9 @@ namespace debugger {
             setFlags(specification);
             numberExpected = sendMsg(-1,MODE,specification,
                                      BROADCAST);
+        } else if (instruction == TIME) {
+            unPauseSimulation(atoi(specification.c_str()));
+            numberExpected = 1;
         }
 
     }
@@ -263,13 +266,11 @@ namespace debugger {
             if (verboseMode){
                 printf("%s",specification.c_str());
             }
-        } else if (instruction == TIMEOUT){
-            if (numberExpected != 0){
-                printf("%s",specification.c_str());
-                numberExpected = 1;
-                sendMsg(-1,PAUSE,"",BROADCAST);
-            } else {
-                numberExpected++;
+        } else if (instruction == TIME){
+            printf("%s",specification.c_str());
+            if(okayToBroadcastPause) {
+				sendMsg(-1,PAUSE,"",BROADCAST);
+				okayToBroadcastPause = false;
             }
         }
     }
