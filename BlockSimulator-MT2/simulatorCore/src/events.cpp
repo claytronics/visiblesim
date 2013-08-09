@@ -29,7 +29,8 @@ Event::Event(uint64_t t) {
 	nbLivingEvents++;
 	date = t;
 	eventType = EVENT_GENERIC;
-	priority = PRIORITY_EVENT_GENERIC;
+	priority = PRIORITY_EVENT_GENERIC;	
+	randomNumber = 0;
 	EVENT_CONSTRUCTOR_INFO();
 }
 
@@ -40,6 +41,7 @@ Event::Event(Event *ev) {
 	date = ev->date;
 	eventType = ev->eventType;
 	priority = ev->priority;
+	randomNumber = 0;
 	EVENT_CONSTRUCTOR_INFO();
 }
 
@@ -69,7 +71,6 @@ unsigned int Event::getNbLivingEvents() {
 BlockEvent::BlockEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock) : Event(t) {
 	EVENT_CONSTRUCTOR_INFO();
 	concernedBlock = conBlock;
-	randomNumber = 0;
 	eventType = BLOCKEVENT_GENERIC;
 	priority = PRIORITY_BLOCKEVENT_GENERIC;
 }

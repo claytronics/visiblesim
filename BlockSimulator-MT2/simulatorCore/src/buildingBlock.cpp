@@ -134,7 +134,11 @@ void BuildingBlock::processLocalEvent() {
 }
 
 int BuildingBlock::getNextRandomNumber() {
-	return generator()%1000;
+	int x = 0;
+	do {
+		x = generator();
+	} while (x <= 0);
+	return x;
 }
 
 } // BaseSimulator namespace

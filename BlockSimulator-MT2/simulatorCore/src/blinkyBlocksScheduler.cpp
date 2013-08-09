@@ -93,10 +93,10 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 			currentDate = pev->date;
 			unlock();
 #ifdef TEST_DETER
-			//cout << " Event: date: "<< now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
+			cout << " Event: date: "<< now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
 			if (pev->getConcernedBlock() != NULL) { 
 				BlockEvent *pevbc = (BlockEvent*) pev.get();
-				cout << pevbc->getConcernedBlock()->blockId << " RANDOM NUMBER : " << pevbc->randomNumber << endl;				
+				cout << pevbc->getConcernedBlock()->blockId << " RANDOM NUMBER : " << pevbc->randomNumber << endl;			
 			}
 #endif
 			pev->consume();
@@ -106,6 +106,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 			unlock();
 			checkForReceivedVMMessages();
 		}
+		cout << "scheduler end at "<< now() << "..." << endl;
 #ifdef TEST_DETER
 		cout << "scheduler end at "<< now() << "..." << endl;
 		//glutLeaveMainLoop();		
@@ -243,25 +244,28 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 		break;
 	case SCHEDULER_MODE_FASTEST:
 	case SCHEDULER_MODE_FASTEST2:
-		if (eventsMap.count(pev->date) > 0 && pev->getConcernedBlock() != NULL) {
+		if (eventsMap.count(pev->date) > 0) {
 			std::pair<multimap<uint64_t, EventPtr>::iterator,multimap<uint64_t, EventPtr>::iterator> range = eventsMap.equal_range(pev->date);
 			multimap<uint64_t, EventPtr>::iterator it = range.first;
 			while (it != range.second) {
-				if (it->second->getConcernedBlock() == NULL) {
+				if (it->second->randomNumber == 0) {
 					it++;
 					continue;
 				}
-				BlockEvent *bev1 = (BlockEvent*) it->second.get();
-				BlockEvent *bev2 = (BlockEvent*) pev.get();					
-				if (bev1->randomNumber > bev2->randomNumber) {
+				if (it->second->randomNumber > pev->randomNumber) {
+					break;
+				}
+				if (it->second->randomNumber == pev->randomNumber) {
+					while (it->second->randomNumber == pev->randomNumber) {
+						if (it->second->getConcernedBlock()->blockId > pev->getConcernedBlock()->blockId) {
+							break;
+						}
+						it++;
+					}
 					break;
 				}
 				it++;
 			}
-			if (it == range.second) {
-				//it--;
-			}
-			//advance (it, rand() % eventsMap.count(pev->date));
 			eventsMap.insert(it, pair<uint64_t, EventPtr>(pev->date,pev));
 		} else {
 			eventsMap.insert(pair<uint64_t, EventPtr>(pev->date,pev));	

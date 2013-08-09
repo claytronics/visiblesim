@@ -210,7 +210,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	
 	OUTPUT << "Blinky01BlockCode: process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
 #ifdef TEST_DETER
-	cout << bb->blockId << " processLocalEvent: date: "<< BaseSimulator::getScheduler()->now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
+	cout << bb->blockId << " processLocalEvent: date: "<< BaseSimulator::getScheduler()->now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << ", random number : " << pev->randomNumber << endl;
 #endif
 	switch (pev->eventType) {
 		case EVENT_SET_ID:

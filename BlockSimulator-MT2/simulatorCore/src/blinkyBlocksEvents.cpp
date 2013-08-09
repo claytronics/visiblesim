@@ -112,7 +112,6 @@ VMRemoveNeighborEvent::VMRemoveNeighborEvent(uint64_t t, BlinkyBlocksBlock *conB
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_REMOVE_NEIGHBOR;
 	face = f;
-	randomNumber = -1;
 	priority = PRIORITY_EVENT_REMOVE_NEIGHBOR;
 }
 
@@ -180,6 +179,7 @@ VMSetColorEvent::VMSetColorEvent(uint64_t t, BlinkyBlocksBlock *conBlock, float 
 VMSetColorEvent::VMSetColorEvent(VMSetColorEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 	color = ev->color;
+	//randomNumber = ev->randomNumber;
 }
 
 VMSetColorEvent::~VMSetColorEvent() {
@@ -213,6 +213,7 @@ VMSendMessageEvent::VMSendMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, 
 VMSendMessageEvent::VMSendMessageEvent(VMSendMessageEvent *ev) : BlockEvent(ev) {
 	message = ev->message;
 	sourceInterface = ev->sourceInterface;
+	//randomNumber = ev->randomNumber;
 	EVENT_CONSTRUCTOR_INFO();
 }
 
