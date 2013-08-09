@@ -87,14 +87,18 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 				pev = (*first).second;
 				unlock();
 			} while (!getWorld()->dateHasBeenReachedByAll(pev->date));
+#ifdef TEST_DETER
 			//cout << "date " << now() << " has been reached" << endl;
+#endif
 			currentDate = pev->date;
 			unlock();
+#ifdef TEST_DETER
 			//cout << " Event: date: "<< now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
 			if (pev->getConcernedBlock() != NULL) { 
 				BlockEvent *pevbc = (BlockEvent*) pev.get();
 				cout << pevbc->getConcernedBlock()->blockId << " RANDOM NUMBER : " << pevbc->randomNumber << endl;				
 			}
+#endif
 			pev->consume();
 			lock();
 			eventsMap.erase(first);

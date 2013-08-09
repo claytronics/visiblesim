@@ -14,10 +14,13 @@ systemTime=0
 userTime=0
 realTime=0
 
-nbr=10
-for i in $(seq 2 1 $nbr)
+nbr=300
+echec=0
+succes=0
+for i in $(seq 1 1 $nbr)
 do
-   	time="$( { time ./blinky01 > exec$i.out; } 2>&1 )"
+	j=$(($i+1))
+   	time="$( { time ./blinky01 > exec$j.out; } 2>&1 )"
    	killall meld
    	echo $time
    	userTime=$(echo "$userTime+$(echo $time | cut -d " " -f 1 | cut -d "u" -f 1)" | bc -l)
@@ -26,17 +29,25 @@ do
 	echo "cumulated user time: $userTime"
 	echo "cumulated system time: $systemTime"
 	echo "cumulated real time: $realTime"
-	r=$(diff -q exec1.out exec$i.out | wc -w)
+	r=$(diff -q exec1.out exec$j.out | wc -w)
 	if [ $r -eq 0 ]
 	then
 		echo "${vert}OK${neutre}"
+		succes=$(($succes+1))
 	else
 		echo "${rouge}KO${neutre}"
+		echec=$(($echec+1))
 	fi
 done
 	echo "average user time: $( echo $userTime/$nbr | bc -l)"
 	echo "average system time: $( echo $systemTime/$nbr | bc -l)"
 	echo "average real time: $( echo $realTime/$nbr | bc -l)"
 	
-
-	
+	echo "${vert}$succes/$nbr${neutre}"
+	echo "${rouge}$echec/$nbr${neutre}"
+	if [ $succes -eq $nbr ] && [ $echec -eq 0 ]
+	then
+		echo "${vert}TEST PASSED${neutre}"
+	else
+		echo "${rouge}TEST FAILED${neutre}"
+	fi
