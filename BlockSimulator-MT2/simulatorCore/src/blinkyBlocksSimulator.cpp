@@ -205,8 +205,11 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 		ERRPUT << "no Block List" << endl;
 	}
 	
-	world->linkBlocks();	
+	world->linkBlocks();
+	getScheduler()->setState(Scheduler::NOTSTARTED);
+#ifndef TEST_DETER
 	GlutContext::mainLoop();
+#endif
 }
 
 BlinkyBlocksSimulator::~BlinkyBlocksSimulator() {

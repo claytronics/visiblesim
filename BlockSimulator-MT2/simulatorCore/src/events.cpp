@@ -69,7 +69,7 @@ unsigned int Event::getNbLivingEvents() {
 BlockEvent::BlockEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock) : Event(t) {
 	EVENT_CONSTRUCTOR_INFO();
 	concernedBlock = conBlock;
-	randomNumber = conBlock->getNextRandomNumber();
+	randomNumber = 0;
 	eventType = BLOCKEVENT_GENERIC;
 	priority = PRIORITY_BLOCKEVENT_GENERIC;
 }

@@ -39,7 +39,7 @@ protected:
 	virtual ~Scheduler();
 
 public:
-	enum State {NOTSTARTED = 0, ENDED = 1, PAUSED = 2, RUNNING = 3};
+	enum State {NOTREADY = 0, NOTSTARTED = 1, ENDED = 2, PAUSED = 3, RUNNING = 4};
 	State state;
 	static Scheduler* getScheduler() {
 		assert(scheduler != NULL);

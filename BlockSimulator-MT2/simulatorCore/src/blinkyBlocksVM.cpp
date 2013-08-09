@@ -31,6 +31,10 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 	assert(ios != NULL && acceptor != NULL);
 	hostBlock = bb;
 	OUTPUT << "VM "<< hostBlock->blockId << " constructor" << endl;
+	socket = boost::shared_ptr<tcp::socket>(new tcp::socket(*ios));
+	boost::interprocess::interprocess_semaphore s(0);
+	boost::thread threadConnect = boost::thread(boost::bind(&BlinkyBlocksVM::connect, this, &s));
+	s.wait();
 	// Start the VM
 	pid = 0;
 	pid = fork();
@@ -53,12 +57,15 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 			execv(vmPath.c_str(), const_cast<char**>(cmd));
 		}
 	}
-	// Wait for an incoming connection
-	socket = boost::shared_ptr<tcp::socket>(new tcp::socket(*ios));
-	acceptor->accept(*(socket.get()));
-	OUTPUT << "VM "<< hostBlock->blockId << " connected" << endl;
+	threadConnect.join();	
 	idSent = false;
 	asyncReadMessage();
+}
+
+void BlinkyBlocksVM::connect(boost::interprocess::interprocess_semaphore* s) {
+	s->post();
+	acceptor->accept(*(socket.get()));
+	OUTPUT << "VM "<< hostBlock->blockId << " connected" << endl;
 }
 
 BlinkyBlocksVM::~BlinkyBlocksVM() {

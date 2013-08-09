@@ -172,6 +172,7 @@ const string VMTapEvent::getEventName() {
 VMSetColorEvent::VMSetColorEvent(uint64_t t, BlinkyBlocksBlock *conBlock, float r, float g, float b, float a): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_SET_COLOR;
+	randomNumber = conBlock->getNextRandomNumber();
 	priority = PRIORITY_EVENT_SET_COLOR;
 	color = Vecteur(r, g, b, a);
 }
@@ -204,6 +205,7 @@ VMSendMessageEvent::VMSendMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, 
 	eventType = EVENT_SEND_MESSAGE;
 	message = MessagePtr(mes);
 	sourceInterface = ni;
+	randomNumber = conBlock->getNextRandomNumber();
 	priority = PRIORITY_EVENT_SEND_MESSAGE;
 	EVENT_CONSTRUCTOR_INFO();
 }

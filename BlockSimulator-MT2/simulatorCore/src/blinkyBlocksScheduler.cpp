@@ -24,11 +24,11 @@ namespace BlinkyBlocks {
 
 BlinkyBlocksScheduler::BlinkyBlocksScheduler() {
 	OUTPUT << "BlinkyBlocksScheduler constructor" << endl;
+	state = NOTREADY;
 	sem_schedulerStart = new boost::interprocess::interprocess_semaphore(0);
 	//schedulerMode = SCHEDULER_MODE_FASTEST;
 	schedulerMode = SCHEDULER_MODE_REALTIME;
 	schedulerThread = new thread(bind(&BlinkyBlocksScheduler::startPaused, this));
-	state = NOTSTARTED;
 }
 
 BlinkyBlocksScheduler::~BlinkyBlocksScheduler() {
@@ -58,10 +58,14 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	
 	usleep(1000000);
 	OUTPUT << "\033[1;33mScheduler Mode :" << schedulerMode << "\033[0m" << endl;
-	
+#ifndef TEST_DETER
 	sem_schedulerStart->wait(); // wait for 'r' or 'R'
 	if (BlinkyBlocksVM::isInDebuggingMode())
 		sem_schedulerStart->wait(); // wait for "run" in the debugger
+#else
+	schedulerMode = SCHEDULER_MODE_FASTEST;
+#endif
+	while (state == NOTREADY) {usleep(5000);}
 	state = RUNNING;
 	checkForReceivedVMMessages();
 	//BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
@@ -86,6 +90,11 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 			//cout << "date " << now() << " has been reached" << endl;
 			currentDate = pev->date;
 			unlock();
+			//cout << " Event: date: "<< now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
+			if (pev->getConcernedBlock() != NULL) { 
+				BlockEvent *pevbc = (BlockEvent*) pev.get();
+				cout << pevbc->getConcernedBlock()->blockId << " RANDOM NUMBER : " << pevbc->randomNumber << endl;				
+			}
 			pev->consume();
 			lock();
 			eventsMap.erase(first);
@@ -93,7 +102,11 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 			unlock();
 			checkForReceivedVMMessages();
 		}
+#ifdef TEST_DETER
 		cout << "scheduler end at "<< now() << "..." << endl;
+		//glutLeaveMainLoop();		
+		exit(0);
+#endif
 		break;
 		case SCHEDULER_MODE_FASTEST2:
 			while (!eventsMap.empty()) {
@@ -204,6 +217,7 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 	OUTPUT << "BlinkyBlocksScheduler: Schedule a " << pev->getEventName() << " (" << ev->id << ") with " << ev->priority << endl;
 
 	if (pev->date < Scheduler::currentDate) {
+		cout << "ERROR : An event cannot be schedule in the past !\n" << endl;
 		OUTPUT << "ERROR : An event cannot be schedule in the past !\n";
 	    OUTPUT << "current time : " << Scheduler::currentDate << endl;
 	    OUTPUT << "ev->eventDate : " << pev->date << endl;
@@ -225,7 +239,7 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 		break;
 	case SCHEDULER_MODE_FASTEST:
 	case SCHEDULER_MODE_FASTEST2:
-		if (eventsMap.count(pev->date) > 1 && pev->getConcernedBlock() != NULL) {
+		if (eventsMap.count(pev->date) > 0 && pev->getConcernedBlock() != NULL) {
 			std::pair<multimap<uint64_t, EventPtr>::iterator,multimap<uint64_t, EventPtr>::iterator> range = eventsMap.equal_range(pev->date);
 			multimap<uint64_t, EventPtr>::iterator it = range.first;
 			while (it != range.second) {
@@ -234,14 +248,14 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 					continue;
 				}
 				BlockEvent *bev1 = (BlockEvent*) it->second.get();
-				BlockEvent *bev2 = (BlockEvent*) it->second.get();					
-				if (bev1->randomNumber >= bev2->randomNumber) {
+				BlockEvent *bev2 = (BlockEvent*) pev.get();					
+				if (bev1->randomNumber > bev2->randomNumber) {
 					break;
 				}
 				it++;
 			}
 			if (it == range.second) {
-				it--;
+				//it--;
 			}
 			//advance (it, rand() % eventsMap.count(pev->date));
 			eventsMap.insert(it, pair<uint64_t, EventPtr>(pev->date,pev));

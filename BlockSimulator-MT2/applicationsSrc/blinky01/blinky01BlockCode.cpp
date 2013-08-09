@@ -86,6 +86,7 @@ Blinky01BlockCode::Blinky01BlockCode(BlinkyBlocksBlock *host): BlinkyBlocksBlock
 	OUTPUT << "Blinky01BlockCode constructor" << endl;
 	computing = false;
 	hasWork = true;
+	nb = 0;
 }
 
 Blinky01BlockCode::~Blinky01BlockCode() {
@@ -106,7 +107,9 @@ void Blinky01BlockCode::startup() {
 void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
 	OUTPUT << "Blinky01BlockCode: type: " << getStringMessage(message[1]) << " size: " << message[0] << endl;
+	//cout << bb->blockId << " message received: date: " << message[2] << ", type: " << getStringMessage(message[1]) << endl;
 	uint64_t dateToSchedule;
+	assert(hasWork);
 	switch (BlinkyBlocks::getScheduler()->getMode()) {
 			case SCHEDULER_MODE_REALTIME:
 			case SCHEDULER_MODE_FASTEST2:
@@ -137,6 +140,7 @@ void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 			interface = bb->getInterfaceDestId(message[5]);
 			if (interface == NULL) {
 				OUTPUT << "interface not found" << endl;
+				//cout << "interface not found" << endl;
 				return;
 			}
 			BlinkyBlocks::getScheduler()->schedule(new VMSendMessageEvent(dateToSchedule, bb,
@@ -160,10 +164,14 @@ void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 				endComputingTime = message[2];				
 			} else {
 				// fastest_mode_1
+				//BlinkyBlocks::getScheduler()->schedule(new VMEffectiveEndComputationEvent(message[2], bb));
 				currentLocalDate = message[2];
-				hasWork = (bool) message[4];
-				//cout << hostBlock->blockId << " has no work anymore" << endl;
-				//BlinkyBlocks::getScheduler()->schedule(new VMEffectiveEndComputationEvent(endComputingTime+1, bb));
+				//endComputingTime = currentLocalDate;
+				//cout << "nb " << nb << "/ recus" << message[4] << endl;
+				if (message[4] == nb) {
+					hasWork = false;			
+					//cout << hostBlock->blockId << " has no work anymore" << endl;
+				}
 			}
 			break;
 		default:
@@ -185,7 +193,10 @@ bool Blinky01BlockCode::mustBeQueued() {
 void Blinky01BlockCode::handleDeterministicMode(){
 	if(!hasWork) {
 		hasWork = true;
-		//cout << hostBlock->blockId << " has work again" << endl; 
+		currentLocalDate=max(BaseSimulator::getScheduler()->now(), currentLocalDate);
+#ifdef TEST_DETER
+		//cout << hostBlock->blockId << " has work again at " << BaseSimulator::getScheduler()->now() << endl;
+#endif
 		if (BlinkyBlocks::getScheduler()->getMode() == SCHEDULER_MODE_FASTEST2) {
 			BlinkyBlocks::getScheduler()->schedule(new VMStartComputationEvent(std::max(BaseSimulator::getScheduler()->now(), endComputingTime)+1, (BlinkyBlocksBlock*)hostBlock, 50));
 		}
@@ -198,8 +209,9 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	info.str("");
 	
 	OUTPUT << "Blinky01BlockCode: process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
-	//cout << BaseSimulator::getScheduler()->now() << " : Blinky01BlockCode: "<< bb->blockId << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
-
+#ifdef TEST_DETER
+	cout << bb->blockId << " processLocalEvent: date: "<< BaseSimulator::getScheduler()->now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
+#endif
 	switch (pev->eventType) {
 		case EVENT_SET_ID:
 			{
@@ -211,6 +223,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			bb->vm->sendMessage(4*sizeof(uint64_t), message);
 			OUTPUT << "ID sent to the VM " << hostBlock->blockId << endl;
 			info << "ID sent";
+			nb++;
 			}
 			break;
 		case EVENT_SET_DETERMINISTIC:
@@ -255,6 +268,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			bb->vm->sendMessage(6*sizeof(uint64_t), message);
 			handleDeterministicMode();
 			info << "Add neighbor "<< message[4] << " at face " << BlinkyBlocks::NeighborDirection::getString(BlinkyBlocks::NeighborDirection::getOpposite(message[5]));
+			nb++;
 			}
 			break;
 		case EVENT_REMOVE_NEIGHBOR:
@@ -286,7 +300,9 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			{
 			Vecteur color = (boost::static_pointer_cast<VMSetColorEvent>(pev))->color;
 			bb->setColor(color);
-			//cout << bb->blockId << "SET_COLOR_EVENT" << endl;
+#ifdef TEST_DETER
+			cout << bb->blockId << " SET_COLOR_EVENT" << endl;
+#endif
 			info << "set color "<< color << endl;
 			}
 			break;
@@ -305,8 +321,11 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			m->message[2] = BlinkyBlocks::getScheduler()->now();
 			handleDeterministicMode();
 			bb->vm->sendMessage(m->size(), m->message);
-			//cout << "message received from " << m->sourceInterface->hostBlock->blockId << endl;
+#ifdef TEST_DETER
+			cout << "message received from " << m->sourceInterface->hostBlock->blockId << endl;
+#endif
 			info << "message received at face " << NeighborDirection::getString(bb->getDirection(m->sourceInterface->connectedInterface)) << " from " << m->sourceInterface->hostBlock->blockId;
+			nb++;
 			}
 			break;
 		case EVENT_ACCEL:
@@ -355,7 +374,9 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			//availabilityDate = BlinkyBlocks::getScheduler()->now()+duration;
 			
 			info << "starting computation (will last for " << duration << ")" ;
-			//cout << "blinky01BlockCode " << bb->blockId << " starting computation (will last for " << duration << ")" << endl;
+#ifdef TEST_DETER
+			cout << "blinky01BlockCode " << bb->blockId << " starting computation (will last for " << duration << ")" << endl;
+#endif
 			BlinkyBlocks::getScheduler()->schedule(new VMExpectedEndComputationEvent(BlinkyBlocks::getScheduler()->now()+duration, bb));
 			}
 			break;
@@ -369,7 +390,9 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 					//BlinkyBlocks::checkForReceivedVMMessages();
 			}
 			info << "finished its computation";
-			//cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << " finished computation at " << endComputingTime << endl;
+#ifdef TEST_DETER
+			cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << " finished computation at " << endComputingTime << endl;
+#endif
 			BlinkyBlocks::getScheduler()->schedule(new VMEffectiveEndComputationEvent(endComputingTime+1, bb));
 			}
 			break;
@@ -377,7 +400,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			{
 			switch (BlinkyBlocks::getScheduler()->getMode()) {
 				case SCHEDULER_MODE_FASTEST:
-					hasWork = false;
+					if (BlinkyBlocks::getScheduler()->now() == endComputingTime)
+						hasWork = false;
 					break;
 				case SCHEDULER_MODE_FASTEST2:
 					//cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << " effective end of computation " << endl;

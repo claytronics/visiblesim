@@ -14,6 +14,7 @@
 #include <boost/asio.hpp>
 #include <boost/shared_ptr.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
+#include <boost/interprocess/sync/interprocess_semaphore.hpp>
 
 using namespace std;
 using boost::asio::ip::tcp;
@@ -133,6 +134,8 @@ public:
 	inline static bool isInDebuggingMode() {
 			return debugging;
 	}
+	
+	void connect(boost::interprocess::interprocess_semaphore* s);
 };
 
 	inline void createVMServer(int p) { BlinkyBlocksVM::createServer(p); };
