@@ -3,9 +3,9 @@
 #diff <(head -$3 $1) <(head -$3 $2)
 #diff <(head -3000 exec2.txt) <(head -3000 exec1.txt)
 
-vert="\\033[1;32m"
-rouge="\\033[0;31m"
-neutre="\\033[0;m"
+green="\\033[1;32m"
+red="\\033[0;31m"
+classic="\\033[0;m"
 
 ./blinky01 > exec1.out
 killall meld
@@ -14,9 +14,9 @@ systemTime=0
 userTime=0
 realTime=0
 
-nbr=300
-echec=0
-succes=0
+nbr=3
+failures=0
+successes=0
 for i in $(seq 1 1 $nbr)
 do
 	j=$(($i+1))
@@ -32,22 +32,23 @@ do
 	r=$(diff -q exec1.out exec$j.out | wc -w)
 	if [ $r -eq 0 ]
 	then
-		echo "${vert}OK${neutre}"
-		succes=$(($succes+1))
+		echo "${green}OK${classic}"
+		successes=$(($successes+1))
 	else
-		echo "${rouge}KO${neutre}"
-		echec=$(($echec+1))
+		echo "${red}KO${classic}"
+		failures=$(($failures+1))
 	fi
 done
 	echo "average user time: $( echo $userTime/$nbr | bc -l)"
 	echo "average system time: $( echo $systemTime/$nbr | bc -l)"
 	echo "average real time: $( echo $realTime/$nbr | bc -l)"
 	
-	echo "${vert}$succes/$nbr${neutre}"
-	echo "${rouge}$echec/$nbr${neutre}"
-	if [ $succes -eq $nbr ] && [ $echec -eq 0 ]
+	echo ""
+	echo "${green}successes: $successes/$nbr${classic}"
+	echo "${red}failures: $failures/$nbr${classic}"
+	if [ $successes -eq $nbr ] && [ $failures -eq 0 ]
 	then
-		echo "${vert}TEST PASSED${neutre}"
+		echo "${green}TEST PASSED${classic}"
 	else
-		echo "${rouge}TEST FAILED${neutre}"
+		echo "${red}TEST FAILED${classic}"
 	fi
