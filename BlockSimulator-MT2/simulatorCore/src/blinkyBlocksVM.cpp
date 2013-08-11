@@ -102,7 +102,6 @@ void BlinkyBlocksVM::asyncReadMessageHandler(const boost::system::error_code& er
 		ERRPUT << "connection to the VM "<< hostBlock->blockId << " lost" << endl;
 	}
 	if (bbc->mustBeQueued()) {
-		cout << "Queued" << endl;
 		inQueue.push(inBuffer);
 	} else {
 		bbc->handleNewMessage(inBuffer.message);

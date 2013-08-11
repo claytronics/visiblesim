@@ -86,7 +86,17 @@ Blinky01BlockCode::Blinky01BlockCode(BlinkyBlocksBlock *host): BlinkyBlocksBlock
 	OUTPUT << "Blinky01BlockCode constructor" << endl;
 	computing = false;
 	hasWork = true;
+	hasWork2 = true;
 	nb = 0;
+	generator = boost::rand48(hostBlock->blockId);
+}
+
+int Blinky01BlockCode::getRandom() {
+	int x = 0;
+	do {
+		x = generator() %  300 + 35;
+	} while (x 	< 35);
+	return x;
 }
 
 Blinky01BlockCode::~Blinky01BlockCode() {
@@ -100,7 +110,7 @@ void Blinky01BlockCode::startup() {
 	info << "  Starting Blinky01BlockCode in block " << hostBlock->blockId;
 	BlinkyBlocks::getScheduler()->trace(info.str(),hostBlock->blockId);
 	if (BlinkyBlocks::getScheduler()->getMode() == SCHEDULER_MODE_FASTEST2) {
-		BlinkyBlocks::getScheduler()->schedule(new VMStartComputationEvent(BaseSimulator::getScheduler()->now()+1, bb, 300));
+		BlinkyBlocks::getScheduler()->schedule(new VMStartComputationEvent(BaseSimulator::getScheduler()->now()+1, bb, getRandom()));
 	}
 }
 
@@ -109,7 +119,7 @@ void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 	OUTPUT << "Blinky01BlockCode: type: " << getStringMessage(message[1]) << " size: " << message[0] << endl;
 	//cout << bb->blockId << " message received: date: " << message[2] << ", type: " << getStringMessage(message[1]) << endl;
 	uint64_t dateToSchedule;
-	assert(hasWork);
+	//assert(hasWork); // mode 1
 	switch (BlinkyBlocks::getScheduler()->getMode()) {
 			case SCHEDULER_MODE_REALTIME:
 			case SCHEDULER_MODE_FASTEST2:
@@ -160,7 +170,7 @@ void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 			// format: <size> <command> <timestamp> <src> <hasNoWork>
 			if (BlinkyBlocks::getScheduler()->getMode() == SCHEDULER_MODE_FASTEST2) {
 				computing = false;
-				hasWork = (bool) message[4];
+				hasWork2 = (bool) message[4];
 				endComputingTime = message[2];				
 			} else {
 				// fastest_mode_1
@@ -198,7 +208,7 @@ void Blinky01BlockCode::handleDeterministicMode(){
 		//cout << hostBlock->blockId << " has work again at " << BaseSimulator::getScheduler()->now() << endl;
 #endif
 		if (BlinkyBlocks::getScheduler()->getMode() == SCHEDULER_MODE_FASTEST2) {
-			BlinkyBlocks::getScheduler()->schedule(new VMStartComputationEvent(std::max(BaseSimulator::getScheduler()->now(), endComputingTime)+1, (BlinkyBlocksBlock*)hostBlock, 50));
+			BlinkyBlocks::getScheduler()->schedule(new VMStartComputationEvent(std::max(BaseSimulator::getScheduler()->now(), endComputingTime), (BlinkyBlocksBlock*)hostBlock, getRandom()));
 		}
 	}
 }
@@ -373,44 +383,45 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			bb->vm->sendMessage(5*sizeof(uint64_t), message);
 			//availabilityDate = BlinkyBlocks::getScheduler()->now()+duration;
 			
-			info << "starting computation (will last for " << duration << ")" ;
+//			info << "starting computation (will last for " << duration << ")" ;
 #ifdef TEST_DETER
-			cout << "blinky01BlockCode " << bb->blockId << " starting computation (will last for " << duration << ")" << endl;
+//			cout << "blinky01BlockCode " << bb->blockId << " starting computation (will last for " << duration << ")" << endl;
 #endif
 			BlinkyBlocks::getScheduler()->schedule(new VMExpectedEndComputationEvent(BlinkyBlocks::getScheduler()->now()+duration, bb));
 			}
 			break;
 		case EVENT_VM_EXPECTED_END_COMPUTATION:
 			{
-			info.str("");
+//			info.str("");
 			//cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << bb->blockId << " wait for end message " << endl;		
 			while (computing) {
 					//sleep(1);
 					BlinkyBlocks::waitForOneVMMessage();
 					//BlinkyBlocks::checkForReceivedVMMessages();
 			}
-			info << "finished its computation";
+//			info << "finished its computation";
 #ifdef TEST_DETER
-			cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << " finished computation at " << endComputingTime << endl;
+//			cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << " finished computation at " << endComputingTime << endl;
 #endif
-			BlinkyBlocks::getScheduler()->schedule(new VMEffectiveEndComputationEvent(endComputingTime+1, bb));
+			BlinkyBlocks::getScheduler()->schedule(new VMEffectiveEndComputationEvent(max(BlinkyBlocks::getScheduler()->now(), endComputingTime), bb));
 			}
 			break;
 		case EVENT_VM_EFFECTIVE_END_COMPUTATION:
 			{
 			switch (BlinkyBlocks::getScheduler()->getMode()) {
 				case SCHEDULER_MODE_FASTEST:
-					if (BlinkyBlocks::getScheduler()->now() == endComputingTime)
-						hasWork = false;
-					break;
+					//if (BlinkyBlocks::getScheduler()->now() == endComputingTime)
+					//	hasWork = false;
+					// break;
 				case SCHEDULER_MODE_FASTEST2:
 					//cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << " effective end of computation " << endl;
 					bb->setState(BlinkyBlocksBlock::ALIVE);
 					bb->vm->handleQueuedMessages();
+					hasWork = hasWork2;
 					if(hasWork) {
-						BlinkyBlocks::getScheduler()->schedule(new VMStartComputationEvent(BaseSimulator::getScheduler()->now()+1, bb, 50));
+						BlinkyBlocks::getScheduler()->schedule(new VMStartComputationEvent(BaseSimulator::getScheduler()->now()+1, bb, getRandom()));
 					}
-					info << "effective end of computation";
+	//				info << "effective end of computation";
 					break;
 				default:
 					break;

@@ -65,7 +65,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 #else
 	schedulerMode = SCHEDULER_MODE_FASTEST;
 #endif
-	while (state == NOTREADY) {usleep(5000);}
+	while (state == NOTREADY) {usleep(5000);} // use the semaphore instead
 	state = RUNNING;
 	checkForReceivedVMMessages();
 	//BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
@@ -93,11 +93,11 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 			currentDate = pev->date;
 			unlock();
 #ifdef TEST_DETER
-			cout << " Event: date: "<< now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
-			if (pev->getConcernedBlock() != NULL) { 
-				BlockEvent *pevbc = (BlockEvent*) pev.get();
-				cout << pevbc->getConcernedBlock()->blockId << " RANDOM NUMBER : " << pevbc->randomNumber << endl;			
-			}
+//			cout << " Event: date: "<< now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
+//			if (pev->getConcernedBlock() != NULL) { 
+//				BlockEvent *pevbc = (BlockEvent*) pev.get();
+//				cout << pevbc->getConcernedBlock()->blockId << " RANDOM NUMBER : " << pevbc->randomNumber << endl;			
+//			}
 #endif
 			pev->consume();
 			lock();
@@ -127,7 +127,8 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 				unlock();
 				checkForReceivedVMMessages();
 				}
-				//cout << "scheduler end at "<< now() << "..." << endl;
+				cout << "scheduler end at "<< now() << "..." << endl;
+				exit(0);
 			break;
 		case SCHEDULER_MODE_REALTIME:
 			OUTPUT << "Realtime mode scheduler\n";

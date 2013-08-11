@@ -10,6 +10,7 @@
 
 #include "blinkyBlocksBlockCode.h"
 #include "blinkyBlocksSimulator.h"
+#include <boost/random.hpp>
 
 class VMDataMessage : public Message {	
 public:
@@ -26,6 +27,8 @@ private:
 	bool computing; // deterministic mode 2
 	uint64_t endComputingTime; // deterministic mode 2 & 1
 	uint64_t nb;
+	bool hasWork2;
+	boost::rand48 generator;
 	
 public:
 
@@ -37,6 +40,7 @@ public:
 	void handleNewMessage(uint64_t *message);
 	bool mustBeQueued();
 	void handleDeterministicMode();
+	int getRandom();
 	static BlinkyBlocks::BlinkyBlocksBlockCode *buildNewBlockCode(BlinkyBlocks::BlinkyBlocksBlock *host);
 };
 
