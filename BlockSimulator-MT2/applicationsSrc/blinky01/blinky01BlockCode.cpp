@@ -35,6 +35,8 @@ using boost::asio::ip::tcp;
 #define VM_MESSAGE_START_COMPUTATION 			21
 #define VM_MESSAGE_END_COMPUTATION 				22
 
+#define VM_MESSAGE_TIME_INFO					23
+
 string getStringMessage(uint64_t t) {
 	switch(t) {
 		case VM_MESSAGE_SET_COLOR:
@@ -52,6 +54,8 @@ string getStringMessage(uint64_t t) {
 		case VM_MESSAGE_END_COMPUTATION:
 			return string("VM_MESSAGE_END_COMPUTATION");
 			break;
+		case VM_MESSAGE_TIME_INFO:
+			return string("VM_MESSAGE_TIME_INFO");
 		default:
 			ERRPUT << "Unknown received-message type" << endl;
 			return string("Unknown");
@@ -183,6 +187,9 @@ void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 					//cout << hostBlock->blockId << " has no work anymore" << endl;
 				}
 			}
+			break;
+		case VM_MESSAGE_TIME_INFO:
+			currentLocalDate = message[2];
 			break;
 		default:
 			ERRPUT << "*** ERROR *** : unsupported message received from VM (" << message[1] <<")" << endl;
