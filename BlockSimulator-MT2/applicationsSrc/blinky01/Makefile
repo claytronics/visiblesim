@@ -1,4 +1,4 @@
-SRCS = blinky01.cpp blinky01BlockCode.cpp
+SRCS = blinky01.cpp blinky01BlockCode.cpp VMCommands.cpp
 
 OUT = blinky01
 

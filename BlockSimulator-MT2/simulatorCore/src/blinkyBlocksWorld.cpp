@@ -536,6 +536,7 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		}
 		minReallyReached = min2;
 		//cout << date << "<" << min << endl;
+		//cout << "min" << minReallyReached << endl;
 		return (date <= min);
 	}
 

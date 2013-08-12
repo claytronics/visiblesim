@@ -14,28 +14,11 @@
 #include "blinkyBlocksEvents.h"
 #include "blinkyBlocksDebugger.h"
 #include "trace.h"
+#include "VMCommands.h"
 
 using namespace std;
 using namespace BlinkyBlocks;
 using boost::asio::ip::tcp;
-
-#define VM_MESSAGE_SET_ID						1
-#define VM_MESSAGE_STOP							4
-#define VM_MESSAGE_ADD_NEIGHBOR					5
-#define VM_MESSAGE_REMOVE_NEIGHBOR				6
-#define VM_MESSAGE_TAP							7
-#define VM_MESSAGE_SET_COLOR					8
-#define VM_MESSAGE_SEND_MESSAGE					12
-#define VM_MESSAGE_RECEIVE_MESSAGE				13
-#define VM_MESSAGE_ACCEL						14
-#define VM_MESSAGE_SHAKE						15
-#define VM_MESSAGE_DEBUG						16
-
-#define VM_SET_DETERMINISTIC_MODE				20
-#define VM_MESSAGE_START_COMPUTATION 			21
-#define VM_MESSAGE_END_COMPUTATION 				22
-
-#define VM_MESSAGE_TIME_INFO					23
 
 string getStringMessage(uint64_t t) {
 	switch(t) {
@@ -138,12 +121,13 @@ void Blinky01BlockCode::handleNewMessage(uint64_t *message) {
 	}
 	//cout << "Message received at " << BaseSimulator::getScheduler()->now() << ": type: " << getStringMessage(message[1]) << endl;
 	//cout << "Message actually for " << message[2] << endl;
-	switch (message[1]) {
-		case VM_MESSAGE_SET_COLOR:			
+	switch (VMCommand::getType(message)) {
+		case VM_MESSAGE_SET_COLOR:	
 			{
 			// format: <size> <command> <timestamp> <src> <red> <blue> <green> <intensity>
-			BlinkyBlocks::getScheduler()->schedule(new VMSetColorEvent(dateToSchedule, bb,
-					(float)message[4]/255.0, (float)message[5]/255.0, (float)message[6]/255.0, (float)message[7]/255.0 ));
+			SetColorVMCommand command(message);
+			Vecteur color = command.getColor();
+			BlinkyBlocks::getScheduler()->schedule(new VMSetColorEvent(dateToSchedule, bb, color));
 			currentLocalDate = message[2];
 			}
 			break;
@@ -303,12 +287,10 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			break;
 		case EVENT_TAP:
 			{
-			uint64_t message[4];
-			message[0] = 3*sizeof(uint64_t);	
-			message[1] = VM_MESSAGE_TAP;
-			message[2] = BaseSimulator::getScheduler()->now(); // timestamp
-			message[3] = bb->blockId; // souce node
-			bb->vm->sendMessage(4*sizeof(uint64_t), message);
+			uint64_t c[4];
+			uint64_t now = BaseSimulator::getScheduler()->now();
+			TapVMCommand command(c, now, bb->blockId);
+			bb->vm->sendMessage(command.getTotalSize(), command.getCommand());
 			handleDeterministicMode();
 			info << "tapped";
 			}

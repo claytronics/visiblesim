@@ -176,6 +176,14 @@ VMSetColorEvent::VMSetColorEvent(uint64_t t, BlinkyBlocksBlock *conBlock, float 
 	color = Vecteur(r, g, b, a);
 }
 
+VMSetColorEvent::VMSetColorEvent(uint64_t t, BlinkyBlocksBlock *conBlock, Vecteur &c): BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_SET_COLOR;
+	randomNumber = conBlock->getNextRandomNumber();
+	priority = PRIORITY_EVENT_SET_COLOR;
+	color = c;
+}
+
 VMSetColorEvent::VMSetColorEvent(VMSetColorEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 	color = ev->color;

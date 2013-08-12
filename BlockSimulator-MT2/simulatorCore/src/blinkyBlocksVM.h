@@ -38,12 +38,6 @@ public:
 	~VMMessage() { };
 };
 
-/*
-typedef struct VMMessage_tt {
-        uint64_t size;
-        uint64_t *message;
-} VMMessage_t; */
-
 class BlinkyBlocksVM {
 
 protected:

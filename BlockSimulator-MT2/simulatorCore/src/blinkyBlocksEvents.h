@@ -112,6 +112,7 @@ public:
 	Vecteur color;
 
 	VMSetColorEvent(uint64_t, BlinkyBlocksBlock *conBlock, float r, float g, float b, float a);
+	VMSetColorEvent(uint64_t, BlinkyBlocksBlock *conBlock, Vecteur &c);
 	VMSetColorEvent(VMSetColorEvent *ev);
 	~VMSetColorEvent();
 	void consumeBlockEvent();

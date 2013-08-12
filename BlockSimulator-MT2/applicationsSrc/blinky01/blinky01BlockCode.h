@@ -18,7 +18,7 @@ public:
 	
 	VMDataMessage(uint64_t src, uint64_t* m);
 	VMDataMessage(VMDataMessage *m);
-	~VMDataMessage();	
+	~VMDataMessage();
 	virtual unsigned int size();
 };
 
