@@ -3,6 +3,7 @@
 
 #include <string>
 #include <queue>
+#include <list>
 #include <stdint.h>
 
 
@@ -33,7 +34,9 @@ namespace debugger {
 
     typedef uint64_t message_type;
 
+
     extern std::queue<message_type*> *messageQueue;
+    extern std::list<struct msgListContainer*>* rcvMessageList;
     extern int numberExpected;
 
     const int MASTER = 0;
@@ -54,7 +57,11 @@ namespace debugger {
                  std::string content, bool broadcast = false);
     void messageQueueInsert(message_type* msg);
     void handlePauseCommand(void);
-    message_type* pack(int msgEncode, std::string content);
+    message_type* pack(int msgEncode, std::string content, int priority);
+    void insertMsg(std::string content, int priority, int instruction, int node);
+    std::string buildString(struct msgListContainer* container);
+    struct msgListContainer* checkAndGet(void);
+    void printRcv();
 }
 
 #endif

@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "debug_Simprompt.hpp"
+#include "debug_Simhandler.hpp"
 
 using namespace std;
 
@@ -35,6 +36,7 @@ namespace debugger {
         cout.rdbuf(o.rdbuf());
 
         messageQueue = new std::queue<message_type*>();
+        rcvMessageList = new std::list<struct msgListContainer*>();
 
         debugSendMsg = sendMsg;
         pauseSimulation = pauseSim;

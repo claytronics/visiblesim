@@ -11,6 +11,7 @@
 #include "serialization.hpp"
 #include "types.hpp"
 #include "blinkyBlocksVM.h"
+#include <list>
 
 using namespace std;
 using namespace debugger;
@@ -45,6 +46,28 @@ namespace debugger {
 
     bool verboseMode = false;
     bool serializationMode = false;
+
+        /*cache ...rcvMessageList holds containters for
+     * different lists of broken messages*/
+    std::list<struct msgListContainer*>* rcvMessageList;
+
+    /*BROKEN UP MESSAGE CONTAINERS TO BE STORED IN CACHE*/
+
+    /*rcvMessageList Elems -- contains a list that holds incoming messages
+     * from a certain node*/
+    struct msgListContainer {
+        int instruction;
+        int node;
+        std::list<struct msgListElem*>* msglist;
+    };
+
+    /*msgListElems -- holds the information necessary to reconstruct the
+     * the message*/
+    struct msgListElem{
+        int priority;
+        string content;
+    };
+
 
     /**********************************************************************/
 
@@ -283,113 +306,235 @@ namespace debugger {
     /***************************************************************************/
 
 
-    /*return the size of a packed array stored with content of an unkown size*/
-    inline int getSize(string content){
-
-        /*will always return an integer*/
-        return  3 + ((content.size()+1) + (SIZE-(content.size()+1)%SIZE))/SIZE;
-    }
-
-
     void messageQueueInsert(uint64_t* msg){
         messageQueue->push(msg);
     }
 
-    /*given the type encoding and content, pack the information into
-     *a sendable messeage*/
-    message_type* pack(int msgEncode, string content){
+
+
+    /***************************************************************************/
+
+    /*DEBUG MESSAGE SENDING - send message over a connection
+     *  -messages are first broken into packets, attatched with a header
+     *   when sent
+     *  -the reciever stores the packets in a cache until the whole message can
+     *   be reconsructed and processed*/
+
+    /***************************************************************************/
+
+
+    /*GET MAX CHAR ARRAY SIZE--return the size of the maximum char array size*/
+    inline int getMaxCharArraySize(){
+
+        /*will always return an integer*/
+        return MAXLENGTH*SIZE -
+            (sizeof(int)+4*sizeof(message_type)+sizeof(size_t)
+             +sizeof(int)+8);
+    }
+
+
+    /*PACK LIST --break message into parts while
+     *it is longer than the buffer size and store
+     * it in a list to be ready to be sent.
+     * Attatch a header to know how many messages the
+     * list contains including the header*/
+    std::list<message_type*>* packList(int msgEncode, string content){
+
+        std::list<message_type*>* msgList = new std::list<message_type*>();
+
+        message_type* msg;
+
+        string partition;
+        int priority = 1;
+        /*if too big*/
+        while (content.length() + 1 > (uint)getMaxCharArraySize()){
+
+            /*pack the broken message and put it in the list*/
+            partition = content.substr(0,getMaxCharArraySize());
+            content = content.substr(getMaxCharArraySize()+1);
+            msg = pack(msgEncode,partition,priority);
+            msgList->push_back(msg);
+            priority++;
+        }
+
+        /*put the last message that is smaller than buffer*/
+        ostringstream convert;
+        convert << priority + 1;
+        msgList->push_back(pack(msgEncode,content,priority));
+
+        /*attatch the header with priority 0, and the number of messages
+         * as the content*/
+        msgList->push_back(pack(msgEncode,convert.str(),0));
+        return msgList;
+    }
+
+
+
+
+    /*PACK--given the type encoding and content, pack the information into
+     * a sendable messeage.
+     * priority is the number in a message group*/
+    message_type* pack(int msgEncode, string content, int priority){
+
 
         utils::byte* msg = (utils::byte*)new message_type[MAXLENGTH];
         int pos = 0;
+
+
         message_type debugFlag =  DEBUG;
-        size_t size = content.length() +1;
-        size_t bufSize = MAXLENGTH*SIZE;
-        message_type msgSize = bufSize-SIZE;
-        utils::byte anotherIndicator = 0;
+        size_t contentSize = content.length() + 1;
+        size_t bufSize = MAXLENGTH*SIZE;//bytes
+        message_type msgSize = bufSize-SIZE;//according to message spec
         message_type timeStamp = 0;
         message_type nodeId = 0;
 
-
+        /*message size in bytes*/
         utils::pack<message_type>(&msgSize,1,msg,bufSize,&pos);
+
+        /*debug indicator*/
         utils::pack<message_type>(&debugFlag,1,msg,bufSize,&pos);
+
         /*timestamp*/
         utils::pack<message_type>(&timeStamp,1,msg,bufSize,&pos);
-        /*VM ID*/
+
+        /*VM id*/
         utils::pack<message_type>(&nodeId,1,msg,bufSize,&pos);
-        /*indicate if another message is coming*/
-        utils::pack<utils::byte>(&anotherIndicator,1,msg,bufSize,&pos);
 
+        /*priority of the message*/
+        utils::pack<int>(&priority,1,msg,bufSize,&pos);
+
+        /*debug command encoding*/
         utils::pack<int>(&msgEncode,1,msg,bufSize,&pos);
-        utils::pack<size_t>(&size,1,msg,bufSize,&pos);
 
-        /*add the content into the buffer*/
+        /*size of content*/
+        utils::pack<size_t>(&contentSize,1,msg,bufSize,&pos);
+
+        /*content*/
         utils::pack<char>((char*)content.c_str(),content.size()+1,
                                  msg,bufSize,&pos);
+
         return (message_type*)msg;
 
     }
 
 
 
-
-    /*the desination specified is the process*/
-    /*send a debug message to another process through the MPI layer*/
-    /*if send to all, specify BROADCAST (see top)*/
+    /*SENDMSG--the desination specified is the user input node ID*/
+    /* send a debug message to another process through the API layer*/
+    /* if send to all, specify BROADCAST (see top)*/
     int sendMsg(int destination, int msgType,
               string content, bool broadcast)  {
 
+         /*length of array*/
+            size_t msgSize = MAXLENGTH;
+            /*pack the message into a broken list*/
+            std::list<message_type*>* msgList = packList(msgType,content);
+            message_type* msg;
 
-        /*pack the message*/
-        message_type* msg = pack(msgType,content);
+            int expected;
 
-        size_t msgSize = MAXLENGTH*SIZE;
+            /*send all the messages in the list*/
+            while (!msgList->empty()){
 
-        if (broadcast){
+                msg = msgList->front();
+                msgList->pop_front();
 
-            return debugSendMsg(-1,msg,msgSize);
 
-        } else {
+                if (broadcast){
 
-            /*get the process id (getVMId) and send the message*/
-            return debugSendMsg(destination,msg,
-                              msgSize);
-        }
+                    expected = debugSendMsg(-1,msg,msgSize);
+
+                } else {
+
+                    /*get the process id (getVMId) and send the message*/
+                    expected = debugSendMsg(destination,msg,
+                                        msgSize);
+                }
+
+
+            }
+
+            delete msgList;
+
+            return expected;
 
     }
 
 
+
     void receiveMsg(void){
+
+
 
         utils::byte *msg;
         int instruction;
         char specification[MAXLENGTH*SIZE];
         int pos = 0;
-        message_type size;
-        message_type debugFlag;
+        message_type size,debugFlag,timeStamp,NodeId;
         size_t specSize;
-         utils::byte anotherIndicator;
-        message_type nodeId;
-        message_type timeStamp;
+        int priority;
+
+        struct msgListContainer* msgContainer;
+
 
 		BlinkyBlocks::checkForReceivedVMMessages();
 
         while(!messageQueue->empty()){
+
             /*process each message until empty*/
             /*extract the message*/
             msg = (utils::byte*)messageQueue->front();
 
-            /*unpack the message into readable form*/
-            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&size,1);
-            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&debugFlag,1);
-            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&timeStamp,1);
-            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&nodeId,1);
-            utils::unpack<utils::byte>(msg,MAXLENGTH*SIZE,&pos,
-                                        &anotherIndicator,1);
+            /*==>UNPACK the message into readable form*/
+            /*msgsize in bytes*/
+            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,
+                                             &pos,&size,1);
+            /*debugFlag*/
+            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,
+                                             &pos,&debugFlag,1);
+            /*timestamp*/
+            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,
+                                             &pos,&timeStamp,1);
+            /*place msg came from*/
+            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,
+                                             &pos,&NodeId,1);
+            /*priority*/
+            utils::unpack<int>(msg,MAXLENGTH*SIZE,
+                                       &pos,&priority,1);
+            /*command encoding*/
             utils::unpack<int>(msg,MAXLENGTH*SIZE,&pos,&instruction,1);
+            /*content size*/
             utils::unpack<size_t>(msg,MAXLENGTH*SIZE,&pos,&specSize,1);
+            /*content*/
             utils::unpack<char>(msg,MAXLENGTH*SIZE,&pos,
                                 &specification,specSize);
+
             string spec(specification);
+
+
+
+             /*insert the message into a cache to be checked if the
+             *broken message in pieces has been completed*/
+            insertMsg(spec, priority, instruction, NodeId);
+
+            /*check to see if a total message has been sent*/
+            msgContainer = checkAndGet();
+
+            /*messages are ready to be processed*/
+            if (msgContainer!= NULL){
+                instruction = msgContainer->instruction;
+                spec = buildString(msgContainer);
+
+            /*no messages completed*/
+            } else {
+
+                /* resetup*/
+                memset(specification,0,MAXLENGTH*SIZE);
+                messageQueue->pop();
+                memset(msg,0,MAXLENGTH*SIZE);
+                pos = 0;
+                continue;
+            }
 
 
             debugMasterController(instruction,spec);
@@ -404,6 +549,145 @@ namespace debugger {
             memset(msg,0,MAXLENGTH*SIZE);
             pos = 0;
         }
+    }
+
+
+    /************************************************************************/
+
+    /*RECONSTRUCTING/STORING PARTITIONED MESSAGES
+     *  -Receiving and constructing broken apart message algorithms*/
+
+    /************************************************************************/
+
+
+    /*INSERT MESSAGE--insert the a parted message into the cache (a list of lists)*/
+    void insertMsg(string content, int priority, int instruction, int node){
+
+         std::list<struct msgListContainer*>::const_iterator it;
+         struct msgListElem* elem;
+         struct msgListContainer* contain;
+
+         for (it = rcvMessageList->begin();it!=rcvMessageList->end();it++){
+
+             contain = *it;
+
+             /*a message that matches already came from a node, insert it with
+              * that node*/
+             if (contain->instruction == instruction && contain->node == node){
+                 elem = new struct msgListElem;
+                 elem->priority = priority;
+                 elem->content = content;
+                 contain->msglist->push_back(elem);
+                 return;
+             }
+         }
+
+
+         /*if no message like it exist yet create a new list in the cache*/
+         contain = new struct msgListContainer;
+         contain->instruction = instruction;
+         contain->node = node;
+         contain->msglist = new std::list<struct msgListElem*>();
+         elem = new struct msgListElem;
+         elem->priority = priority;
+         elem->content = content;
+         contain->msglist->push_back(elem);
+         rcvMessageList->push_back(contain);
+    }
+
+
+    /*CHECK AND GET -- check to see if any lists in the cache have completed
+     * i.e.  all broken partitioned messages for a command have been sent*/
+    struct msgListContainer* checkAndGet(void){
+
+        std::list<struct msgListElem*>* msgList;
+        std::list<struct msgListElem*>::iterator iter;
+        std::list<struct msgListContainer*>::iterator it;
+        struct msgListContainer* contain;
+        struct msgListElem* elem;
+
+        /*iterate through cache*/
+        for (it = rcvMessageList->begin();
+             it!=rcvMessageList->end();it++){
+            contain = *it;
+            msgList = contain->msglist;
+
+            /*iterate through list within cache*/
+            for (iter = msgList->begin();iter!=msgList->end();iter++){
+                elem = *iter;
+
+                /*find the header and check if it is done if the size expected
+                 *matches the size of the list*/
+                if (elem->priority == 0 &&
+                    (uint)atoi(elem->content.c_str()) == (uint)msgList->size()){
+                    return contain;
+                }
+            }
+        }
+
+        /*no commands have been completed*/
+        return NULL;
+    }
+
+    /*PRINT RECIEVED-- print the cache (used for debugging the debugger :) ) */
+    void printRcv(void){
+
+        std::list<struct msgListElem*>* msgList;
+        std::list<struct msgListElem*>::iterator iter;
+        std::list<struct msgListContainer*>::iterator it;
+        struct msgListContainer* contain;
+        struct msgListElem* elem;
+
+        ostringstream msg;
+
+        msg << "#######################################" << endl <<endl;
+
+        for (it = rcvMessageList->begin();
+             it!=rcvMessageList->end();it++){
+            contain = *it;
+            msg << "========================" << endl;
+            msg << "instruction: " << contain->instruction << endl;
+            msg << "node: " << contain->node << endl;
+            msg << "========================" << endl;
+            msgList = contain->msglist;
+            for (iter = msgList->begin();iter!=msgList->end();iter++){
+                elem = *iter;
+                msg << "\t*****************" << endl;
+                msg << "\tpriority: " << elem->priority << endl;
+                msg << "\tcontent: " << elem->content << endl;
+                msg << "\t*****************" << endl;
+            }
+            msg << "========================" << endl;
+        }
+
+        printf("%s",msg.str().c_str());
+    }
+
+
+    /*BUILD STRING -- rebuild a broken message that is ready to
+     * be completed*/
+    string buildString(struct msgListContainer* container){
+
+        ostringstream msg;
+
+        std::list<struct msgListElem*>::iterator it;
+        struct msgListElem* elem;
+        std::list<struct msgListElem*>* msgList = container->msglist;
+
+
+
+        for (it = msgList->begin(); it!=msgList->end(); it++){
+            elem = *it;
+            /*ignore the header and reconstruct the full content*/
+            if (elem->priority!=0)
+                msg << elem->content;
+            delete elem;
+        }
+
+        rcvMessageList->remove(container);
+        delete container;
+
+        return msg.str();
     }
 
 }
