@@ -46,39 +46,28 @@ int BlinkyBlocksDebugger::sendMsg(int id, int size, uint64_t *message) {
 			bb->vm->sendMessage(size, message);
 			return 1;
 		} else {
-			debuggerMessageHandler(debugger::pack(debugger::PRINTCONTENT, "node does not exist\n"));
+			debuggerMessageHandler(debugger::pack(debugger::PRINTCONTENT, "2", 0));
+			debuggerMessageHandler(debugger::pack(debugger::PRINTCONTENT, "node does not exist\n", 1));
 			return 0;
 		}
 	} else if (id == -1) {
 		// send to all vm
-		int x = getWorld()->broadcastDebugMessage(size, message);
-		// Bricolage en attendant un reel algorithme
-		cur_timeout++;
-		//boost::thread(boost::bind(&BlinkyBlocksDebugger::timeOut, this, cur_timeout));
-		return x;
+		return getWorld()->broadcastDebugMessage(size, message);
 	} else {
 		return 0;
 	}
 }
 
-void BlinkyBlocksDebugger::pauseSim() {
-	cout << "Simulator paused" << endl;
-	getScheduler()->pause(BlinkyBlocks::getScheduler()->now());
+void BlinkyBlocksDebugger::pauseSim(int t) {
+	if (t == -1) {
+		getScheduler()->pause(BlinkyBlocks::getScheduler()->now());
+	} else {
+		getScheduler()->pause(t);
+	}
 }
 
 void BlinkyBlocksDebugger::unPauseSim() {
-	cout << "Simulator unpaused" << endl;
 	getScheduler()->unPause();
-}
-
-void BlinkyBlocksDebugger::timeOut(int num) {
-	//debuggerMessageHandler(debugger::pack(debugger::TIMEOUT, "System appears to be in equilibrium\n"));
-	while(getScheduler()->getState() == Scheduler::NOTSTARTED) {
-		usleep(5000);
-	}	
-	sleep(3);
-	if(num == cur_timeout)
-		debuggerMessageHandler(debugger::pack(debugger::TIMEOUT, "TimeOut to avoid deadlock when system is in equilibrium\n"));
 }
 
 void BlinkyBlocksDebugger::waitForDebuggerEnd() {

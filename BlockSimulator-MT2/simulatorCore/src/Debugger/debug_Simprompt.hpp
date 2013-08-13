@@ -14,8 +14,8 @@ namespace debugger {
     typedef void (*ftrp)(message_type*);
 
 	ftrp initDebugger(int (*sendMsg)(int,message_type*,int),
-                        void (*pauseSim)(void),
-                        void (*unPauseSim)(int),
+                        void (*pauseSim)(int),
+                        void (*unPauseSim)(void),
                         void (*quitDebug)(void),
                       std::ostream& o = std::cout, std::istream& i = std::cin);
 
