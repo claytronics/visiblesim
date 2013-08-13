@@ -1,3 +1,5 @@
+/*DEBUGGER FOR BLINKY BLOCK SIMULATOR*/
+
 #include <string.h>
 #include <pthread.h>
 #include <iostream>
@@ -24,7 +26,7 @@ namespace debugger {
 
     /*****************************************************************/
 
-    /*GLOBAL STORED VARS: debug handling specific*/
+    /*GLOBAL STORED VARS*/
 
     /****************************************************************/
 
@@ -47,7 +49,7 @@ namespace debugger {
     bool verboseMode = false;
     bool serializationMode = false;
 
-        /*cache ...rcvMessageList holds containters for
+    /*cache ...rcvMessageList holds containters for
      * different lists of broken messages*/
     std::list<struct msgListContainer*>* rcvMessageList;
 
@@ -71,12 +73,13 @@ namespace debugger {
 
     /**********************************************************************/
 
-    /* I/0 SPECIFICATION PARSING */
+    /* I/0 SPECIFICATION PARSING - extract the different parts of
+     * a specification format*/
 
     /*********************************************************************/
 
 
-    /*returns the index of a character in a string,
+    /*CHARACTER IN STRING INDEX -- returns the index of a character in a string,
      *if it is not there it returns -1*/
     int characterInStringIndex(string str, char character){
         for(unsigned int i = 0; i < str.length(); i++){
@@ -87,7 +90,7 @@ namespace debugger {
     }
 
 
-    /*extracts the type from the specification from input line
+    /*GET TYPE -- extracts the type from the specification from input line
      *returns the type of breakpoint from the specification
      *invariant-- the type is always specified*/
     string getType(string specification){
@@ -102,7 +105,7 @@ namespace debugger {
     }
 
 
-    /*extracts the name from the specification
+    /*GET NAME -- extracts the name from the specification
      *returns the name from the specification
      *returns "" if name is not present*/
     string getName(string specification){
@@ -123,7 +126,7 @@ namespace debugger {
     }
 
 
-    /*extracts the node from the specification
+    /*GET NODE -- extracts the node from the specification
      *returns the node from the specification
      *returns "" if node is not given*/
     string getNode(string specification){
@@ -137,8 +140,9 @@ namespace debugger {
         return build;
     }
 
-    /*given the encoding return the corresponding string for
-     *break point types*/
+    /*TYPE INT TO STRING -- given the encoding return
+     *  the corresponding string for
+     *  break point types*/
     string typeInt2String(int type){
         switch(type){
             case FACTDER:
@@ -163,6 +167,8 @@ namespace debugger {
 
     /*********************************************************************/
 
+
+    /*SETFLAGS -- switch to different debugging modes based on user input*/
    void setFlags(string specification){
         ostringstream msg;
         for (int i = 0; i < specification.length(); i++){
@@ -175,6 +181,8 @@ namespace debugger {
     }
 
 
+    /*HANDLE PAUSE COMMAND -- broadcast a pause message to all VMs
+     *  -used when the user presses P for a runnung system*/
     void handlePauseCommand(void){
 
         sendMsg(-1,PAUSE,"",BROADCAST);
@@ -182,6 +190,8 @@ namespace debugger {
 
     }
 
+
+    /*DEBUG CONTROLLER -- send messages to the VMs based off the user input*/
     void debugController(int instruction, string specification){
 
         string type;
@@ -189,11 +199,11 @@ namespace debugger {
         string node;
 
 
+        /*keep tract of number of messages expected*/
         okayToPrint = true;
         if (instruction == CONTINUE || instruction == UNPAUSE){
             okayToBroadcastPause = true;
             okayToPauseSimulation = true;
-            /*continue a paused system by broadcasting an CONTINUE signal*/
             unPauseSimulation();
             printLimitation = false;
             numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
@@ -244,12 +254,13 @@ namespace debugger {
         } else if (instruction == PRINTLIST) {
 
             printLimitation = false;
-            /*broadcast  a pause message*/
+            /*broadcast  a PRINT LIST message*/
             numberExpected = sendMsg(-1,PRINTLIST,"",BROADCAST);
 
         } else if (instruction == MODE) {
 
             printLimitation = true;
+            /*set flags and tell the VMs of the update*/
             setFlags(specification);
             numberExpected = sendMsg(-1,MODE,specification,
                                      BROADCAST);
@@ -261,22 +272,25 @@ namespace debugger {
     }
 
 
-    /*the controller for the master MPI debugger-called when messages are
-    *received*/
+    /*DEBUG MASTER CONTROLLER -- the controller for the master
+     *  MPI debugger-called when messages are
+     *  received*/
     void debugMasterController(int instruction, string specification){
 
         /*print the output and then tell all other VMs to pause*/
         if (instruction == BREAKFOUND){
             printf("%s",specification.c_str());
-			/*print content from a VM*/
+			/*only able to broadcast pause per one run/continue*/
             if(okayToBroadcastPause) {
 				sendMsg(-1,PAUSE,"",BROADCAST);
 				okayToBroadcastPause = false;
             }
         } else if (instruction == PRINTCONTENT){
+            /*if not verbose, only print from first VM to respond*/
             if (!verboseMode&&printLimitation&&okayToPrint){
                 printf("%s",specification.c_str());
                 okayToPrint  = false;
+                /*print all*/
             } else if (verboseMode||!printLimitation) {
                 printf("%s",specification.c_str());
             }
@@ -289,6 +303,7 @@ namespace debugger {
             if (verboseMode){
                 printf("%s",specification.c_str());
             }
+
         } else if (instruction == TIME){
             printf("%s",specification.c_str());
             if(okayToBroadcastPause) {
@@ -301,19 +316,6 @@ namespace debugger {
 
     /***************************************************************************/
 
-    /*DEBUG MESSAGE SENDING*/
-
-    /***************************************************************************/
-
-
-    void messageQueueInsert(uint64_t* msg){
-        messageQueue->push(msg);
-    }
-
-
-
-    /***************************************************************************/
-
     /*DEBUG MESSAGE SENDING - send message over a connection
      *  -messages are first broken into packets, attatched with a header
      *   when sent
@@ -322,6 +324,11 @@ namespace debugger {
 
     /***************************************************************************/
 
+
+    /*MESSAGE QUEUE INSERT -- used by simulator to update debugger message queue*/
+    void messageQueueInsert(uint64_t* msg){
+        messageQueue->push(msg);
+    }
 
     /*GET MAX CHAR ARRAY SIZE--return the size of the maximum char array size*/
     inline int getMaxCharArraySize(){
@@ -462,6 +469,10 @@ namespace debugger {
 
 
 
+    /* RECEIVE MESSAGE -- ask for messages from the simulator,
+     *  if there are messages, put them in the cache.
+     *  if a whole message has been completed in the cache
+     *  reconctruct it and process it in the master contoller*/
     void receiveMsg(void){
 
 
@@ -537,9 +548,11 @@ namespace debugger {
             }
 
 
+            /*process a reconstructed message*/
             debugMasterController(instruction,spec);
             numberExpected--;
 
+            /*if all expected messages have been received*/
             if (numberExpected == 0 && okayToPauseSimulation)
                 pauseSimulation(-1);
 
