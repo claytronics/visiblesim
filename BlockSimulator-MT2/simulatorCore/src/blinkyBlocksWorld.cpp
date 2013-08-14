@@ -441,14 +441,14 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		bb->shake(date, f);	
 	}
 	
-	int BlinkyBlocksWorld::broadcastDebugMessage(int size, uint64_t* message) {
+	int BlinkyBlocksWorld::broadcastDebugCommand(DebbuggerVMCommand &c) {
 		map<int, BaseSimulator::BuildingBlock*>::iterator it;
 		int aliveBlocks = 0;
 		for(it = buildingBlocksMap.begin(); 
 				it != buildingBlocksMap.end(); it++) {
 			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
 			if (bb->getState() >= BlinkyBlocksBlock::ALIVE) {
-				aliveBlocks += getDebugger()->sendMsg(bb->blockId, size, message);
+				aliveBlocks += getDebugger()->sendCmd(bb->blockId, c);
 			}
 		}
 		return aliveBlocks;
@@ -539,5 +539,16 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		//cout << "min" << minReallyReached << endl;
 		return (date <= min);
 	}
+	
+	/*
+	void BlinkyBlocks::killAllVMs() {
+		map<int, BaseSimulator::BuildingBlock*>::iterator it;
+		for(it = buildingBlocksMap.begin(); 
+				it != buildingBlocksMap.end(); it++) {
+			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
+			kill(bb->vm->pid, SIGTERM);
+			waitpid(bb->vm->pid, NULL, 0);
+		}	
+	}*/
 
 } // BlinkyBlock namespace

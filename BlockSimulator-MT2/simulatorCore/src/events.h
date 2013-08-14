@@ -200,6 +200,7 @@ public:
 	P2PNetworkInterface *sourceInterface;
 
 	NetworkInterfaceEnqueueOutgoingEvent(uint64_t, Message *mes, P2PNetworkInterface *ni);
+	NetworkInterfaceEnqueueOutgoingEvent(uint64_t, MessagePtr mes, P2PNetworkInterface *ni);
 	~NetworkInterfaceEnqueueOutgoingEvent();
 	void consume();
 	const virtual string getEventName();

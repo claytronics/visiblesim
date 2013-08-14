@@ -13,26 +13,16 @@
 #include <inttypes.h>
 #include "blinkyBlocksSimulator.h"
 #include "blinkyBlocksScheduler.h"
+#include "blinkyBlocksVMCommands.h"
 
 using namespace std;
 
 namespace BlinkyBlocks {
 
-class VMDebugMessage {
-public:
-	int size; // in bytes
-	uint64_t *message;
-	
-	VMDebugMessage(int s, uint64_t *m);
-	virtual ~VMDebugMessage();
-};
-
-typedef boost::shared_ptr<VMDebugMessage> VMDebugMessagePtr;
-
 class BlinkyBlocksDebugger {
 
 protected:
-	void (*debuggerMessageHandler)(uint64_t*);	
+	void (*debuggerCommandHandler)(uint64_t*);	
 	static BlinkyBlocksDebugger *debugger;
 
 public:
@@ -41,7 +31,7 @@ public:
 	BlinkyBlocksDebugger();
 	~BlinkyBlocksDebugger();
 	
-	int sendMsg(int id, int size, uint64_t *message);
+	int sendCmd(int id, DebbuggerVMCommand &c);
 	void pauseSim();
 	void unPauseSim();
 	
@@ -59,15 +49,15 @@ public:
 		debugger = NULL;
 	}
 	
-	void handleDebugMessage(uint64_t* m) {
-		debuggerMessageHandler(m);
+	void handleDebugCommand(uint64_t* c) {
+		debuggerCommandHandler(c);
 	}
 	
 	void timeOut(int num);
 	
 	void waitForDebuggerEnd();
 	
-	void sendTerminateMsg(int id);
+	void sendTerminateCmd(int id);
 	
 	void handlePauseRequest();
 	
@@ -79,19 +69,19 @@ inline void deleteDebugger() { BlinkyBlocksDebugger::deleteDebugger(); }
 
 inline BlinkyBlocksDebugger* getDebugger() { return(BlinkyBlocksDebugger::getDebugger()); }
 	
-inline int sendMessage(int id, uint64_t *message, int size) { return getDebugger()->sendMsg(id, size, message); }
+inline int sendCommand(int id, uint64_t *data, int size) { DebbuggerVMCommand c(data); return getDebugger()->sendCmd(id, c); }
 
 inline void pauseSimulation(void) { getDebugger()->pauseSim(); }
 
 inline void unPauseSimulation() { getDebugger()->unPauseSim(); }
 
-inline void handleDebugMessage(uint64_t* m) { getDebugger()->handleDebugMessage(m); }
+inline void handleDebugCommand(uint64_t* c) { getDebugger()->handleDebugCommand(c); }
 
 inline void quit() {
-					BlinkyBlocksDebugger::threadHasFinished = true;
-					if(getScheduler()->getState() != Scheduler::ENDED)
-						glutLeaveMainLoop(); 
-					}
+	BlinkyBlocksDebugger::threadHasFinished = true;
+	if(getScheduler()->getState() != Scheduler::ENDED)
+		glutLeaveMainLoop(); 
+	}
 
 }
 

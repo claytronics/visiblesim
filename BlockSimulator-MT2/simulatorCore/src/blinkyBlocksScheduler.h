@@ -19,8 +19,6 @@
 
 using namespace boost;
 
-#define SCHEDULER_MODE_FASTEST2 3
-
 namespace BlinkyBlocks {
 
 class BlinkyBlocksScheduler : public BaseSimulator::Scheduler {

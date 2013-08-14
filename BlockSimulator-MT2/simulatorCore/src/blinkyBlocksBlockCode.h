@@ -10,6 +10,7 @@
 
 #include "blockCode.h"
 #include "blinkyBlocksBlock.h"
+#include "blinkyBlocksVMCommands.h"
 
 namespace BlinkyBlocks {
 
@@ -23,8 +24,9 @@ public:
 	BlinkyBlocksBlockCode(BlinkyBlocksBlock *host);
 	virtual ~BlinkyBlocksBlockCode();
 
-	virtual void handleNewMessage(uint64_t *message) {}
-	virtual bool mustBeQueued() {return false;}
+	virtual void handleCommand(VMCommand &command) {}
+	virtual void handleDeterministicMode(VMCommand &command) {}
+	virtual bool mustBeQueued(VMCommand &command) { return false; }
 	inline uint64_t getCurrentLocalDate() { return currentLocalDate; }
 
 	//static BlinkyBlocksBlockCode* buildNewBlockCode(BlinkyBlocksBlock *host);

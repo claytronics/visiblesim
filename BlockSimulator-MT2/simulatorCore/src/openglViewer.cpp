@@ -226,6 +226,8 @@ void GlutContext::keyboardFunc(unsigned char c, int x, int y)
       //case 'p' : getScheduler()->pauseSimulation(getScheduler()->now()); break;
       case 'p' : BlinkyBlocks::getDebugger()->handlePauseRequest(); break;
 	  case 'R' : getScheduler()->start(SCHEDULER_MODE_FASTEST); break;
+	  case 'd' : getScheduler()->start(SCHEDULER_MODE_FASTEST_2); break;
+	  case 'D' : getScheduler()->start(SCHEDULER_MODE_FASTEST_1); break;
 	  //case 'u' : getScheduler()->unPauseSimulation(); break;
 	  case 'z' : {
 		  World *world = BaseSimulator::getWorld();

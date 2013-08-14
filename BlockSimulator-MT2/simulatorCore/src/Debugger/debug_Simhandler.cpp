@@ -370,7 +370,7 @@ namespace debugger {
         message_type nodeId;
         message_type timeStamp;
 
-		BlinkyBlocks::checkForReceivedVMMessages();
+		BlinkyBlocks::checkForReceivedVMCommands();
 
         while(!messageQueue->empty()){
             /*process each message until empty*/

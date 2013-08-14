@@ -18,8 +18,10 @@
 
 using namespace std;
 
-#define SCHEDULER_MODE_FASTEST	1
-#define SCHEDULER_MODE_REALTIME	2
+#define SCHEDULER_MODE_FASTEST		1
+#define SCHEDULER_MODE_FASTEST_1	SCHEDULER_MODE_FASTEST
+#define SCHEDULER_MODE_FASTEST_2	2
+#define SCHEDULER_MODE_REALTIME		3
 
 namespace BaseSimulator {
 
@@ -33,7 +35,6 @@ protected:
 	int eventsMapSize, largestEventsMapSize;
 	boost::interprocess::interprocess_mutex mutex_schedule;
 	boost::interprocess::interprocess_mutex mutex_trace;
-	
 	
 	Scheduler();
 	virtual ~Scheduler();
@@ -64,10 +65,8 @@ public:
 	void lock();
 	void unlock();
 	
-	//virtual void pauseSimulation(int timestamp) {};
-	//virtual void unPauseSimulation() {};
-
 	virtual void start(int) {};
+	
 	// stop for good
 	virtual void stop(uint64_t date) {};
 	

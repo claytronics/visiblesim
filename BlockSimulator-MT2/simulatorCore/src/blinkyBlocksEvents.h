@@ -201,7 +201,7 @@ public:
 //          VMDebugMessageEvent  (class)
 //
 //===========================================================================================================
-
+/*
 class VMDebugMessageEvent : public BlockEvent {
 
 public:
@@ -213,7 +213,7 @@ public:
 	void consumeBlockEvent();
 	const virtual string getEventName();
 };
-
+*/
 //===========================================================================================================
 //
 //          VMDebugMessageEvent  (class)
@@ -233,17 +233,17 @@ public:
 
 //===========================================================================================================
 //
-//          VMStartComputationEvent  (class)
+//          VMResumeComputationEvent  (class)
 //
 //===========================================================================================================
 
-class VMStartComputationEvent : public BlockEvent {
+class VMResumeComputationEvent : public BlockEvent {
 public:
 	uint64_t duration;
 
-	VMStartComputationEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint64_t dur);
-	VMStartComputationEvent(VMStartComputationEvent *ev);
-	~VMStartComputationEvent();
+	VMResumeComputationEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint64_t dur);
+	VMResumeComputationEvent(VMResumeComputationEvent *ev);
+	~VMResumeComputationEvent();
 	void consumeBlockEvent();
 	const virtual string getEventName();
 };
@@ -254,28 +254,28 @@ public:
 //
 //===========================================================================================================
 
-class VMExpectedEndComputationEvent : public BlockEvent {
+class VMExpectedComputationPauseEvent : public BlockEvent {
 public:
 
-	VMExpectedEndComputationEvent(uint64_t, BlinkyBlocksBlock *conBlock);
-	VMExpectedEndComputationEvent(VMExpectedEndComputationEvent *ev);
-	~VMExpectedEndComputationEvent();
+	VMExpectedComputationPauseEvent(uint64_t, BlinkyBlocksBlock *conBlock);
+	VMExpectedComputationPauseEvent(VMExpectedComputationPauseEvent *ev);
+	~VMExpectedComputationPauseEvent();
 	void consumeBlockEvent();
 	const virtual string getEventName();
 };
 
 //===========================================================================================================
 //
-//          VMEffectiveEndComputationEvent  (class)
+//          VMEffectiveComputationPauseEvent  (class)
 //
 //===========================================================================================================
 
-class VMEffectiveEndComputationEvent : public BlockEvent {
+class VMEffectiveComputationPauseEvent : public BlockEvent {
 public:
 
-	VMEffectiveEndComputationEvent(uint64_t, BlinkyBlocksBlock *conBlock);
-	VMEffectiveEndComputationEvent(VMEffectiveEndComputationEvent *ev);
-	~VMEffectiveEndComputationEvent();
+	VMEffectiveComputationPauseEvent(uint64_t, BlinkyBlocksBlock *conBlock);
+	VMEffectiveComputationPauseEvent(VMEffectiveComputationPauseEvent *ev);
+	~VMEffectiveComputationPauseEvent();
 	void consumeBlockEvent();
 	const virtual string getEventName();
 };

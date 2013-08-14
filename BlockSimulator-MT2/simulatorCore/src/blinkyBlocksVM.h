@@ -15,28 +15,14 @@
 #include <boost/shared_ptr.hpp>
 #include <boost/interprocess/sync/interprocess_mutex.hpp>
 #include <boost/interprocess/sync/interprocess_semaphore.hpp>
+#include "blinkyBlocksVMCommands.h"
 
 using namespace std;
 using boost::asio::ip::tcp;
 
 namespace BlinkyBlocks {
 
-//#define VM_MESSAGE_MAXLENGHT 512
-#define VM_MESSAGE_MAXLENGHT 544 // debugger
-typedef uint64_t messageType;
-
 class BlinkyBlocksBlock;
-
-class VMMessage {
-public:
-	int size;
-	uint64_t message[VM_MESSAGE_MAXLENGHT];
-	
-	VMMessage() { };
-	VMMessage(const VMMessage &m);
-	VMMessage(int size) { };
-	~VMMessage() { };
-};
 
 class BlinkyBlocksVM {
 
@@ -47,16 +33,17 @@ protected:
 	pid_t pid;
 	/* socket connected to the associated VM program */
 	boost::shared_ptr<tcp::socket> socket;
-	/* buffer used to receive tcp message */
-	VMMessage inBuffer;
+	
 	/* queue used to store incoming message when necessary*/
-	queue<VMMessage> inQueue;
+	queue<VMCommand> inQueue;
 	/* Mutex used when sending message */
 	boost::interprocess::interprocess_mutex mutex_send;
 	/* True if the id was sent */
 	bool idSent;
 	
-	tcp::socket& getSocket() {assert(socket != NULL); return *(socket.get()); };
+	inline tcp::socket& getSocket() { 
+		assert(socket != NULL);
+		return *(socket.get()); };
 	/* kill the associated VM program (and wait for the effective end) */
 	void terminate();
 	/* close the socket associated to the VM program */
@@ -74,68 +61,31 @@ public:
 	BlinkyBlocksVM(BlinkyBlocksBlock* bb);
 	~BlinkyBlocksVM();
 
-	VMMessage*  getBufferPtr() { return &inBuffer;};
-	
-	static void setConfiguration(string v, string p, bool d) {
-		vmPath = v;
-		programPath = p;
-		debugging = d;
-	};
-	
-	static void createServer(int p) {
-		assert(ios == NULL);
-		ios = new boost::asio::io_service();
-		acceptor =  new tcp::acceptor(*ios, tcp::endpoint(tcp::v4(), p));
-	};
-	
-	static void deleteServer() {
-		ios->stop();
-		delete acceptor;
-		delete ios;
-		ios = NULL; acceptor = NULL;
-	};
-	
+	/* buffer used to receive tcp message */
+	commandType inBuffer[VM_COMMAND_MAX_LENGHT];	
+	commandType outBuffer[VM_COMMAND_MAX_LENGHT];	
+	commandType nbSentCommands; // mode fastest 1
+			
+	/* send and receive message from the associated VM program */
+	void sendCommand(VMCommand &command);
+	void asyncReadCommand();	
+	void asyncReadCommandHandler(const boost::system::error_code& error, std::size_t bytes_transferred);
+	void handleQueuedCommands();
 	/* close the socket */
 	void stop();
 	
-	/* send and receive message from the associated VM program */
-	//void sendMessage(VMMessage &m);
-	void sendMessage(uint64_t size, uint64_t* m);
-	void asyncReadMessage();
-	
-	static void checkForReceivedMessages() {
-		if (ios != NULL) {
-			ios->poll();
-			ios->reset();
-		}
-	};
-
-	static void waitForOneMessage() {
-		if (ios != NULL) {
-			//boost::system::error_code ec;
-			ios->run_one();
-			//cout << ios->run_one(ec) << endl;
-			//cout << ec << endl;
-			ios->reset();
-		} else {
-			cout << "ios is null" <<endl;
-		}
-	};
-	
-	void asyncReadMessageHandler(const boost::system::error_code& error, std::size_t bytes_transferred);
-	void handleQueuedMessages();
-	
-	inline static bool isInDebuggingMode() {
-			return debugging;
-	}
-	
-	void connect(boost::interprocess::interprocess_semaphore* s);
+	inline static bool isInDebuggingMode() { return debugging; };
+	static void setConfiguration(string v, string p, bool d);
+	static void createServer(int p);
+	static void deleteServer();
+	static void checkForReceivedCommands();
+	static void waitForOneCommand();
 };
 
 	inline void createVMServer(int p) { BlinkyBlocksVM::createServer(p); };
 	inline void deleteVMServer() { BlinkyBlocksVM::deleteServer(); };
 	inline void setVMConfiguration(string v, string p, bool d) { BlinkyBlocksVM::setConfiguration(v,p,d); };
-	inline void checkForReceivedVMMessages() { BlinkyBlocksVM::checkForReceivedMessages(); };
-	inline void waitForOneVMMessage() { BlinkyBlocksVM::waitForOneMessage(); };
+	inline void checkForReceivedVMCommands() { BlinkyBlocksVM::checkForReceivedCommands(); };
+	inline void waitForOneVMCommand() { BlinkyBlocksVM::waitForOneCommand(); };
 }
 #endif /* BLINKYBLOCKSVM_H_ */

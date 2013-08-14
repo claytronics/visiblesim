@@ -26,7 +26,6 @@ BlinkyBlocksScheduler::BlinkyBlocksScheduler() {
 	OUTPUT << "BlinkyBlocksScheduler constructor" << endl;
 	state = NOTREADY;
 	sem_schedulerStart = new boost::interprocess::interprocess_semaphore(0);
-	//schedulerMode = SCHEDULER_MODE_FASTEST;
 	schedulerMode = SCHEDULER_MODE_REALTIME;
 	schedulerThread = new thread(bind(&BlinkyBlocksScheduler::startPaused, this));
 }
@@ -63,13 +62,12 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	if (BlinkyBlocksVM::isInDebuggingMode())
 		sem_schedulerStart->wait(); // wait for "run" in the debugger
 #else
-	//schedulerMode = SCHEDULER_MODE_FASTEST2;
+	//schedulerMode = SCHEDULER_MODE_FASTEST_2;
 #endif
-	//schedulerMode = SCHEDULER_MODE_FASTEST2;
 	
 	while (state == NOTREADY) {usleep(5000);} // use the semaphore instead
 	state = RUNNING;
-	checkForReceivedVMMessages();
+	checkForReceivedVMCommands();
 	//BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
 	uint64_t systemStartTime, systemStopTime, reachedDate;
 	multimap<uint64_t, EventPtr>::iterator first, tmp;
@@ -77,10 +75,9 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	systemStartTime = (glutGet(GLUT_ELAPSED_TIME))*1000;
 	OUTPUT << "\033[1;33m" << "Scheduler : start order received " << systemStartTime << "\033[0m" << endl;
 	switch (schedulerMode) {
-		case SCHEDULER_MODE_FASTEST:
-		cout << "SCHEDULER_MODE_FASTEST" << endl;
-    BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
-
+		case SCHEDULER_MODE_FASTEST_1:
+		cout << "SCHEDULER_MODE_FASTEST_1" << endl;
+		BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
 		while (!eventsMap.empty()) {
 			do {
 				lock();
@@ -90,9 +87,8 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 				if (getWorld()->dateHasBeenReachedByAll(pev->date))
 					break;
 					
-				waitForOneVMMessage();
-				checkForReceivedVMMessages();
-				//usleep(5000);
+				waitForOneVMCommand();
+				checkForReceivedVMCommands();
 			} while (true);
 #ifdef TEST_DETER
 			//cout << "date " << now() << " has been reached" << endl;
@@ -110,7 +106,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 			eventsMap.erase(first);
 			eventsMapSize--;
 			unlock();
-			checkForReceivedVMMessages();
+			checkForReceivedVMCommands();
 		}
 		cout << "scheduler end at "<< now() << "..." << endl;
 #ifdef TEST_DETER
@@ -118,9 +114,9 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 		exit(0);
 #endif
 		break;
-		case SCHEDULER_MODE_FASTEST2:		
-		cout << "SCHEDULER_MODE_FASTEST2" << endl;
-    BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
+		case SCHEDULER_MODE_FASTEST_2:		
+		cout << "SCHEDULER_MODE_FASTEST_2" << endl;
+		BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
 
 			while (!eventsMap.empty()) {
 				lock();						
@@ -133,7 +129,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 				eventsMap.erase(first);
 				eventsMapSize--;
 				unlock();
-				checkForReceivedVMMessages();
+				checkForReceivedVMCommands();
 				}
 				cout << "scheduler end at "<< now() << "..." << endl;
 #ifdef TEST_DETER
@@ -144,11 +140,12 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 
 		case SCHEDULER_MODE_REALTIME:
 			OUTPUT << "Realtime mode scheduler\n";
+			cout << "SCHEDULER_MODE_REALTIME" << endl;
 			while (state != ENDED) {
 				systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000 - pausedTime;
 				systemCurrentTimeMax = systemCurrentTime - systemStartTime;
 				currentDate = systemCurrentTimeMax;
-				checkForReceivedVMMessages();
+				checkForReceivedVMCommands();
 				while (true) {
 						lock();
 						if (eventsMap.empty()) { unlock(); break;}
@@ -164,7 +161,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 						eventsMapSize--;
 						unlock();
 						// may call schedule(), which contains lock();
-						checkForReceivedVMMessages();
+						checkForReceivedVMCommands();
 				}
 				if (state == PAUSED) {
 					int pauseBeginning = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
@@ -255,8 +252,8 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 	case SCHEDULER_MODE_REALTIME:
 		eventsMap.insert(pair<uint64_t, EventPtr>(pev->date,pev));
 		break;
-	case SCHEDULER_MODE_FASTEST:
-	case SCHEDULER_MODE_FASTEST2:
+	case SCHEDULER_MODE_FASTEST_1:
+	case SCHEDULER_MODE_FASTEST_2:
 		if (eventsMap.count(pev->date) > 0) {
 			std::pair<multimap<uint64_t, EventPtr>::iterator,multimap<uint64_t, EventPtr>::iterator> range = eventsMap.equal_range(pev->date);
 			multimap<uint64_t, EventPtr>::iterator it = range.first;

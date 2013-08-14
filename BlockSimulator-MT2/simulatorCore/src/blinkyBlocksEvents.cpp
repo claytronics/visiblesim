@@ -311,7 +311,7 @@ const string VMShakeEvent::getEventName() {
 //          VMDebugMessageEvent  (class)
 //
 //===========================================================================================================
-
+/*
 VMDebugMessageEvent::VMDebugMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, VMDebugMessage *mes): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_DEBUG_MESSAGE;
@@ -337,7 +337,7 @@ void VMDebugMessageEvent::consumeBlockEvent() {
 const string VMDebugMessageEvent::getEventName() {
 	return("VMDebugMessage Event");
 }
-
+*/
 //===========================================================================================================
 //
 //          VMDebugPauseSimEvent  (class)
@@ -371,94 +371,91 @@ const string VMDebugPauseSimEvent::getEventName() {
 
 //===========================================================================================================
 //
-//          VMStartComputationEvent  (class)
+//          VMResumeComputationEvent  (class)
 //
 //===========================================================================================================
 
-VMStartComputationEvent::VMStartComputationEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t dur): BlockEvent(t, conBlock) {
+VMResumeComputationEvent::VMResumeComputationEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t dur): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
-	eventType = EVENT_VM_START_COMPUTATION;
-	priority = PRIORITY_EVENT_VM_START_COMPUTATION;
+	eventType = EVENT_VM_RESUME_COMPUTATION;
 	duration = dur;
 }
 
-VMStartComputationEvent::VMStartComputationEvent(VMStartComputationEvent *ev) : BlockEvent(ev) {
+VMResumeComputationEvent::VMResumeComputationEvent(VMResumeComputationEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 	duration = ev->duration;
 }
 
-VMStartComputationEvent::~VMStartComputationEvent() {
+VMResumeComputationEvent::~VMResumeComputationEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMStartComputationEvent::consumeBlockEvent() {
+void VMResumeComputationEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
-	concernedBlock->scheduleLocalEvent(EventPtr(new VMStartComputationEvent(this)));
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMResumeComputationEvent(this)));
 }
 
-const string VMStartComputationEvent::getEventName() {
-	return("VMStartComputation Event");
+const string VMResumeComputationEvent::getEventName() {
+	return("VMResumeComputation Event");
 }
 
 
 //===========================================================================================================
 //
-//          VMExpectedEndComputationEvent  (class)
+//          VMExpectedComputationPauseEvent  (class)
 //
 //===========================================================================================================
 
-VMExpectedEndComputationEvent::VMExpectedEndComputationEvent(uint64_t t, BlinkyBlocksBlock *conBlock) : BlockEvent(t, conBlock) {
+VMExpectedComputationPauseEvent::VMExpectedComputationPauseEvent(uint64_t t, BlinkyBlocksBlock *conBlock) : BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
-	priority = PRIORITY_EVENT_VM_END_COMPUTATION;
-	eventType = EVENT_VM_EXPECTED_END_COMPUTATION;
+	eventType = EVENT_VM_EXPECTED_COMPUTATION_PAUSE;
 }
 
-VMExpectedEndComputationEvent::VMExpectedEndComputationEvent(VMExpectedEndComputationEvent *ev) : BlockEvent(ev) {
+VMExpectedComputationPauseEvent::VMExpectedComputationPauseEvent(VMExpectedComputationPauseEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 }
 
-VMExpectedEndComputationEvent::~VMExpectedEndComputationEvent() {
+VMExpectedComputationPauseEvent::~VMExpectedComputationPauseEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMExpectedEndComputationEvent::consumeBlockEvent() {
+void VMExpectedComputationPauseEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
-	concernedBlock->scheduleLocalEvent(EventPtr(new VMExpectedEndComputationEvent(this)));
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMExpectedComputationPauseEvent(this)));
 	return;
 }
 
-const string VMExpectedEndComputationEvent::getEventName() {
-	return("VMExpectedEndComputation Event");
+const string VMExpectedComputationPauseEvent::getEventName() {
+	return("VMExpectedComputationPause Event");
 }
 
 //===========================================================================================================
 //
-//          VMEffectiveEndComputationEvent  (class)
+//          VMEffectiveComputationPauseEvent  (class)
 //
 //===========================================================================================================
 
-VMEffectiveEndComputationEvent::VMEffectiveEndComputationEvent(uint64_t t, BlinkyBlocksBlock *conBlock) : BlockEvent(t, conBlock) {
+VMEffectiveComputationPauseEvent::VMEffectiveComputationPauseEvent(uint64_t t, BlinkyBlocksBlock *conBlock) : BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
-	priority = PRIORITY_EVENT_VM_END_COMPUTATION;
-	eventType = EVENT_VM_EFFECTIVE_END_COMPUTATION;
+	eventType = EVENT_VM_EFFECTIVE_COMPUTATION_PAUSE;
 }
 
-VMEffectiveEndComputationEvent::VMEffectiveEndComputationEvent(VMEffectiveEndComputationEvent *ev) : BlockEvent(ev) {
+VMEffectiveComputationPauseEvent::VMEffectiveComputationPauseEvent(VMEffectiveComputationPauseEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 }
 
-VMEffectiveEndComputationEvent::~VMEffectiveEndComputationEvent() {
+VMEffectiveComputationPauseEvent::~VMEffectiveComputationPauseEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMEffectiveEndComputationEvent::consumeBlockEvent() {
+void VMEffectiveComputationPauseEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
-	concernedBlock->scheduleLocalEvent(EventPtr(new VMEffectiveEndComputationEvent(this)));
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMEffectiveComputationPauseEvent(this)));
 	return;
 }
 
-const string VMEffectiveEndComputationEvent::getEventName() {
-	return("VMEffectiveEndComputation Event");
+const string VMEffectiveComputationPauseEvent::getEventName() {
+	return("VMEffectiveComputationPause Event");
 }
 
 
