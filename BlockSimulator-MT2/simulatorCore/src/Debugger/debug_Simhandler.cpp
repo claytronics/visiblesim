@@ -448,7 +448,6 @@ namespace debugger {
 
 
                 if (broadcast){
-
                     expected = debugSendMsg(-1,msg,msgSize);
 
                 } else {
