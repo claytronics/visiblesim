@@ -79,7 +79,7 @@ public:
 	
 	bool dateHasBeenReachedByAll(uint64_t date);
 	
-	//void killAllVMs();
+	void killAllVMs();
 };
 
 inline void createWorld(int slx,int sly,int slz, int argc, char *argv[]) {

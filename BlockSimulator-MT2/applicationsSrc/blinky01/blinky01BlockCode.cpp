@@ -55,7 +55,7 @@ void Blinky01BlockCode::handleCommand(VMCommand &command) {
 	uint64_t dateToSchedule;
 	
 	OUTPUT << "Blinky01BlockCode: type: " << VMCommand::getString(command.getType()) << " size: " << command.getSize() << endl;
-	cout << bb->blockId << " message received: date: " <<command.getTimestamp() << ", type: " << VMCommand::getString(command.getType()) << endl;
+	//cout << bb->blockId << " message received: date: " <<command.getTimestamp() << ", type: " << VMCommand::getString(command.getType()) << endl;
 	//assert(hasWork); // mode 1
 	
 	currentLocalDate = command.getTimestamp();
@@ -107,7 +107,9 @@ void Blinky01BlockCode::handleCommand(VMCommand &command) {
 			WorkEndVMCommand c(command.getData());
 			if (BlinkyBlocks::getScheduler()->getMode() == SCHEDULER_MODE_FASTEST_2) {
 				computing = false;
-				willHaveWork = false;
+				if (c.getNbProcessedMsg() == bb->vm->nbSentCommands) {
+					willHaveWork = false;
+				}
 				endComputingTime = c.getTimestamp();		
 			} else {
 				if (c.getNbProcessedMsg() == bb->vm->nbSentCommands) {
@@ -134,9 +136,9 @@ bool Blinky01BlockCode::mustBeQueued(VMCommand &command) {
 }
 
 void Blinky01BlockCode::handleDeterministicMode(VMCommand &command){
+	currentLocalDate = max(BaseSimulator::getScheduler()->now(), currentLocalDate);
 	if(!hasWork && command.getType() != VM_COMMAND_STOP && command.getType() != VM_COMMAND_RESUME_COMPUTATION) {
 		hasWork = true;
-		currentLocalDate = max(BaseSimulator::getScheduler()->now(), currentLocalDate);
 #ifdef TEST_DETER
 		//cout << hostBlock->blockId << " has work again at " << BaseSimulator::getScheduler()->now() << endl;
 #endif
@@ -155,7 +157,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	info.str("");
 	
 	OUTPUT << "Blinky01BlockCode: process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
-	cout << bb->blockId << " processLocalEvent: date: "<< BaseSimulator::getScheduler()->now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << ", random number : " << pev->randomNumber << endl;
+	//cout << bb->blockId << " processLocalEvent: date: "<< BaseSimulator::getScheduler()->now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << ", random number : " << pev->randomNumber << endl;
 
 #ifdef TEST_DETER
 	cout << bb->blockId << " processLocalEvent: date: "<< BaseSimulator::getScheduler()->now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << ", random number : " << pev->randomNumber << endl;

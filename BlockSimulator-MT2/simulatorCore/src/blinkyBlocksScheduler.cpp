@@ -62,7 +62,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	if (BlinkyBlocksVM::isInDebuggingMode())
 		sem_schedulerStart->wait(); // wait for "run" in the debugger
 #else
-	//schedulerMode = SCHEDULER_MODE_FASTEST_2;
+	schedulerMode = SCHEDULER_MODE_FASTEST_1;
 #endif
 	
 	while (state == NOTREADY) {usleep(5000);} // use the semaphore instead
@@ -101,6 +101,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 //				cout << pevbc->getConcernedBlock()->blockId << " RANDOM NUMBER : " << pevbc->randomNumber << endl;			
 //			}
 #endif
+			cout << " Event: date: "<< now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
 			pev->consume();
 			lock();
 			eventsMap.erase(first);
@@ -110,7 +111,8 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 		}
 		cout << "scheduler end at "<< now() << "..." << endl;
 #ifdef TEST_DETER
-		//glutLeaveMainLoop();		
+		//glutLeaveMainLoop();
+		getWorld()->killAllVMs();
 		exit(0);
 #endif
 		break;
@@ -133,6 +135,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 				}
 				cout << "scheduler end at "<< now() << "..." << endl;
 #ifdef TEST_DETER
+				getWorld()->killAllVMs();
 				//glutLeaveMainLoop();		
 				exit(0);
 #endif

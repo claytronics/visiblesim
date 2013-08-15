@@ -12,6 +12,9 @@
 #include "blinkyBlocksBlock.h"
 #include "blinkyBlocksEvents.h"
 #include "trace.h"
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <signal.h>
 
 using namespace std;
 
@@ -540,8 +543,7 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		return (date <= min);
 	}
 	
-	/*
-	void BlinkyBlocks::killAllVMs() {
+	void BlinkyBlocksWorld::killAllVMs() {
 		map<int, BaseSimulator::BuildingBlock*>::iterator it;
 		for(it = buildingBlocksMap.begin(); 
 				it != buildingBlocksMap.end(); it++) {
@@ -549,6 +551,6 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 			kill(bb->vm->pid, SIGTERM);
 			waitpid(bb->vm->pid, NULL, 0);
 		}	
-	}*/
+	}
 
 } // BlinkyBlock namespace

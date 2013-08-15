@@ -208,6 +208,7 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 	world->linkBlocks();
 	getScheduler()->setState(Scheduler::NOTSTARTED);
 #ifndef TEST_DETER
+
 	GlutContext::mainLoop();
 #endif
 }

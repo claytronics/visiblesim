@@ -213,6 +213,10 @@ ReceiveMessageVMCommand::ReceiveMessageVMCommand(SendMessageVMCommand &c) : VMCo
 	data[NODE] = c.getDestId();
 }
 
+unsigned int ReceiveMessageVMCommand::size() { 
+	return getSize();
+}
+
 ReceiveMessageVMCommand::~ReceiveMessageVMCommand() {
 	delete[] data;
 }

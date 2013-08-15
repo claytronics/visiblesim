@@ -171,6 +171,7 @@ public:
 class ReceiveMessageVMCommand : public VMCommand, public Message {
 public:
 	ReceiveMessageVMCommand(SendMessageVMCommand &c);
+	unsigned int size();
 	~ReceiveMessageVMCommand();
 };
 

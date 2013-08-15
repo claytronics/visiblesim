@@ -29,8 +29,6 @@ class BlinkyBlocksVM {
 protected:
 	/* associated Block */
 	BlinkyBlocksBlock* hostBlock;
-	/* associated VM program pid */
-	pid_t pid;
 	/* socket connected to the associated VM program */
 	boost::shared_ptr<tcp::socket> socket;
 	
@@ -61,6 +59,8 @@ public:
 	BlinkyBlocksVM(BlinkyBlocksBlock* bb);
 	~BlinkyBlocksVM();
 
+	/* associated VM program pid */
+	pid_t pid;
 	/* buffer used to receive tcp message */
 	commandType inBuffer[VM_COMMAND_MAX_LENGHT];	
 	commandType outBuffer[VM_COMMAND_MAX_LENGHT];	
