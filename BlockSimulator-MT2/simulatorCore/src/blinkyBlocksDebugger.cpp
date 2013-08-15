@@ -35,24 +35,25 @@ int BlinkyBlocksDebugger::sendCmd(int id, DebbuggerVMCommand &c) {
 			bb->vm->sendCommand(c);
 			return 1;
 		} else {
-			debuggerCommandHandler(debugger::pack(debugger::PRINTCONTENT, "node does not exist\n"));
-			return 0;
+			return -1;
 		}
 	} else if (id == -1) {
 		// send to all vm
 		return getWorld()->broadcastDebugCommand(c);
 	} else {
-		return 0;
+		return -1;
 	}
 }
 
-void BlinkyBlocksDebugger::pauseSim() {
-	cout << "Simulator paused" << endl;
-	getScheduler()->pause(BlinkyBlocks::getScheduler()->now());
+void BlinkyBlocksDebugger::pauseSim(int t) {
+	if (t == -1) {
+		getScheduler()->pause(BlinkyBlocks::getScheduler()->now());
+	} else {
+		getScheduler()->pause(t);
+	}
 }
 
 void BlinkyBlocksDebugger::unPauseSim() {
-	cout << "Simulator unpaused" << endl;
 	getScheduler()->unPause();
 }
 

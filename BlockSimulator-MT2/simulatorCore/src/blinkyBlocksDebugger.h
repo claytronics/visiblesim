@@ -32,7 +32,7 @@ public:
 	~BlinkyBlocksDebugger();
 	
 	int sendCmd(int id, DebbuggerVMCommand &c);
-	void pauseSim();
+	void pauseSim(int t);
 	void unPauseSim();
 	
 	static BlinkyBlocksDebugger* getDebugger() {
@@ -71,7 +71,7 @@ inline BlinkyBlocksDebugger* getDebugger() { return(BlinkyBlocksDebugger::getDeb
 	
 inline int sendCommand(int id, uint64_t *data, int size) { DebbuggerVMCommand c(data); return getDebugger()->sendCmd(id, c); }
 
-inline void pauseSimulation(void) { getDebugger()->pauseSim(); }
+inline void pauseSimulation(int t) { getDebugger()->pauseSim(t); }
 
 inline void unPauseSimulation() { getDebugger()->unPauseSim(); }
 

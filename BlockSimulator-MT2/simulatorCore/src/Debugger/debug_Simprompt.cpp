@@ -8,6 +8,7 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include "debug_Simprompt.hpp"
+#include "debug_Simhandler.hpp"
 
 using namespace std;
 
@@ -19,14 +20,14 @@ namespace debugger {
 	pthread_t tid = 0;
 
     int (*debugSendMsg)(int,message_type*,int);
-    void (*pauseSimulation)(void);
+    void (*pauseSimulation)(int);
     void (*unPauseSimulation)(void);
     void (*quitDebugger)(void);
 
     /*spawn the debbugging prompt as a separate thread to
       controll the main one*/
     ftrp initDebugger(int (*sendMsg)(int,message_type*,int),
-                      void (*pauseSim)(void),
+                      void (*pauseSim)(int),
                       void (*unPauseSim)(void),
                       void (*quitDebug)(void),
                       std::ostream& o, std::istream& i){
@@ -35,6 +36,7 @@ namespace debugger {
         cout.rdbuf(o.rdbuf());
 
         messageQueue = new std::queue<message_type*>();
+        rcvMessageList = new std::list<struct msgListContainer*>();
 
         debugSendMsg = sendMsg;
         pauseSimulation = pauseSim;
@@ -120,7 +122,7 @@ namespace debugger {
           }
 
       if (command != BREAKPOINT && command!=DUMP
-          && command != REMOVE && command != MODE){
+          && command != REMOVE && command != MODE &&command != TIME){
         debugController(command, build);
         lastInstruction = command;
         lastBuild = build;
@@ -130,7 +132,7 @@ namespace debugger {
 
     /*if not enough info - these  types must have a specification*/
     if ((command == BREAKPOINT||command == DUMP||command == REMOVE||
-            command == MODE)&&
+            command == MODE||command==TIME)&&
         wordCount == 1){
       cout << "Please specify- type help for options" << endl;
       return false;
@@ -139,7 +141,7 @@ namespace debugger {
     /*handle breakpointsand dumps*/
     if (wordCount == 2){
         if (command == BREAKPOINT||command == DUMP||command == REMOVE
-            ||command == MODE){
+            ||command == MODE||command == TIME){
         debugController(command,build);
         } else
         debugController(command,"");
@@ -151,74 +153,78 @@ namespace debugger {
 
   }
 
-  /*recognizes and sets different modes for the debugger*/
-  int handle_command(string command){
+    /*recognizes and sets different modes for the debugger*/
+    int handle_command(string command){
 
-    int retVal;
+        int retVal;
 
-    if (command == "break"){
-      retVal = BREAKPOINT;
-    } else if (command == "help"||command == "h") {
-      help();
-      retVal = NOTHING;
-    } else if (command == "run"|| command == "r") {
-      retVal = RUN;
-    } else if (command == "dump"||command == "d") {
-      retVal = DUMP;
-    } else if (command == "print" || command == "p"){
-      retVal = PRINTLIST;
-    } else if (command == "mode" || command == "m"){
-        retVal = MODE;
-    } else if (command == "remove" || command == "rm"){
-      retVal = REMOVE;
-    } else if (command == "continue"||command == "c"){
-      retVal = CONTINUE;
-    } else if (command == "quit"||command == "q"){
-      sendMsg(-1,TERMINATE,"",true);
-      delete messageQueue;
-      quitDebugger();
-      pthread_exit(NULL);
-    } else {
-      cout << "unknown command: type 'help' for options " << endl;
-      retVal = NOTHING;
+        if (command == "break"){
+            retVal = BREAKPOINT;
+        } else if (command == "help"||command == "h") {
+            help();
+            retVal = NOTHING;
+        } else if (command == "run"|| command == "r") {
+            retVal = RUN;
+        } else if (command == "dump"||command == "d") {
+            retVal = DUMP;
+        } else if (command == "breakTime") {
+            retVal = TIME;
+        } else if (command == "print" || command == "p"){
+            retVal = PRINTLIST;
+        } else if (command == "mode" || command == "m"){
+            retVal = MODE;
+        } else if (command == "remove" || command == "rm"){
+            retVal = REMOVE;
+        } else if (command == "continue"||command == "c"){
+            retVal = CONTINUE;
+        } else if (command == "quit"||command == "q"){
+            sendMsg(-1,TERMINATE,"",true);
+            delete messageQueue;
+            delete rcvMessageList;
+            quitDebugger();
+            pthread_exit(NULL);
+        } else {
+            cout << "unknown command: type 'help' for options " << endl;
+            retVal = NOTHING;
+        }
+        return retVal;
     }
-    return retVal;
-  }
 
 
-  /*prints the help screen*/
-  void help(){
-    cout << endl;
-    cout << "*******************************************************************" << endl;
-    cout << endl;
-    cout << "DEBUGGER HELP" << endl;
-    cout << "\t-break <Specification>- set break point at specified place" << endl;
-    cout << "\t-rm <Specification> - remove a break point at specified place" << endl;
-    cout << "\t\t-Specification Format:" << endl;
-    cout << "\t\t  <type>:<name>@<node> OR" << endl;
-    cout << "\t\t  <type>:<name>        OR" << endl;
-    cout << "\t\t  <type>@<node>" << endl;
-    cout << "\t\t    -type - [factRet|factDer|factCon|action|sense]" << endl;
-    cout << "\t\t\t-a type MUST be specified" << endl;
-    cout << "\t\t    -name - the name of certain type ex. the name of a fact" << endl;
-    cout << "\t\t    -node - the number of the node" << endl;
-    cout << "\t-dump or d <nodeID> <all> - dump the state of the system" << endl;
-    cout << "\t-print - print the breakpoint list" << endl;
-    cout << "\t-mode V - go into verbose mode" << endl;
-    cout << "\t-continue or c - continue execution" << endl;
-    cout << "\t-run or r - start the program" << endl;
-    cout << "\t-quit - exit debugger" << endl;
-    cout << endl;
-    cout << "\t-Press Enter to use last Input" << endl;
-    cout << endl;
-    cout << "\t-Press p in simulator to pause an executing system" << endl;
-    cout << endl;
-    cout << "\tIMPORTANT: You MUST press r in simulator before typing run or continue" <<endl;
-    cout << endl;
-    cout << "*******************************************************************" << endl;
-  }
+    /*prints the help screen*/
+    void help(){
+        cout << endl;
+        cout << "*******************************************************************" << endl;
+        cout << endl;
+        cout << "DEBUGGER HELP" << endl;
+        cout << "\t-break <Specification>- set break point at specified place" << endl;
+        cout << "\t-rm <Specification> - remove a break point at specified place" << endl;
+        cout << "\t\t-Specification Format:" << endl;
+        cout << "\t\t  <type>:<name>@<node> OR" << endl;
+        cout << "\t\t  <type>:<name>        OR" << endl;
+        cout << "\t\t  <type>@<node>" << endl;
+        cout << "\t\t    -type - [factRet|factDer|factCon|action|sense]" << endl;
+        cout << "\t\t\t-a type MUST be specified" << endl;
+        cout << "\t\t    -name - the name of certain type ex. the name of a fact" << endl;
+        cout << "\t\t    -node - the number of the node" << endl;
+        cout << "\t-dump or d <nodeID> <all> - dump the state of the system" << endl;
+        cout << "\t-breakTime <time number> - stop the simulator at a certain time"  << endl;
+        cout << "\t-print - print the breakpoint list" << endl;
+        cout << "\t-mode V - go into verbose mode" << endl;
+        cout << "\t-continue or c - continue execution" << endl;
+        cout << "\t-run or r - start the program" << endl;
+        cout << "\t-quit - exit debugger" << endl;
+        cout << endl;
+        cout << "\t-Press Enter to use last Input" << endl;
+        cout << endl;
+        cout << "\t-Press p in simulator to pause an executing system" << endl;
+        cout << endl;
+        cout << "\tIMPORTANT: You MUST press r in simulator before typing run or continue" <<endl;
+        cout << endl;
+        cout << "*******************************************************************" << endl;
+    }
 
-  void joinThread() {
-	pthread_join(tid, NULL);
-  }
+    void joinThread() {
+        pthread_join(tid, NULL);
+    }
 }
