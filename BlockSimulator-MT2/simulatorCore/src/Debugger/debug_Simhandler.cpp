@@ -387,7 +387,6 @@ namespace debugger {
         utils::byte* msg = (utils::byte*)new message_type[MAXLENGTH];
         int pos = 0;
 
-
         message_type debugFlag =  DEBUG;
         size_t contentSize = content.length() + 1;
         size_t bufSize = MAXLENGTH*SIZE;//bytes
@@ -432,11 +431,12 @@ namespace debugger {
     int sendMsg(int destination, int msgType,
               string content, bool broadcast)  {
 
-         /*length of array*/
-            size_t msgSize = MAXLENGTH;
+            /*length of array*/
+            size_t msgSize = MAXLENGTH*SIZE;
             /*pack the message into a broken list*/
             std::list<message_type*>* msgList = packList(msgType,content);
             message_type* msg;
+
 
             int expected;
 
@@ -456,6 +456,14 @@ namespace debugger {
                     /*get the process id (getVMId) and send the message*/
                     expected = debugSendMsg(destination,msg,
                                         msgSize);
+
+                    /*error*/
+                    if (expected < 0){
+                        messageQueueInsert(pack(PRINTCONTENT,
+                                                "Node does not exist\n",1));
+                        messageQueueInsert(pack(PRINTCONTENT,"2",0));
+                        return 1;
+                    }
                 }
 
 

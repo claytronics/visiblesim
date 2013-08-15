@@ -46,15 +46,13 @@ int BlinkyBlocksDebugger::sendMsg(int id, int size, uint64_t *message) {
 			bb->vm->sendMessage(size, message);
 			return 1;
 		} else {
-			debuggerMessageHandler(debugger::pack(debugger::PRINTCONTENT, "2", 0));
-			debuggerMessageHandler(debugger::pack(debugger::PRINTCONTENT, "node does not exist\n", 1));
-			return 0;
+			return -1;
 		}
 	} else if (id == -1) {
 		// send to all vm
 		return getWorld()->broadcastDebugMessage(size, message);
 	} else {
-		return 0;
+		return -1;
 	}
 }
 

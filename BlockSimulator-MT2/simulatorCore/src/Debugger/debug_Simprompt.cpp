@@ -180,6 +180,7 @@ namespace debugger {
         } else if (command == "quit"||command == "q"){
             sendMsg(-1,TERMINATE,"",true);
             delete messageQueue;
+            delete rcvMessageList;
             quitDebugger();
             pthread_exit(NULL);
         } else {
