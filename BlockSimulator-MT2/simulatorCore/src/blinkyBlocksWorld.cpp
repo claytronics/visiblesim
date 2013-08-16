@@ -552,5 +552,21 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 			waitpid(bb->vm->pid, NULL, 0);
 		}	
 	}
+	
+	bool BlinkyBlocksWorld::equilibrium() {
+		map<int, BaseSimulator::BuildingBlock*>::iterator it;
+		for(it = buildingBlocksMap.begin(); 
+				it != buildingBlocksMap.end(); it++) {
+			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;			
+			BlinkyBlocksBlockCode *bc = (BlinkyBlocksBlockCode*) bb->blockCode;
+			if (bb->getState() < BlinkyBlocksBlock::ALIVE) {
+				continue;
+			}
+			if (bc->hasWork) {
+				return false;
+			}
+		}
+		return true;
+	}
 
 } // BlinkyBlock namespace

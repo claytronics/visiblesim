@@ -78,38 +78,41 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	switch (schedulerMode) {
 		case SCHEDULER_MODE_FASTEST_1:
 		cout << "start SCHEDULER_MODE_FASTEST_1" << endl;
-		BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
-		while (!eventsMap.empty()) {
+		//BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
 			do {
+			while (!eventsMap.empty()){
+				do {
+					lock();
+					first = eventsMap.begin();		
+					pev = (*first).second;
+					unlock();
+					if (getWorld()->dateHasBeenReachedByAll(pev->date))
+						break;
+						
+					waitForOneVMCommand();
+					checkForReceivedVMCommands();
+				} while (true);
+#ifdef TEST_DETER
+				//cout << "date " << now() << " has been reached" << endl;
+#endif
+				currentDate = pev->date;
+#ifdef TEST_DETER
+	//			cout << " Event: date: "<< now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
+	//			if (pev->getConcernedBlock() != NULL) { 
+	//				BlockEvent *pevbc = (BlockEvent*) pev.get();
+	//				cout << pevbc->getConcernedBlock()->blockId << " RANDOM NUMBER : " << pevbc->randomNumber << endl;			
+	//			}
+#endif
+				cout << " Event: date: "<< now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
+				pev->consume();
 				lock();
-				first = eventsMap.begin();		
-				pev = (*first).second;
+				eventsMap.erase(first);
+				eventsMapSize--;
 				unlock();
-				if (getWorld()->dateHasBeenReachedByAll(pev->date))
-					break;
-					
-				waitForOneVMCommand();
 				checkForReceivedVMCommands();
-			} while (true);
-#ifdef TEST_DETER
-			//cout << "date " << now() << " has been reached" << endl;
-#endif
-			currentDate = pev->date;
-#ifdef TEST_DETER
-//			cout << " Event: date: "<< now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
-//			if (pev->getConcernedBlock() != NULL) { 
-//				BlockEvent *pevbc = (BlockEvent*) pev.get();
-//				cout << pevbc->getConcernedBlock()->blockId << " RANDOM NUMBER : " << pevbc->randomNumber << endl;			
-//			}
-#endif
-			cout << " Event: date: "<< now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
-			pev->consume();
-			lock();
-			eventsMap.erase(first);
-			eventsMapSize--;
-			unlock();
+			}
 			checkForReceivedVMCommands();
-		}
+		} while (!getWorld()->equilibrium() || !eventsMap.empty());
 		cout << "scheduler end at "<< now() << "..." << endl;
 #ifdef TEST_DETER
 		//glutLeaveMainLoop();

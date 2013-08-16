@@ -78,6 +78,7 @@ public:
 	int broadcastDebugCommand(DebbuggerVMCommand &c);
 	
 	bool dateHasBeenReachedByAll(uint64_t date);
+	bool equilibrium();
 	
 	void killAllVMs();
 };
