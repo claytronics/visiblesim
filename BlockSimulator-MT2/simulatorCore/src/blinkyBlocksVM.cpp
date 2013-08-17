@@ -72,7 +72,6 @@ void BlinkyBlocksVM::closeSocket() {
 }
 
 void BlinkyBlocksVM::asyncReadCommandHandler(const boost::system::error_code& error, std::size_t bytes_transferred) {
-	BlinkyBlocksBlockCode *bbc = (BlinkyBlocksBlockCode*)hostBlock->blockCode;
 	if(error) {
 		ERRPUT << "An error occurred while receiving a tcp command from VM " << hostBlock->blockId << " (socket closed ?) " <<endl;
 		return;
@@ -83,14 +82,29 @@ void BlinkyBlocksVM::asyncReadCommandHandler(const boost::system::error_code& er
 	} catch (std::exception& e) {
 		ERRPUT << "Connection to the VM "<< hostBlock->blockId << " lost" << endl;
 	}
+	handleInBuffer();
+	while (socket->available()) {
+		try {
+			boost::asio::read(getSocket(), boost::asio::buffer(inBuffer, sizeof(commandType))); 
+			boost::asio::read(getSocket(),boost::asio::buffer((void*)(inBuffer + 1), inBuffer[0]));
+		}  catch (std::exception& e) {
+			ERRPUT << "Connection to the VM "<< hostBlock->blockId << " lost" << endl;
+		}
+		handleInBuffer();
+	}
+    this->asyncReadCommand();
+}
+
+void BlinkyBlocksVM::handleInBuffer() {
+	BlinkyBlocksBlockCode *bbc = (BlinkyBlocksBlockCode*)hostBlock->blockCode;
 	VMCommand command(inBuffer);
+	
 	if (bbc->mustBeQueued(command)) {
 		command.copyData();
 		inQueue.push(command);
 	} else {
 		bbc->handleCommand(command);
 	}
-    this->asyncReadCommand();
 }
 
 void BlinkyBlocksVM::asyncReadCommand() {
@@ -152,6 +166,7 @@ void BlinkyBlocksVM::waitForOneCommand() {
 		ios->run_one();
 		ios->reset();
 	}
+	checkForReceivedCommands();
 }
 
 void BlinkyBlocksVM::setConfiguration(string v, string p, bool d) {

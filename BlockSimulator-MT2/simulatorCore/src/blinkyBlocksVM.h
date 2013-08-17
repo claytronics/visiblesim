@@ -70,6 +70,7 @@ public:
 	void sendCommand(VMCommand &command);
 	void asyncReadCommand();	
 	void asyncReadCommandHandler(const boost::system::error_code& error, std::size_t bytes_transferred);
+	void handleInBuffer();
 	void handleQueuedCommands();
 	/* close the socket */
 	void stop();

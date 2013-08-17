@@ -496,7 +496,7 @@ namespace debugger {
 
 
 		BlinkyBlocks::checkForReceivedVMCommands();
-
+		//BlinkyBlocks::waitForOneVMCommand();
         while(!messageQueue->empty()){
 
             /*process each message until empty*/
