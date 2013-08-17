@@ -280,6 +280,22 @@ public:
 	const virtual string getEventName();
 };
 
+//===========================================================================================================
+//
+//          VMEndPollEvent  (class)
+//
+//===========================================================================================================
+
+class VMEndPollEvent : public BlockEvent {
+public:
+
+	VMEndPollEvent(uint64_t, BlinkyBlocksBlock *conBlock);
+	VMEndPollEvent(VMEndPollEvent *ev);
+	~VMEndPollEvent();
+	void consumeBlockEvent();
+	const virtual string getEventName();
+};
+
 } // BlinkyBlocks namespace
 
 

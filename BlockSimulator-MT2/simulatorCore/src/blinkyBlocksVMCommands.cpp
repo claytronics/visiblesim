@@ -294,4 +294,13 @@ commandType WorkEndVMCommand::getNbProcessedMsg() { return data[PARAM1]; }
 
 DebbuggerVMCommand::DebbuggerVMCommand(commandType *d) : VMCommand(d) {};
 
+//===========================================================================================================
+//
+//          EndPollVMCommand  (class)
+//
+//===========================================================================================================
+
+EndPollVMCommand::EndPollVMCommand(commandType *d, commandType src):
+	VMCommand(d, 3*sizeof(commandType), VM_COMMAND_END_POLL, src) {};
+	
 }

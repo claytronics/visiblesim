@@ -515,7 +515,7 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 				continue;
 			}
 			alive++;
-			if (!bc->hasWork) {
+			if (!bc->hasWork || bc->polling) {
 				hasNoWork++;
 				if (alive == 1) {
 					min2 = bc->currentLocalDate;
@@ -540,7 +540,7 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		minReallyReached = min2;
 		//cout << date << "<" << min << endl;
 		//cout << "min" << minReallyReached << endl;
-		return (date <= min);
+		return (date < min);
 	}
 	
 	void BlinkyBlocksWorld::killAllVMs() {

@@ -30,9 +30,11 @@
 #define VM_COMMAND_SET_DETERMINISTIC_MODE		20
 #define VM_COMMAND_RESUME_COMPUTATION			21
 #define VM_COMMAND_COMPUTATION_PAUSE			22
-#define VM_COMMAND_WORK_END						23
+#define VM_COMMAND_POLL_START					23
+#define VM_COMMAND_END_POLL						24
+#define VM_COMMAND_WORK_END						25
 
-#define VM_COMMAND_TIME_INFO					24
+#define VM_COMMAND_TIME_INFO					26
 
 
 typedef uint64_t commandType;
@@ -255,6 +257,27 @@ public:
 	DebbuggerVMCommand(commandType *d);
 };
 
+//===========================================================================================================
+//
+//          PollStartVMCommand  (class)
+//
+//===========================================================================================================
+/*
+class PollStartVMCommand : public VMCommand {
+public:
+	PollStartVMCommand(commandType *c);	
+};*/
+
+//===========================================================================================================
+//
+//          EndPollVMCommand  (class)
+//
+//===========================================================================================================
+
+class EndPollVMCommand : public VMCommand {
+public:
+	EndPollVMCommand(commandType *d, commandType src);
+};
 
 }
 #endif

@@ -22,8 +22,9 @@ using boost::asio::ip::tcp;
 Blinky01BlockCode::Blinky01BlockCode(BlinkyBlocksBlock *host): BlinkyBlocksBlockCode(host) {
 	OUTPUT << "Blinky01BlockCode constructor" << endl;
 	hasWork = true; // mode fastest 1 & 2
+	polling = false;
 	willHaveWork = true; // mode fastest 2
-	computing = false; // mode fastest 2
+	computing = false; // mode fastest 2	
 	generator = boost::rand48(hostBlock->blockId); // mode fastest 2
 }
 
@@ -120,6 +121,12 @@ void Blinky01BlockCode::handleCommand(VMCommand &command) {
 			break;
 		case VM_COMMAND_TIME_INFO:
 			;
+			break;
+		case VM_COMMAND_POLL_START:
+			//PollStartVMCommand c(command.getData());
+			//cout << "schedule end poll for: " << dateToSchedule << "(scheduler: " << BlinkyBlocks::getScheduler()->now() << ")" << endl;
+			polling = true;
+			BlinkyBlocks::getScheduler()->schedule(new VMEndPollEvent(dateToSchedule, bb));
 			break;
 		default:
 			ERRPUT << "*** ERROR *** : unsupported message received from VM (" << command.getType() <<")" << endl;
@@ -270,7 +277,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			info << "VM set in deterministic mode";
 			}
 			break;
-		case EVENT_VM_RESUME_COMPUTATION:
+		case EVENT_RESUME_COMPUTATION:
 			{
 			uint64_t duration = (boost::static_pointer_cast<VMResumeComputationEvent>(pev))->duration;
 
@@ -287,7 +294,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			BlinkyBlocks::getScheduler()->schedule(new VMExpectedComputationPauseEvent(BlinkyBlocks::getScheduler()->now()+duration, bb));
 			}
 			break;
-		case EVENT_VM_EXPECTED_COMPUTATION_PAUSE:
+		case EVENT_EXPECTED_COMPUTATION_PAUSE:
 			{
 //			info.str("");
 			//cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << bb->blockId << " wait for end message " << endl;		
@@ -301,7 +308,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			BlinkyBlocks::getScheduler()->schedule(new VMEffectiveComputationPauseEvent(max(BlinkyBlocks::getScheduler()->now(), endComputingTime), bb));
 			}
 			break;
-		case EVENT_VM_EFFECTIVE_COMPUTATION_PAUSE:
+		case EVENT_EFFECTIVE_COMPUTATION_PAUSE:
 			{
 			//cout << "blinky01BlockCode (" << BlinkyBlocks::getScheduler()->now() << ") " << " effective end of computation " << endl;
 			bb->setState(BlinkyBlocksBlock::ALIVE);
@@ -311,6 +318,13 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 				BlinkyBlocks::getScheduler()->schedule(new VMResumeComputationEvent(BaseSimulator::getScheduler()->now()+1, bb, getRandom()));
 			}
 			//info << "effective end of computation";
+			}
+			break;
+		case EVENT_END_POLL: 
+			{
+			polling = false;
+			EndPollVMCommand command(vm->outBuffer, bb->blockId);
+			vm->sendCommand(command);
 			}
 			break;
 		default:
