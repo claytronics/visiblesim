@@ -14,7 +14,6 @@
 #include "blinkyBlocksWorld.h"
 #include "trace.h"
 
-
 using namespace std;
 
 namespace BlinkyBlocks {

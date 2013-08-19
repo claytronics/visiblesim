@@ -110,6 +110,16 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 			float angle = atof(attr);
 			world->getCamera()->setAngle(angle);
 		}
+		double def_near=1,def_far=1500;
+		attr=cameraElement->Attribute("near");
+		if (attr) {
+			def_near = atof(attr);
+		}
+		attr=cameraElement->Attribute("far");
+		if (attr) {
+			def_far = atof(attr);
+		}
+		world->getCamera()->setNearFar(def_near,def_far);
 	}
 
 	// loading the spotlight parameters
@@ -142,6 +152,7 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 		}
 		float farplane=2.0*dist*tan(angle*M_PI/180.0);
 		world->getCamera()->setLightParameters(target,az,ele,dist,angle,10.0,farplane);
+
 	}
 
 	// loading the blocks

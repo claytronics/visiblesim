@@ -63,6 +63,8 @@ public :
   void mouseLightMove(int x,int y);
   void mouseLightZoom(double pas);
   void updateIntrinsics(double a,double rwh,double np,double fp);
+  void setW_H(double r) { w_h=r; };
+  void setNearFar(double n,double f) { near_plane=n; far_plane=f; };
   void setAngle(double a) { angle=a; };
   inline void setTarget(const Vecteur &p) { target=p; updatePositionFromAngles(); }
   inline void setDirection(double az,double ele) { theta=az*M_PI/180.0; phi=ele*M_PI/180.0; updatePositionFromAngles(); }

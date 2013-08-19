@@ -34,7 +34,6 @@ protected:
 	boost::interprocess::interprocess_mutex mutex_schedule;
 	boost::interprocess::interprocess_mutex mutex_trace;
 	
-	
 	Scheduler();
 	virtual ~Scheduler();
 

@@ -22,6 +22,7 @@ int GlutContext::screenHeight = 800;
 int GlutContext::keyboardModifier = 0;
 //bool GlutContext::showLinks=false;
 bool GlutContext::fullScreenMode=false;
+bool GlutContext::saveScreenMode=false;
 GlutSlidingMainWindow *GlutContext::mainWindow=NULL;
 GlutPopupWindow *GlutContext::popup=NULL;
 GlutPopupMenuWindow *GlutContext::popupMenu=NULL;
@@ -91,14 +92,13 @@ void GlutContext::reshapeFunc(int w,int h) {
 	screenWidth=w;
 	screenHeight=h;
 	Camera* camera=getWorld()->getCamera();
-	camera->updateIntrinsics(60,double(w)/double(h),1.0,1500.0);
+	camera->setW_H(double(w)/double(h));
 	// size of the OpenGL drawing area
 	glViewport(0,0,w,h);
 	glMatrixMode(GL_PROJECTION);
 	glLoadIdentity();
 	camera->glProjection();
 	// camera intrinsic parameters
-	//gluPerspective(60,(double)w/(double)h,10.0,5000.0);
 	glMatrixMode(GL_MODELVIEW);
 	glLoadIdentity();
 	mainWindow->reshapeFunc(w,h);
@@ -248,8 +248,8 @@ void GlutContext::keyboardFunc(unsigned char c, int x, int y)
 		  }
 		  helpWindow->showHide();
 	  break;
-
-
+	  case 's' : saveScreenMode=!saveScreenMode;
+	  break;
     }
 
   glutPostRedisplay();
@@ -264,6 +264,12 @@ void GlutContext::idleFunc(void) {
 #else
 	  usleep(20000);
 #endif
+	if (saveScreenMode) {
+		static int num=0;
+		char title[16];
+		sprintf(title,"save%04d.ppm",num++);
+		saveScreen(title);
+	}
 	glutPostRedisplay();
 }
 
@@ -399,3 +405,30 @@ void GlutContext::addTrace(const string &message,int id) {
 	if (mainWindow) mainWindow->addTrace(id,message);
 }
 
+bool GlutContext::saveScreen(char *title) {
+#ifdef WIN32
+	FILE *fichier;
+	fopen_s(&fichier,title,"wb");
+#else
+	FILE *fichier = fopen(title,"wb");
+#endif
+  if (!fichier) return false;
+  unsigned char *pixels;
+  int w,h;
+
+  w = glutGet(GLUT_WINDOW_WIDTH);
+  h = glutGet(GLUT_WINDOW_HEIGHT);
+  if (w%4!=0) w=(int(w/4))*4;
+
+  pixels = (unsigned char*) malloc(3*w*h);
+  glReadPixels(0,0,w,h,GL_RGB,GL_UNSIGNED_BYTE,(GLvoid*) pixels);
+  fprintf(fichier,"P6\n%d %d\n255\n",w,h);
+  unsigned char *ptr = pixels+(h-1)*w*3;
+  while (h--)
+  { fwrite(ptr,w*3,1,fichier);
+    ptr-=w*3;
+  }
+  fclose(fichier);
+  free(pixels);
+  return true;
+}
