@@ -495,8 +495,11 @@ namespace debugger {
         struct msgListContainer* msgContainer;
 
 
-		BlinkyBlocks::checkForReceivedVMCommands();
-		//BlinkyBlocks::waitForOneVMCommand();
+		if (messageQueue->empty()) {
+			//BlinkyBlocks::checkForReceivedVMCommands();
+			BlinkyBlocks::waitForOneVMCommand();
+		}
+		
         while(!messageQueue->empty()){
 
             /*process each message until empty*/
