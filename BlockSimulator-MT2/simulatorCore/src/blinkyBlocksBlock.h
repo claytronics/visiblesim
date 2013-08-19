@@ -25,7 +25,7 @@ public:
 };
 
 class BlinkyBlocksBlockCode;
-class BlinkyBlocksVM;
+class meldVM;
 
 class BlinkyBlocksBlock : public BaseSimulator::BuildingBlock {
 	P2PNetworkInterface *tabInterfaces[6];

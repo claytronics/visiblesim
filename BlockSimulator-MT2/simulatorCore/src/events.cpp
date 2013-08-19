@@ -29,7 +29,8 @@ Event::Event(uint64_t t) {
 	nbLivingEvents++;
 	date = t;
 	eventType = EVENT_GENERIC;
-	priority = PRIORITY_EVENT_GENERIC;
+	priority = PRIORITY_EVENT_GENERIC;	
+	randomNumber = 0;
 	EVENT_CONSTRUCTOR_INFO();
 }
 
@@ -40,6 +41,7 @@ Event::Event(Event *ev) {
 	date = ev->date;
 	eventType = ev->eventType;
 	priority = ev->priority;
+	randomNumber = 0;
 	EVENT_CONSTRUCTOR_INFO();
 }
 
@@ -69,7 +71,6 @@ unsigned int Event::getNbLivingEvents() {
 BlockEvent::BlockEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock) : Event(t) {
 	EVENT_CONSTRUCTOR_INFO();
 	concernedBlock = conBlock;
-	randomNumber = conBlock->getNextRandomNumber();
 	eventType = BLOCKEVENT_GENERIC;
 	priority = PRIORITY_BLOCKEVENT_GENERIC;
 }
@@ -172,7 +173,6 @@ const string ProcessLocalEvent::getEventName() {
 NetworkInterfaceStartTransmittingEvent::NetworkInterfaceStartTransmittingEvent(uint64_t t, P2PNetworkInterface *ni):Event(t) {
 	eventType = EVENT_NI_START_TRANSMITTING;
 	interface = ni;
-	priority = PRIORITY_EVENT_NI_START_TRANSMITTING; // ni->hostBlock->getNextRandomNumber();
 	EVENT_CONSTRUCTOR_INFO();
 }
 NetworkInterfaceStartTransmittingEvent::~NetworkInterfaceStartTransmittingEvent() {
@@ -197,7 +197,6 @@ const string NetworkInterfaceStartTransmittingEvent::getEventName() {
 NetworkInterfaceStopTransmittingEvent::NetworkInterfaceStopTransmittingEvent(uint64_t t, P2PNetworkInterface *ni):Event(t) {
 	eventType = EVENT_NI_STOP_TRANSMITTING;
 	interface = ni;
-	priority = PRIORITY_EVENT_NI_STOP_TRANSMITTING; // ni->hostBlock->getNextRandomNumber();
 	EVENT_CONSTRUCTOR_INFO();
 }
 NetworkInterfaceStopTransmittingEvent::~NetworkInterfaceStopTransmittingEvent() {
@@ -232,7 +231,6 @@ NetworkInterfaceReceiveEvent::NetworkInterfaceReceiveEvent(uint64_t t, P2PNetwor
 	eventType = EVENT_NI_RECEIVE;
 	interface = ni;
 	message = mes;
-	priority = PRIORITY_EVENT_NI_RECEIVE; // ni->hostBlock->getNextRandomNumber();
 	EVENT_CONSTRUCTOR_INFO();
 }
 
@@ -259,7 +257,13 @@ NetworkInterfaceEnqueueOutgoingEvent::NetworkInterfaceEnqueueOutgoingEvent(uint6
 	eventType = EVENT_NI_ENQUEUE_OUTGOING_MESSAGE;
 	message = MessagePtr(mes);
 	sourceInterface = ni;
-	priority = PRIORITY_EVENT_NI_ENQUEUE_OUTGOING_MESSAGE; //ni->hostBlock->getNextRandomNumber();
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+NetworkInterfaceEnqueueOutgoingEvent::NetworkInterfaceEnqueueOutgoingEvent(uint64_t t, MessagePtr mes, P2PNetworkInterface *ni):Event(t) {
+	eventType = EVENT_NI_ENQUEUE_OUTGOING_MESSAGE;
+	message = mes;
+	sourceInterface = ni;
 	EVENT_CONSTRUCTOR_INFO();
 }
 

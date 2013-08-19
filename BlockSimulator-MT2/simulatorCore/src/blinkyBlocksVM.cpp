@@ -16,21 +16,17 @@ using asio::ip::tcp;
 
 namespace BlinkyBlocks {
 
-//int BlinkyBlocksVM::port=5000; // default
 boost::asio::io_service *BlinkyBlocksVM::ios = NULL;
 tcp::acceptor *BlinkyBlocksVM::acceptor = NULL;
 string BlinkyBlocksVM::vmPath;
 string BlinkyBlocksVM::programPath;
 bool BlinkyBlocksVM::debugging = false;
 
-VMMessage::VMMessage(const VMMessage &m) {
-	memcpy(message, m.message, m.message[0]+sizeof(uint64_t));
-}
-
 BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 	assert(ios != NULL && acceptor != NULL);
 	hostBlock = bb;
 	OUTPUT << "VM "<< hostBlock->blockId << " constructor" << endl;
+	socket = boost::shared_ptr<tcp::socket>(new tcp::socket(*ios));
 	// Start the VM
 	pid = 0;
 	pid = fork();
@@ -45,24 +41,20 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 		if (debugging) {
 			//./meld -f  /home/ubuntu/Bureau/CMU/meld/examples/ends.m -c sl -D SIM
 			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", (char*) "-D", (char*) "SIM", NULL };
-			//char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", NULL };
 			execv(vmPath.c_str(), const_cast<char**>(cmd));
 		} else {
+			//./meld -f  /home/ubuntu/Bureau/CMU/meld/examples/ends.m -c sl
 			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", NULL };
-			OUTPUT << "no debugging mode!" << endl;
 			execv(vmPath.c_str(), const_cast<char**>(cmd));
 		}
 	}
-	// Wait for an incoming connection
-	socket = boost::shared_ptr<tcp::socket>(new tcp::socket(*ios));
-	acceptor->accept(*(socket.get()));
-	OUTPUT << "VM "<< hostBlock->blockId << " connected" << endl;
+	acceptor->accept(*(socket.get()));	
 	idSent = false;
-	asyncReadMessage();
+	nbSentCommands = 0;
+	asyncReadCommand();
 }
 
 BlinkyBlocksVM::~BlinkyBlocksVM() {
-	OUTPUT << "VM "<< hostBlock->blockId << " destructor" << endl;
 	closeSocket();
 	terminate();
 }
@@ -72,55 +64,68 @@ void BlinkyBlocksVM::terminate() {
 }
 
 void BlinkyBlocksVM::closeSocket() {
-	OUTPUT << "VM "<< hostBlock->blockId << " close socket" << endl;
 	if (socket != NULL) {
 		socket->cancel();
-		OUTPUT << "VM "<< hostBlock->blockId << " cancel socket" << endl;
 		socket->close();
 		socket.reset();
 	}
 }
 
-void BlinkyBlocksVM::asyncReadMessageHandler(const boost::system::error_code& error, std::size_t bytes_transferred) {
-	BlinkyBlocksBlockCode *bbc = (BlinkyBlocksBlockCode*)hostBlock->blockCode;
-	OUTPUT << "handler called" << endl;
+void BlinkyBlocksVM::asyncReadCommandHandler(const boost::system::error_code& error, std::size_t bytes_transferred) {
 	if(error) {
-		ERRPUT << "an error occurred while receiving a tcp message from VM " << hostBlock->blockId << " (socket closed ?) " <<endl;
+		ERRPUT << "An error occurred while receiving a tcp command from VM " << hostBlock->blockId << " (socket closed ?) " <<endl;
 		return;
 	}
     try {
-		memset(inBuffer.message+1, 0, inBuffer.message[0]);
-		boost::asio::read(getSocket(),boost::asio::buffer((void*)(inBuffer.message + 1), inBuffer.message[0]) );
+		memset(inBuffer+1, 0, inBuffer[0]);
+		boost::asio::read(getSocket(),boost::asio::buffer((void*)(inBuffer + 1), inBuffer[0]) );
 	} catch (std::exception& e) {
-		ERRPUT << "connection to the VM "<< hostBlock->blockId << " lost" << endl;
+		ERRPUT << "Connection to the VM "<< hostBlock->blockId << " lost" << endl;
 	}
-	if (bbc->mustBeQueued()) {
-		inQueue.push(inBuffer);
-	} else {
-		bbc->handleNewMessage(inBuffer.message);
+	handleInBuffer();
+	while (socket->available()) {
+		try {
+			boost::asio::read(getSocket(), boost::asio::buffer(inBuffer, sizeof(commandType))); 
+			boost::asio::read(getSocket(),boost::asio::buffer((void*)(inBuffer + 1), inBuffer[0]));
+		}  catch (std::exception& e) {
+			ERRPUT << "Connection to the VM "<< hostBlock->blockId << " lost" << endl;
+		}
+		handleInBuffer();
 	}
-    this->asyncReadMessage();
+    this->asyncReadCommand();
 }
 
-void BlinkyBlocksVM::asyncReadMessage() {
+void BlinkyBlocksVM::handleInBuffer() {
+	BlinkyBlocksBlockCode *bbc = (BlinkyBlocksBlockCode*)hostBlock->blockCode;
+	VMCommand command(inBuffer);
+	
+	if (bbc->mustBeQueued(command)) {
+		command.copyData();
+		inQueue.push(command);
+	} else {
+		bbc->handleCommand(command);
+	}
+}
+
+void BlinkyBlocksVM::asyncReadCommand() {
 	if (socket == NULL) {
-		ERRPUT << "the simulator is not connected to the VM "<< hostBlock->blockId << endl;
+		ERRPUT << "Simulator is not connected to the VM "<< hostBlock->blockId << endl;
 		return;
 	}
 	try {
-	inBuffer.message[0] = 0;
+	inBuffer[0] = 0;
 	boost::asio::async_read(getSocket(),
-		boost::asio::buffer(inBuffer.message, sizeof(uint64_t)),
-		boost::bind(&BlinkyBlocksVM::asyncReadMessageHandler, this, boost::asio::placeholders::error,
+		boost::asio::buffer(inBuffer, sizeof(commandType)),
+		boost::bind(&BlinkyBlocksVM::asyncReadCommandHandler, this, boost::asio::placeholders::error,
 		boost::asio::placeholders::bytes_transferred));
 	} catch (std::exception& e) {
-		ERRPUT << "connection to the VM "<< hostBlock->blockId << " lost" << endl;
+		ERRPUT << "Connection to the VM "<< hostBlock->blockId << " lost" << endl;
 	}
 }
 
-void BlinkyBlocksVM::sendMessage(uint64_t size, uint64_t* message){
+void BlinkyBlocksVM::sendCommand(VMCommand &command){
 	if (socket == NULL) {
-		ERRPUT << "the simulator is not connected to the VM "<< hostBlock->blockId << endl;
+		ERRPUT << "Simulator is not connected to the VM "<< hostBlock->blockId << endl;
 		return;
 	}
 	if (!idSent) {
@@ -129,20 +134,59 @@ void BlinkyBlocksVM::sendMessage(uint64_t size, uint64_t* message){
 	}
 	mutex_send.lock();
 	try {
-		boost::asio::write(getSocket(), boost::asio::buffer((void*)message,size));
+		boost::asio::write(getSocket(), boost::asio::buffer(command.getData(), command.getSize()));
 	} catch (std::exception& e) {
-		ERRPUT << "connection to the VM "<< hostBlock->blockId << " lost" << endl;
+		ERRPUT << "Connection to the VM "<< hostBlock->blockId << " lost" << endl;
 	}
 	mutex_send.unlock();
+	nbSentCommands++;
+	((BlinkyBlocksBlockCode*)hostBlock->blockCode)->handleDeterministicMode(command);
 }
 
-void BlinkyBlocksVM::handleQueuedMessages() {
+void BlinkyBlocksVM::handleQueuedCommands() {
 	BlinkyBlocksBlockCode *bbc = (BlinkyBlocksBlockCode*)hostBlock->blockCode;
 	while (!inQueue.empty()) {
-		VMMessage &m = inQueue.front();
-		bbc->handleNewMessage(m.message);
+		VMCommand &command = inQueue.front();
+		bbc->handleCommand(command);
+		delete[] command.getData();
 		inQueue.pop();
 	}
 }
+
+
+void BlinkyBlocksVM::checkForReceivedCommands() {
+	if (ios != NULL) {
+		ios->poll();
+		ios->reset();
+	}
+}
+
+void BlinkyBlocksVM::waitForOneCommand() {
+	if (ios != NULL) {
+		ios->run_one();
+		ios->reset();
+	}
+	checkForReceivedCommands();
+}
+
+void BlinkyBlocksVM::setConfiguration(string v, string p, bool d) {
+	vmPath = v;
+	programPath = p;
+	debugging = d;
+}
+
+void BlinkyBlocksVM::createServer(int p) {
+	assert(ios == NULL);
+	ios = new boost::asio::io_service();
+	acceptor =  new tcp::acceptor(*ios, tcp::endpoint(tcp::v4(), p));
+}
+
+void BlinkyBlocksVM::deleteServer() {
+	ios->stop();
+	delete acceptor;
+	delete ios;
+	ios = NULL; acceptor = NULL;
+}
+
 
 }

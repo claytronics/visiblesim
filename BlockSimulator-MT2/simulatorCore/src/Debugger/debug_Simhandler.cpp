@@ -1,3 +1,5 @@
+/*DEBUGGER FOR BLINKY BLOCK SIMULATOR*/
+
 #include <string.h>
 #include <pthread.h>
 #include <iostream>
@@ -11,6 +13,7 @@
 #include "serialization.hpp"
 #include "types.hpp"
 #include "blinkyBlocksVM.h"
+#include <list>
 
 using namespace std;
 using namespace debugger;
@@ -23,7 +26,7 @@ namespace debugger {
 
     /*****************************************************************/
 
-    /*GLOBAL STORED VARS: debug handling specific*/
+    /*GLOBAL STORED VARS*/
 
     /****************************************************************/
 
@@ -37,20 +40,46 @@ namespace debugger {
 
     static bool okayToPauseSimulation = false;
 
+    static bool printLimitation = true;
+    static bool okayToPrint = true;
+
     /*number of messages the Master expects to recieve*/
     int numberExpected = 0;
 
     bool verboseMode = false;
     bool serializationMode = false;
 
+    /*cache ...rcvMessageList holds containters for
+     * different lists of broken messages*/
+    std::list<struct msgListContainer*>* rcvMessageList;
+
+    /*BROKEN UP MESSAGE CONTAINERS TO BE STORED IN CACHE*/
+
+    /*rcvMessageList Elems -- contains a list that holds incoming messages
+     * from a certain node*/
+    struct msgListContainer {
+        int instruction;
+        int node;
+        std::list<struct msgListElem*>* msglist;
+    };
+
+    /*msgListElems -- holds the information necessary to reconstruct the
+     * the message*/
+    struct msgListElem{
+        int priority;
+        string content;
+    };
+
+
     /**********************************************************************/
 
-    /* I/0 SPECIFICATION PARSING */
+    /* I/0 SPECIFICATION PARSING - extract the different parts of
+     * a specification format*/
 
     /*********************************************************************/
 
 
-    /*returns the index of a character in a string,
+    /*CHARACTER IN STRING INDEX -- returns the index of a character in a string,
      *if it is not there it returns -1*/
     int characterInStringIndex(string str, char character){
         for(unsigned int i = 0; i < str.length(); i++){
@@ -61,7 +90,7 @@ namespace debugger {
     }
 
 
-    /*extracts the type from the specification from input line
+    /*GET TYPE -- extracts the type from the specification from input line
      *returns the type of breakpoint from the specification
      *invariant-- the type is always specified*/
     string getType(string specification){
@@ -76,7 +105,7 @@ namespace debugger {
     }
 
 
-    /*extracts the name from the specification
+    /*GET NAME -- extracts the name from the specification
      *returns the name from the specification
      *returns "" if name is not present*/
     string getName(string specification){
@@ -97,7 +126,7 @@ namespace debugger {
     }
 
 
-    /*extracts the node from the specification
+    /*GET NODE -- extracts the node from the specification
      *returns the node from the specification
      *returns "" if node is not given*/
     string getNode(string specification){
@@ -111,8 +140,9 @@ namespace debugger {
         return build;
     }
 
-    /*given the encoding return the corresponding string for
-     *break point types*/
+    /*TYPE INT TO STRING -- given the encoding return
+     *  the corresponding string for
+     *  break point types*/
     string typeInt2String(int type){
         switch(type){
             case FACTDER:
@@ -137,6 +167,8 @@ namespace debugger {
 
     /*********************************************************************/
 
+
+    /*SETFLAGS -- switch to different debugging modes based on user input*/
    void setFlags(string specification){
         ostringstream msg;
         for (int i = 0; i < specification.length(); i++){
@@ -148,85 +180,120 @@ namespace debugger {
         }
     }
 
+
+    /*HANDLE PAUSE COMMAND -- broadcast a pause message to all VMs
+     *  -used when the user presses P for a runnung system*/
+    void handlePauseCommand(void){
+
+        sendMsg(-1,PAUSE,"",BROADCAST);
+        okayToBroadcastPause = false;
+
+    }
+
+
+    /*DEBUG CONTROLLER -- send messages to the VMs based off the user input*/
     void debugController(int instruction, string specification){
 
         string type;
         string name;
         string node;
 
-            if (instruction == CONTINUE || instruction == UNPAUSE){
-				okayToBroadcastPause = true;
-                okayToPauseSimulation = true;
-                /*continue a paused system by broadcasting an CONTINUE signal*/
-                unPauseSimulation();
-                numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
-            } else if (instruction == RUN){
-                okayToBroadcastPause = true;
-                okayToPauseSimulation = true;
-                /*continue a paused system by broadcasting an CONTINUE signal*/
-                unPauseSimulation();
-                numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
-            } else if (instruction == DUMP) {
 
-                /*broadcast the message to all VMs*/
-                if (specification == "all"){
+        /*keep tract of number of messages expected*/
+        okayToPrint = true;
+        if (instruction == CONTINUE || instruction == UNPAUSE){
+            okayToBroadcastPause = true;
+            okayToPauseSimulation = true;
+            unPauseSimulation();
+            printLimitation = false;
+            numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
+        } else if (instruction == RUN){
+            okayToBroadcastPause = true;
+            okayToPauseSimulation = true;
+            printLimitation = false;
+            /*continue a paused system by broadcasting an CONTINUE signal*/
+            unPauseSimulation();
+            numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
+        } else if (instruction == DUMP) {
 
-                    numberExpected = sendMsg(-1,DUMP,specification,BROADCAST);
+            /*broadcast the message to all VMs*/
+            if (specification == "all"){
 
-                } else {
+                numberExpected = sendMsg(-1,DUMP,specification,BROADCAST);
 
-                    /*send to a specific VM to dump content*/
-                    sendMsg(atoi(specification.c_str()),DUMP,specification);
-                    numberExpected = 1;
-                }
+                printLimitation = false;
+            } else {
 
-                /*handle the breakpoints in the lists*/
-            } else if (instruction == REMOVE||instruction == BREAKPOINT) {
-
-                /*extract the destination*/
-                node = getNode(specification);
-                if (node == ""){
-
-                    /*broadcast the message if the node is not specified*/
-                    numberExpected = sendMsg(-1,instruction,specification,BROADCAST);
-
-                } else {
-
-                    /*send break/remove to a specific node */
-                    sendMsg(atoi(node.c_str()),instruction,specification);
-                    numberExpected = 1;
-
-                }
-
-
-            } else if (instruction == PRINTLIST) {
-
-                /*broadcast  a pause message*/
-                numberExpected = sendMsg(-1,PRINTLIST,"",BROADCAST);
-
-            } else if (instruction == MODE) {
-                setFlags(specification);
-                numberExpected = sendMsg(-1,MODE,specification,
-                                         BROADCAST);
+                printLimitation = false;
+                /*send to a specific VM to dump content*/
+                sendMsg(atoi(specification.c_str()),DUMP,specification);
+                numberExpected = 1;
             }
+
+            /*handle the breakpoints in the lists*/
+        } else if (instruction == REMOVE||instruction == BREAKPOINT) {
+
+            /*extract the destination*/
+            node = getNode(specification);
+            if (node == ""){
+
+                printLimitation = true;
+                /*broadcast the message if the node is not specified*/
+                numberExpected = sendMsg(-1,instruction,specification,BROADCAST);
+
+            } else {
+
+                printLimitation = true;
+                /*send break/remove to a specific node */
+                sendMsg(atoi(node.c_str()),instruction,specification);
+                numberExpected = 1;
+
+            }
+
+
+        } else if (instruction == PRINTLIST) {
+
+            printLimitation = false;
+            /*broadcast  a PRINT LIST message*/
+            numberExpected = sendMsg(-1,PRINTLIST,"",BROADCAST);
+
+        } else if (instruction == MODE) {
+
+            printLimitation = true;
+            /*set flags and tell the VMs of the update*/
+            setFlags(specification);
+            numberExpected = sendMsg(-1,MODE,specification,
+                                     BROADCAST);
+        } else if (instruction == TIME) {
+            pauseSimulation(atoi(specification.c_str()));
+            numberExpected = 1;
+        }
 
     }
 
 
-    /*the controller for the master MPI debugger-called when messages are
-    *received*/
+    /*DEBUG MASTER CONTROLLER -- the controller for the master
+     *  MPI debugger-called when messages are
+     *  received*/
     void debugMasterController(int instruction, string specification){
 
         /*print the output and then tell all other VMs to pause*/
         if (instruction == BREAKFOUND){
             printf("%s",specification.c_str());
-			/*print content from a VM*/
+			/*only able to broadcast pause per one run/continue*/
             if(okayToBroadcastPause) {
 				sendMsg(-1,PAUSE,"",BROADCAST);
 				okayToBroadcastPause = false;
             }
         } else if (instruction == PRINTCONTENT){
-            printf("%s",specification.c_str());
+            /*if not verbose, only print from first VM to respond*/
+            if (!verboseMode&&printLimitation&&okayToPrint){
+                printf("%s",specification.c_str());
+                okayToPrint  = false;
+                /*print all*/
+            } else if (verboseMode||!printLimitation) {
+                printf("%s",specification.c_str());
+            }
         } else if (instruction == TERMINATE){
             printf("PROGRAM FINISHED\n");
             exit(0);
@@ -236,13 +303,12 @@ namespace debugger {
             if (verboseMode){
                 printf("%s",specification.c_str());
             }
-        } else if (instruction == TIMEOUT){
-            if (numberExpected != 0){
-                printf("%s",specification.c_str());
-                numberExpected = 1;
-                sendMsg(-1,PAUSE,"",BROADCAST);
-            } else {
-                numberExpected++;
+
+        } else if (instruction == TIME){
+            printf("%s",specification.c_str());
+            if(okayToBroadcastPause) {
+				sendMsg(-1,PAUSE,"",BROADCAST);
+				okayToBroadcastPause = false;
             }
         }
     }
@@ -250,125 +316,252 @@ namespace debugger {
 
     /***************************************************************************/
 
-    /*DEBUG MESSAGE SENDING*/
+    /*DEBUG MESSAGE SENDING - send message over a connection
+     *  -messages are first broken into packets, attatched with a header
+     *   when sent
+     *  -the reciever stores the packets in a cache until the whole message can
+     *   be reconsructed and processed*/
 
     /***************************************************************************/
 
 
-    /*return the size of a packed array stored with content of an unkown size*/
-    inline int getSize(string content){
-
-        /*will always return an integer*/
-        return  3 + ((content.size()+1) + (SIZE-(content.size()+1)%SIZE))/SIZE;
-    }
-
-
+    /*MESSAGE QUEUE INSERT -- used by simulator to update debugger message queue*/
     void messageQueueInsert(uint64_t* msg){
         messageQueue->push(msg);
     }
 
-    /*given the type encoding and content, pack the information into
-     *a sendable messeage*/
-    message_type* pack(int msgEncode, string content){
+    /*GET MAX CHAR ARRAY SIZE--return the size of the maximum char array size*/
+    inline int getMaxCharArraySize(){
+
+        /*will always return an integer*/
+        return MAXLENGTH*SIZE -
+            (sizeof(int)+4*sizeof(message_type)+sizeof(size_t)
+             +sizeof(int)+8);
+    }
+
+
+    /*PACK LIST --break message into parts while
+     *it is longer than the buffer size and store
+     * it in a list to be ready to be sent.
+     * Attatch a header to know how many messages the
+     * list contains including the header*/
+    std::list<message_type*>* packList(int msgEncode, string content){
+
+        std::list<message_type*>* msgList = new std::list<message_type*>();
+
+        message_type* msg;
+
+        string partition;
+        int priority = 1;
+        /*if too big*/
+        while (content.length() + 1 > (uint)getMaxCharArraySize()){
+
+            /*pack the broken message and put it in the list*/
+            partition = content.substr(0,getMaxCharArraySize());
+            content = content.substr(getMaxCharArraySize()+1);
+            msg = pack(msgEncode,partition,priority);
+            msgList->push_back(msg);
+            priority++;
+        }
+
+        /*put the last message that is smaller than buffer*/
+        ostringstream convert;
+        convert << priority + 1;
+        msgList->push_back(pack(msgEncode,content,priority));
+
+        /*attatch the header with priority 0, and the number of messages
+         * as the content*/
+        msgList->push_back(pack(msgEncode,convert.str(),0));
+        return msgList;
+    }
+
+
+
+
+    /*PACK--given the type encoding and content, pack the information into
+     * a sendable messeage.
+     * priority is the number in a message group*/
+    message_type* pack(int msgEncode, string content, int priority){
+
 
         utils::byte* msg = (utils::byte*)new message_type[MAXLENGTH];
         int pos = 0;
+
         message_type debugFlag =  DEBUG;
-        size_t size = content.length() +1;
-        size_t bufSize = MAXLENGTH*SIZE;
-        message_type msgSize = bufSize-SIZE;
-        utils::byte anotherIndicator = 0;
+        size_t contentSize = content.length() + 1;
+        size_t bufSize = MAXLENGTH*SIZE;//bytes
+        message_type msgSize = bufSize-SIZE;//according to message spec
         message_type timeStamp = 0;
         message_type nodeId = 0;
 
-
+        /*message size in bytes*/
         utils::pack<message_type>(&msgSize,1,msg,bufSize,&pos);
+
+        /*debug indicator*/
         utils::pack<message_type>(&debugFlag,1,msg,bufSize,&pos);
+
         /*timestamp*/
         utils::pack<message_type>(&timeStamp,1,msg,bufSize,&pos);
-        /*VM ID*/
+
+        /*VM id*/
         utils::pack<message_type>(&nodeId,1,msg,bufSize,&pos);
-        /*indicate if another message is coming*/
-        utils::pack<utils::byte>(&anotherIndicator,1,msg,bufSize,&pos);
 
+        /*priority of the message*/
+        utils::pack<int>(&priority,1,msg,bufSize,&pos);
+
+        /*debug command encoding*/
         utils::pack<int>(&msgEncode,1,msg,bufSize,&pos);
-        utils::pack<size_t>(&size,1,msg,bufSize,&pos);
 
-        /*add the content into the buffer*/
+        /*size of content*/
+        utils::pack<size_t>(&contentSize,1,msg,bufSize,&pos);
+
+        /*content*/
         utils::pack<char>((char*)content.c_str(),content.size()+1,
                                  msg,bufSize,&pos);
+
         return (message_type*)msg;
 
     }
 
 
 
-
-    /*the desination specified is the process*/
-    /*send a debug message to another process through the MPI layer*/
-    /*if send to all, specify BROADCAST (see top)*/
+    /*SENDMSG--the desination specified is the user input node ID*/
+    /* send a debug message to another process through the API layer*/
+    /* if send to all, specify BROADCAST (see top)*/
     int sendMsg(int destination, int msgType,
               string content, bool broadcast)  {
 
+            /*length of array*/
+            size_t msgSize = MAXLENGTH*SIZE;
+            /*pack the message into a broken list*/
+            std::list<message_type*>* msgList = packList(msgType,content);
+            message_type* msg;
 
-        /*pack the message*/
-        message_type* msg = pack(msgType,content);
 
-        size_t msgSize = MAXLENGTH*SIZE;
+            int expected;
 
-        if (broadcast){
+            /*send all the messages in the list*/
+            while (!msgList->empty()){
 
-            return debugSendMsg(-1,msg,msgSize);
+                msg = msgList->front();
+                msgList->pop_front();
 
-        } else {
 
-            /*get the process id (getVMId) and send the message*/
-            return debugSendMsg(destination,msg,
-                              msgSize);
-        }
+                if (broadcast){
+                    expected = debugSendMsg(-1,msg,msgSize);
+
+                } else {
+
+                    /*get the process id (getVMId) and send the message*/
+                    expected = debugSendMsg(destination,msg,
+                                        msgSize);
+
+                    /*error*/
+                    if (expected < 0){
+                        messageQueueInsert(pack(PRINTCONTENT,
+                                                "Node does not exist\n",1));
+                        messageQueueInsert(pack(PRINTCONTENT,"2",0));
+                        return 1;
+                    }
+                }
+
+
+            }
+
+            delete msgList;
+
+            return expected;
 
     }
 
 
+
+    /* RECEIVE MESSAGE -- ask for messages from the simulator,
+     *  if there are messages, put them in the cache.
+     *  if a whole message has been completed in the cache
+     *  reconctruct it and process it in the master contoller*/
     void receiveMsg(void){
+
+
 
         utils::byte *msg;
         int instruction;
         char specification[MAXLENGTH*SIZE];
         int pos = 0;
-        message_type size;
-        message_type debugFlag;
+        message_type size,debugFlag,timeStamp,NodeId;
         size_t specSize;
-         utils::byte anotherIndicator;
-        message_type nodeId;
-        message_type timeStamp;
+        int priority;
 
-		BlinkyBlocks::checkForReceivedVMMessages();
+        struct msgListContainer* msgContainer;
 
+
+		BlinkyBlocks::checkForReceivedVMCommands();
+		//BlinkyBlocks::waitForOneVMCommand();
         while(!messageQueue->empty()){
+
             /*process each message until empty*/
             /*extract the message*/
             msg = (utils::byte*)messageQueue->front();
 
-            /*unpack the message into readable form*/
-            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&size,1);
-            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&debugFlag,1);
-            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&timeStamp,1);
-            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,&pos,&nodeId,1);
-            utils::unpack<utils::byte>(msg,MAXLENGTH*SIZE,&pos,
-                                        &anotherIndicator,1);
+            /*==>UNPACK the message into readable form*/
+            /*msgsize in bytes*/
+            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,
+                                             &pos,&size,1);
+            /*debugFlag*/
+            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,
+                                             &pos,&debugFlag,1);
+            /*timestamp*/
+            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,
+                                             &pos,&timeStamp,1);
+            /*place msg came from*/
+            utils::unpack<message_type>(msg,MAXLENGTH*SIZE,
+                                             &pos,&NodeId,1);
+            /*priority*/
+            utils::unpack<int>(msg,MAXLENGTH*SIZE,
+                                       &pos,&priority,1);
+            /*command encoding*/
             utils::unpack<int>(msg,MAXLENGTH*SIZE,&pos,&instruction,1);
+            /*content size*/
             utils::unpack<size_t>(msg,MAXLENGTH*SIZE,&pos,&specSize,1);
+            /*content*/
             utils::unpack<char>(msg,MAXLENGTH*SIZE,&pos,
                                 &specification,specSize);
+
             string spec(specification);
 
 
+
+             /*insert the message into a cache to be checked if the
+             *broken message in pieces has been completed*/
+            insertMsg(spec, priority, instruction, NodeId);
+
+            /*check to see if a total message has been sent*/
+            msgContainer = checkAndGet();
+
+            /*messages are ready to be processed*/
+            if (msgContainer!= NULL){
+                instruction = msgContainer->instruction;
+                spec = buildString(msgContainer);
+
+            /*no messages completed*/
+            } else {
+
+                /* resetup*/
+                memset(specification,0,MAXLENGTH*SIZE);
+                messageQueue->pop();
+                memset(msg,0,MAXLENGTH*SIZE);
+                pos = 0;
+                continue;
+            }
+
+
+            /*process a reconstructed message*/
             debugMasterController(instruction,spec);
             numberExpected--;
 
+            /*if all expected messages have been received*/
             if (numberExpected == 0 && okayToPauseSimulation)
-                pauseSimulation();
+                pauseSimulation(-1);
 
             /*set up the variables and buffers for next message*/
             memset(specification,0,MAXLENGTH*SIZE);
@@ -376,6 +569,145 @@ namespace debugger {
             memset(msg,0,MAXLENGTH*SIZE);
             pos = 0;
         }
+    }
+
+
+    /************************************************************************/
+
+    /*RECONSTRUCTING/STORING PARTITIONED MESSAGES
+     *  -Receiving and constructing broken apart message algorithms*/
+
+    /************************************************************************/
+
+
+    /*INSERT MESSAGE--insert the a parted message into the cache (a list of lists)*/
+    void insertMsg(string content, int priority, int instruction, int node){
+
+         std::list<struct msgListContainer*>::const_iterator it;
+         struct msgListElem* elem;
+         struct msgListContainer* contain;
+
+         for (it = rcvMessageList->begin();it!=rcvMessageList->end();it++){
+
+             contain = *it;
+
+             /*a message that matches already came from a node, insert it with
+              * that node*/
+             if (contain->instruction == instruction && contain->node == node){
+                 elem = new struct msgListElem;
+                 elem->priority = priority;
+                 elem->content = content;
+                 contain->msglist->push_back(elem);
+                 return;
+             }
+         }
+
+
+         /*if no message like it exist yet create a new list in the cache*/
+         contain = new struct msgListContainer;
+         contain->instruction = instruction;
+         contain->node = node;
+         contain->msglist = new std::list<struct msgListElem*>();
+         elem = new struct msgListElem;
+         elem->priority = priority;
+         elem->content = content;
+         contain->msglist->push_back(elem);
+         rcvMessageList->push_back(contain);
+    }
+
+
+    /*CHECK AND GET -- check to see if any lists in the cache have completed
+     * i.e.  all broken partitioned messages for a command have been sent*/
+    struct msgListContainer* checkAndGet(void){
+
+        std::list<struct msgListElem*>* msgList;
+        std::list<struct msgListElem*>::iterator iter;
+        std::list<struct msgListContainer*>::iterator it;
+        struct msgListContainer* contain;
+        struct msgListElem* elem;
+
+        /*iterate through cache*/
+        for (it = rcvMessageList->begin();
+             it!=rcvMessageList->end();it++){
+            contain = *it;
+            msgList = contain->msglist;
+
+            /*iterate through list within cache*/
+            for (iter = msgList->begin();iter!=msgList->end();iter++){
+                elem = *iter;
+
+                /*find the header and check if it is done if the size expected
+                 *matches the size of the list*/
+                if (elem->priority == 0 &&
+                    (uint)atoi(elem->content.c_str()) == (uint)msgList->size()){
+                    return contain;
+                }
+            }
+        }
+
+        /*no commands have been completed*/
+        return NULL;
+    }
+
+    /*PRINT RECIEVED-- print the cache (used for debugging the debugger :) ) */
+    void printRcv(void){
+
+        std::list<struct msgListElem*>* msgList;
+        std::list<struct msgListElem*>::iterator iter;
+        std::list<struct msgListContainer*>::iterator it;
+        struct msgListContainer* contain;
+        struct msgListElem* elem;
+
+        ostringstream msg;
+
+        msg << "#######################################" << endl <<endl;
+
+        for (it = rcvMessageList->begin();
+             it!=rcvMessageList->end();it++){
+            contain = *it;
+            msg << "========================" << endl;
+            msg << "instruction: " << contain->instruction << endl;
+            msg << "node: " << contain->node << endl;
+            msg << "========================" << endl;
+            msgList = contain->msglist;
+            for (iter = msgList->begin();iter!=msgList->end();iter++){
+                elem = *iter;
+                msg << "\t*****************" << endl;
+                msg << "\tpriority: " << elem->priority << endl;
+                msg << "\tcontent: " << elem->content << endl;
+                msg << "\t*****************" << endl;
+            }
+            msg << "========================" << endl;
+        }
+
+        printf("%s",msg.str().c_str());
+    }
+
+
+    /*BUILD STRING -- rebuild a broken message that is ready to
+     * be completed*/
+    string buildString(struct msgListContainer* container){
+
+        ostringstream msg;
+
+        std::list<struct msgListElem*>::iterator it;
+        struct msgListElem* elem;
+        std::list<struct msgListElem*>* msgList = container->msglist;
+
+
+
+        for (it = msgList->begin(); it!=msgList->end(); it++){
+            elem = *it;
+            /*ignore the header and reconstruct the full content*/
+            if (elem->priority!=0)
+                msg << elem->content;
+            delete elem;
+        }
+
+        rcvMessageList->remove(container);
+        delete container;
+
+        return msg.str();
     }
 
 }

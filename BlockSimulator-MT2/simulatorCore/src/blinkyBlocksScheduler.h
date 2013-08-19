@@ -31,7 +31,6 @@ protected:
 	void* startPaused(/*void *param */);
 	
 public:
-
 	boost::interprocess::interprocess_semaphore *sem_schedulerStart;
 	
 	static void createScheduler();

@@ -12,6 +12,9 @@
 #include "blinkyBlocksBlock.h"
 #include "blinkyBlocksEvents.h"
 #include "trace.h"
+#include <sys/wait.h>
+#include <sys/types.h>
+#include <signal.h>
 
 using namespace std;
 
@@ -441,14 +444,14 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		bb->shake(date, f);	
 	}
 	
-	int BlinkyBlocksWorld::broadcastDebugMessage(int size, uint64_t* message) {
+	int BlinkyBlocksWorld::broadcastDebugCommand(DebbuggerVMCommand &c) {
 		map<int, BaseSimulator::BuildingBlock*>::iterator it;
 		int aliveBlocks = 0;
 		for(it = buildingBlocksMap.begin(); 
 				it != buildingBlocksMap.end(); it++) {
 			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
 			if (bb->getState() >= BlinkyBlocksBlock::ALIVE) {
-				aliveBlocks += getDebugger()->sendMsg(bb->blockId, size, message);
+				aliveBlocks += getDebugger()->sendCmd(bb->blockId, c);
 			}
 		}
 		return aliveBlocks;
@@ -494,6 +497,76 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		if (GlutContext::helpWindow) 
 			delete GlutContext::helpWindow;
 		GlutContext::helpWindow = new GlutHelpWindow(NULL,10,40,540,480,"../../simulatorCore/blinkyBlocksHelp.txt");
+	}
+	
+	bool BlinkyBlocksWorld::dateHasBeenReachedByAll(uint64_t date) {
+		static uint64_t minReallyReached = 0;
+		uint64_t min, min2;
+		int alive = 0, hasNoWork = 0;
+		if (date <= minReallyReached) {
+			return true;
+		}
+		map<int, BaseSimulator::BuildingBlock*>::iterator it;
+		for(it = buildingBlocksMap.begin(); 
+				it != buildingBlocksMap.end(); it++) {
+			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;			
+			BlinkyBlocksBlockCode *bc = (BlinkyBlocksBlockCode*) bb->blockCode;
+			if (bb->getState() < BlinkyBlocksBlock::ALIVE) {
+				continue;
+			}
+			alive++;
+			if (!bc->hasWork || bc->polling) {
+				hasNoWork++;
+				if (alive == 1) {
+					min2 = bc->currentLocalDate;
+				} else if (bc->currentLocalDate < min2) {
+					min2 = bc->currentLocalDate;
+				}
+			} else {
+				if (alive - 1 == hasNoWork) {
+					min = bc->currentLocalDate;
+				} else if (bc->currentLocalDate < min) {
+					min = bc->currentLocalDate;
+				}
+				if (min < min2) {
+					min2 = min;
+				}
+			}
+		}
+		//cout << "alive: " << alive <<", hasNoWork: " << hasNoWork << endl;
+		if (alive==hasNoWork) {
+			return true;
+		}
+		minReallyReached = min2;
+		//cout << date << "<" << min << endl;
+		//cout << "min" << minReallyReached << endl;
+		return (date < min);
+	}
+	
+	void BlinkyBlocksWorld::killAllVMs() {
+		map<int, BaseSimulator::BuildingBlock*>::iterator it;
+		for(it = buildingBlocksMap.begin(); 
+				it != buildingBlocksMap.end(); it++) {
+			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
+			kill(bb->vm->pid, SIGTERM);
+			waitpid(bb->vm->pid, NULL, 0);
+		}	
+	}
+	
+	bool BlinkyBlocksWorld::equilibrium() {
+		map<int, BaseSimulator::BuildingBlock*>::iterator it;
+		for(it = buildingBlocksMap.begin(); 
+				it != buildingBlocksMap.end(); it++) {
+			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;			
+			BlinkyBlocksBlockCode *bc = (BlinkyBlocksBlockCode*) bb->blockCode;
+			if (bb->getState() < BlinkyBlocksBlock::ALIVE) {
+				continue;
+			}
+			if (bc->hasWork) {
+				return false;
+			}
+		}
+		return true;
 	}
 
 } // BlinkyBlock namespace

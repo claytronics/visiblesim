@@ -19,7 +19,6 @@ namespace BlinkyBlocks {
 VMSetIdEvent::VMSetIdEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_SET_ID;
-	priority = PRIORITY_EVENT_SET_ID;
 }
 
 VMSetIdEvent::VMSetIdEvent(VMSetIdEvent *ev) : BlockEvent(ev) {
@@ -48,7 +47,6 @@ const string VMSetIdEvent::getEventName() {
 VMStopEvent::VMStopEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_STOP;
-	priority = PRIORITY_EVENT_STOP;
 }
 
 VMStopEvent::VMStopEvent(VMStopEvent *ev) : BlockEvent(ev) {
@@ -80,7 +78,6 @@ VMAddNeighborEvent::VMAddNeighborEvent(uint64_t t, BlinkyBlocksBlock *conBlock, 
 	eventType = EVENT_ADD_NEIGHBOR;
 	face = f;
 	target = ta;
-	priority = PRIORITY_EVENT_ADD_NEIGHBOR;
 }
 
 VMAddNeighborEvent::VMAddNeighborEvent(VMAddNeighborEvent *ev) : BlockEvent(ev) {
@@ -112,8 +109,6 @@ VMRemoveNeighborEvent::VMRemoveNeighborEvent(uint64_t t, BlinkyBlocksBlock *conB
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_REMOVE_NEIGHBOR;
 	face = f;
-	randomNumber = -1;
-	priority = PRIORITY_EVENT_REMOVE_NEIGHBOR;
 }
 
 VMRemoveNeighborEvent::VMRemoveNeighborEvent(VMRemoveNeighborEvent *ev) : BlockEvent(ev) {
@@ -143,7 +138,6 @@ const string VMRemoveNeighborEvent::getEventName() {
 VMTapEvent::VMTapEvent(uint64_t t, BlinkyBlocksBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_TAP;
-	priority = PRIORITY_EVENT_TAP;
 }
 
 VMTapEvent::VMTapEvent(VMTapEvent *ev) : BlockEvent(ev) {
@@ -172,13 +166,21 @@ const string VMTapEvent::getEventName() {
 VMSetColorEvent::VMSetColorEvent(uint64_t t, BlinkyBlocksBlock *conBlock, float r, float g, float b, float a): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_SET_COLOR;
-	priority = PRIORITY_EVENT_SET_COLOR;
+	randomNumber = conBlock->getNextRandomNumber();
 	color = Vecteur(r, g, b, a);
+}
+
+VMSetColorEvent::VMSetColorEvent(uint64_t t, BlinkyBlocksBlock *conBlock, Vecteur &c): BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_SET_COLOR;
+	randomNumber = conBlock->getNextRandomNumber();
+	color = c;
 }
 
 VMSetColorEvent::VMSetColorEvent(VMSetColorEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 	color = ev->color;
+	//randomNumber = ev->randomNumber;
 }
 
 VMSetColorEvent::~VMSetColorEvent() {
@@ -204,13 +206,14 @@ VMSendMessageEvent::VMSendMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, 
 	eventType = EVENT_SEND_MESSAGE;
 	message = MessagePtr(mes);
 	sourceInterface = ni;
-	priority = PRIORITY_EVENT_SEND_MESSAGE;
+	randomNumber = conBlock->getNextRandomNumber();
 	EVENT_CONSTRUCTOR_INFO();
 }
 
 VMSendMessageEvent::VMSendMessageEvent(VMSendMessageEvent *ev) : BlockEvent(ev) {
 	message = ev->message;
 	sourceInterface = ev->sourceInterface;
+	//randomNumber = ev->randomNumber;
 	EVENT_CONSTRUCTOR_INFO();
 }
 
@@ -238,7 +241,6 @@ const string VMSendMessageEvent::getEventName() {
 VMAccelEvent::VMAccelEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t xx, uint64_t yy, uint64_t zz): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_ACCEL;
-	priority = PRIORITY_EVENT_ACCEL;
 	x = xx;
 	y = yy;
 	z = zz;
@@ -273,7 +275,6 @@ const string VMAccelEvent::getEventName() {
 VMShakeEvent::VMShakeEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t f): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_SHAKE;
-	priority = PRIORITY_EVENT_SHAKE;
 	force = f;
 }
 
@@ -300,7 +301,7 @@ const string VMShakeEvent::getEventName() {
 //          VMDebugMessageEvent  (class)
 //
 //===========================================================================================================
-
+/*
 VMDebugMessageEvent::VMDebugMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, VMDebugMessage *mes): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_DEBUG_MESSAGE;
@@ -326,7 +327,7 @@ void VMDebugMessageEvent::consumeBlockEvent() {
 const string VMDebugMessageEvent::getEventName() {
 	return("VMDebugMessage Event");
 }
-
+*/
 //===========================================================================================================
 //
 //          VMDebugPauseSimEvent  (class)
@@ -336,7 +337,6 @@ const string VMDebugMessageEvent::getEventName() {
 VMDebugPauseSimEvent::VMDebugPauseSimEvent(uint64_t t): Event(t) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_DEBUG_PAUSE_SIMULATION;
-	priority = PRIORITY_EVENT_DEBUG_PAUSE_SIMULATION;
 }
 
 VMDebugPauseSimEvent::VMDebugPauseSimEvent(VMDebugPauseSimEvent *ev) : Event(ev) {
@@ -360,95 +360,121 @@ const string VMDebugPauseSimEvent::getEventName() {
 
 //===========================================================================================================
 //
-//          VMStartComputationEvent  (class)
+//          VMResumeComputationEvent  (class)
 //
 //===========================================================================================================
 
-VMStartComputationEvent::VMStartComputationEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t dur): BlockEvent(t, conBlock) {
+VMResumeComputationEvent::VMResumeComputationEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint64_t dur): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
-	eventType = EVENT_VM_START_COMPUTATION;
-	priority = PRIORITY_EVENT_VM_START_COMPUTATION;
+	eventType = EVENT_RESUME_COMPUTATION;
 	duration = dur;
 }
 
-VMStartComputationEvent::VMStartComputationEvent(VMStartComputationEvent *ev) : BlockEvent(ev) {
+VMResumeComputationEvent::VMResumeComputationEvent(VMResumeComputationEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 	duration = ev->duration;
 }
 
-VMStartComputationEvent::~VMStartComputationEvent() {
+VMResumeComputationEvent::~VMResumeComputationEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMStartComputationEvent::consumeBlockEvent() {
+void VMResumeComputationEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
-	concernedBlock->scheduleLocalEvent(EventPtr(new VMStartComputationEvent(this)));
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMResumeComputationEvent(this)));
 }
 
-const string VMStartComputationEvent::getEventName() {
-	return("VMStartComputation Event");
+const string VMResumeComputationEvent::getEventName() {
+	return("VMResumeComputation Event");
 }
 
 
 //===========================================================================================================
 //
-//          VMExpectedEndComputationEvent  (class)
+//          VMExpectedComputationPauseEvent  (class)
 //
 //===========================================================================================================
 
-VMExpectedEndComputationEvent::VMExpectedEndComputationEvent(uint64_t t, BlinkyBlocksBlock *conBlock) : BlockEvent(t, conBlock) {
+VMExpectedComputationPauseEvent::VMExpectedComputationPauseEvent(uint64_t t, BlinkyBlocksBlock *conBlock) : BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
-	priority = PRIORITY_EVENT_VM_END_COMPUTATION;
-	eventType = EVENT_VM_EXPECTED_END_COMPUTATION;
+	eventType = EVENT_EXPECTED_COMPUTATION_PAUSE;
 }
 
-VMExpectedEndComputationEvent::VMExpectedEndComputationEvent(VMExpectedEndComputationEvent *ev) : BlockEvent(ev) {
+VMExpectedComputationPauseEvent::VMExpectedComputationPauseEvent(VMExpectedComputationPauseEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 }
 
-VMExpectedEndComputationEvent::~VMExpectedEndComputationEvent() {
+VMExpectedComputationPauseEvent::~VMExpectedComputationPauseEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMExpectedEndComputationEvent::consumeBlockEvent() {
+void VMExpectedComputationPauseEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
-	concernedBlock->scheduleLocalEvent(EventPtr(new VMExpectedEndComputationEvent(this)));
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMExpectedComputationPauseEvent(this)));
 	return;
 }
 
-const string VMExpectedEndComputationEvent::getEventName() {
-	return("VMExpectedEndComputation Event");
+const string VMExpectedComputationPauseEvent::getEventName() {
+	return("VMExpectedComputationPause Event");
 }
 
 //===========================================================================================================
 //
-//          VMEffectiveEndComputationEvent  (class)
+//          VMEffectiveComputationPauseEvent  (class)
 //
 //===========================================================================================================
 
-VMEffectiveEndComputationEvent::VMEffectiveEndComputationEvent(uint64_t t, BlinkyBlocksBlock *conBlock) : BlockEvent(t, conBlock) {
+VMEffectiveComputationPauseEvent::VMEffectiveComputationPauseEvent(uint64_t t, BlinkyBlocksBlock *conBlock) : BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
-	priority = PRIORITY_EVENT_VM_END_COMPUTATION;
-	eventType = EVENT_VM_EFFECTIVE_END_COMPUTATION;
+	eventType = EVENT_EFFECTIVE_COMPUTATION_PAUSE;
 }
 
-VMEffectiveEndComputationEvent::VMEffectiveEndComputationEvent(VMEffectiveEndComputationEvent *ev) : BlockEvent(ev) {
+VMEffectiveComputationPauseEvent::VMEffectiveComputationPauseEvent(VMEffectiveComputationPauseEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 }
 
-VMEffectiveEndComputationEvent::~VMEffectiveEndComputationEvent() {
+VMEffectiveComputationPauseEvent::~VMEffectiveComputationPauseEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-void VMEffectiveEndComputationEvent::consumeBlockEvent() {
+void VMEffectiveComputationPauseEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
-	concernedBlock->scheduleLocalEvent(EventPtr(new VMEffectiveEndComputationEvent(this)));
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMEffectiveComputationPauseEvent(this)));
 	return;
 }
 
-const string VMEffectiveEndComputationEvent::getEventName() {
-	return("VMEffectiveEndComputation Event");
+const string VMEffectiveComputationPauseEvent::getEventName() {
+	return("VMEffectiveComputationPause Event");
 }
 
+//===========================================================================================================
+//
+//          VMEndPollEvent  (class)
+//
+//===========================================================================================================
+
+VMEndPollEvent::VMEndPollEvent(uint64_t t, BlinkyBlocksBlock *conBlock) : BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	randomNumber = conBlock->getNextRandomNumber();
+	eventType = EVENT_END_POLL;
+}
+
+VMEndPollEvent::VMEndPollEvent(VMEndPollEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+VMEndPollEvent::~VMEndPollEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void VMEndPollEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMEndPollEvent(this)));
+	return;
+}
+
+const string VMEndPollEvent::getEventName() {
+	return("VMEndPoll Event");
+}
 
 } // BlinkyBlocks namespace
