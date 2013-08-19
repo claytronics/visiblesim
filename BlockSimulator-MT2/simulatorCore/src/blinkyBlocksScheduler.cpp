@@ -32,12 +32,8 @@ BlinkyBlocksScheduler::BlinkyBlocksScheduler() {
 
 BlinkyBlocksScheduler::~BlinkyBlocksScheduler() {
 	OUTPUT << "\033[1;31mBlinkyBlocksScheduler destructor\33[0m" << endl;
-	delete schedulerThread;	
+	delete schedulerThread;
 	delete sem_schedulerStart;
-	/* sleep for a while, to be sure that the schedulerThread will be
-	* killed before destroying all the events.
-	*/ 
-	//usleep(10000);
 }
 
 void BlinkyBlocksScheduler::createScheduler() {
@@ -216,15 +212,9 @@ void BlinkyBlocksScheduler::unPause() {
 }
 
 void BlinkyBlocksScheduler::stop(uint64_t date){
-	if (!BlinkyBlocksVM::isInDebuggingMode()) {
-		// stop all the VMs
-		getWorld()->stopBlock(date, -1);
-	}
-	getScheduler()->schedule(new CodeEndSimulationEvent(date));
-	//if (state == NOTSTARTED || state == PAUSED) {
-		sem_schedulerStart->post(); // resume the simulation if it is paused
-		sem_schedulerStart->post();
-	//}
+	getWorld()->killAllVMs();
+	schedulerThread->detach();
+	setState(ENDED);
 }
 
 bool BlinkyBlocksScheduler::schedule(Event *ev) {

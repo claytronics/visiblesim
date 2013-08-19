@@ -546,10 +546,13 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 	void BlinkyBlocksWorld::killAllVMs() {
 		map<int, BaseSimulator::BuildingBlock*>::iterator it;
 		for(it = buildingBlocksMap.begin(); 
-				it != buildingBlocksMap.end(); it++) {
+				it != buildingBlocksMap.end(); it++) {	
 			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-			kill(bb->vm->pid, SIGTERM);
-			waitpid(bb->vm->pid, NULL, 0);
+			if(bb->getState() >= BlinkyBlocksBlock::ALIVE && bb->vm != NULL) {
+				kill(bb->vm->pid, SIGTERM);
+				waitpid(bb->vm->pid, NULL, 0);
+				bb->vm = NULL;
+			}
 		}	
 	}
 	

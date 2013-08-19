@@ -206,14 +206,14 @@ namespace debugger {
             okayToPauseSimulation = true;
             unPauseSimulation();
             printLimitation = false;
-            numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
+            numberExpected = sendMsg(-1,CONTINUE,"X",BROADCAST);
         } else if (instruction == RUN){
             okayToBroadcastPause = true;
             okayToPauseSimulation = true;
             printLimitation = false;
             /*continue a paused system by broadcasting an CONTINUE signal*/
             unPauseSimulation();
-            numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
+            numberExpected = sendMsg(-1,CONTINUE,"X",BROADCAST);
         } else if (instruction == DUMP) {
 
             /*broadcast the message to all VMs*/
