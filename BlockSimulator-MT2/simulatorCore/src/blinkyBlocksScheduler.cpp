@@ -65,7 +65,6 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	while (state == NOTREADY) {usleep(5000);} // use the semaphore instead
 	state = RUNNING;
 	checkForReceivedVMCommands();
-	//BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
 	uint64_t systemStartTime, systemStopTime, reachedDate;
 	multimap<uint64_t, EventPtr>::iterator first, tmp;
 	EventPtr pev;
@@ -73,8 +72,6 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	OUTPUT << "\033[1;33m" << "Scheduler : start order received " << systemStartTime << "\033[0m" << endl;
 	switch (schedulerMode) {
 		case SCHEDULER_MODE_FASTEST_1:
-		cout << "start SCHEDULER_MODE_FASTEST_1" << endl;
-		//BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
 			do {
 			while (!eventsMap.empty()){
 				do {
@@ -82,40 +79,34 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 					first = eventsMap.begin();		
 					pev = (*first).second;
 					unlock();
+					if (pev->date == now()) { 
+						break;
+					}
 					if (getWorld()->dateHasBeenReachedByAll(pev->date))
-						break;						
+						break;		
 					waitForOneVMCommand();
 				} while (true);
-#ifdef TEST_DETER
-				//cout << "date " << now() << " has been reached" << endl;
-#endif
 				currentDate = pev->date;
-#ifdef TEST_DETER
-	//			cout << " Event: date: "<< now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
-	//			if (pev->getConcernedBlock() != NULL) { 
-	//				BlockEvent *pevbc = (BlockEvent*) pev.get();
-	//				cout << pevbc->getConcernedBlock()->blockId << " RANDOM NUMBER : " << pevbc->randomNumber << endl;			
-	//			}
-#endif
-				//cout << " Event: date: "<< now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
 				pev->consume();
 				lock();
 				eventsMap.erase(first);
 				eventsMapSize--;
 				unlock();
+				if (state == PAUSED) {
+					sem_schedulerStart->wait();
+					setState(RUNNING);
+				}
 				checkForReceivedVMCommands();
 			}
 			checkForReceivedVMCommands();
 		} while (!getWorld()->equilibrium() || !eventsMap.empty());
-		cout << "scheduler end at "<< now() << "..." << endl;
+		cout << "Scheduler end at "<< now() << "..." << endl;
 #ifdef TEST_DETER
-		//glutLeaveMainLoop();
 		getWorld()->killAllVMs();
 		exit(0);
 #endif
 		break;
-		case SCHEDULER_MODE_FASTEST_2:		
-		cout << "start SCHEDULER_MODE_FASTEST_2" << endl;
+		case SCHEDULER_MODE_FASTEST_2:
 		BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
 
 			while (!eventsMap.empty()) {
@@ -133,8 +124,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 				}
 				cout << "scheduler end at "<< now() << "..." << endl;
 #ifdef TEST_DETER
-				getWorld()->killAllVMs();
-				//glutLeaveMainLoop();		
+				getWorld()->killAllVMs();	
 				exit(0);
 #endif
 			break;
@@ -196,9 +186,11 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 }
 
 void BlinkyBlocksScheduler::start(int mode) {
-	BlinkyBlocksScheduler* sbs = (BlinkyBlocksScheduler*)scheduler;
-	sbs->schedulerMode = mode;
-	sbs->sem_schedulerStart->post();
+	if (state == NOTSTARTED) {
+		BlinkyBlocksScheduler* sbs = (BlinkyBlocksScheduler*)scheduler;
+		sbs->schedulerMode = mode;
+		sbs->sem_schedulerStart->post();
+	}
 }
 
 void BlinkyBlocksScheduler::pause(uint64_t date) {
@@ -207,7 +199,9 @@ void BlinkyBlocksScheduler::pause(uint64_t date) {
 
 void BlinkyBlocksScheduler::unPause() {
 	BlinkyBlocksScheduler* sbs = (BlinkyBlocksScheduler*)scheduler;
-	sbs->sem_schedulerStart->post();
+	if (state != RUNNING) {
+		sbs->sem_schedulerStart->post();
+	}
 	OUTPUT << "unpause sim" << endl;
 }
 

@@ -113,6 +113,10 @@ string VMCommand::getString(commandType t) {
 			break;
 		case VM_COMMAND_TIME_INFO:
 			return string("VM_MESSAGE_TIME_INFO");
+		case VM_COMMAND_POLL_START:
+			return string("VM_MESSAGE_POLL_START");
+		case VM_COMMAND_END_POLL:
+			return string("VM_COMMAND_END_POLL");
 		default:
 			ERRPUT << "Unknown received-message type" << endl;
 			return string("Unknown");
@@ -293,6 +297,13 @@ commandType WorkEndVMCommand::getNbProcessedMsg() { return data[PARAM1]; }
 //===========================================================================================================
 
 DebbuggerVMCommand::DebbuggerVMCommand(commandType *d) : VMCommand(d) {};
+
+commandType DebbuggerVMCommand::getDebuggerCommand() {
+	int *d = (int*) (data+PARAM1);
+	cout << "heee" << d[1] << endl;
+	
+	return d[1];
+}
 
 //===========================================================================================================
 //

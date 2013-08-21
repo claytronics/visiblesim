@@ -198,22 +198,22 @@ public:
 
 //===========================================================================================================
 //
-//          VMDebugMessageEvent  (class)
+//          VMHandleDebugCommandEvent  (class)
 //
 //===========================================================================================================
-/*
-class VMDebugMessageEvent : public BlockEvent {
+
+class VMHandleDebugCommandEvent : public BlockEvent {
 
 public:
-	VMDebugMessagePtr message;
+	DebbuggerVMCommand *command;
 	
-	VMDebugMessageEvent(uint64_t, BlinkyBlocksBlock *conBlock, VMDebugMessage *mes);
-	VMDebugMessageEvent(VMDebugMessageEvent *ev);
-	~VMDebugMessageEvent();
+	VMHandleDebugCommandEvent(uint64_t, BlinkyBlocksBlock *conBlock, DebbuggerVMCommand *c);
+	VMHandleDebugCommandEvent(VMHandleDebugCommandEvent *ev);
+	~VMHandleDebugCommandEvent();
 	void consumeBlockEvent();
 	const virtual string getEventName();
 };
-*/
+
 //===========================================================================================================
 //
 //          VMDebugMessageEvent  (class)

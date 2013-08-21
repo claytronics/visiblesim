@@ -67,6 +67,7 @@ namespace debugger {
       }
 
       if (expectingMessage){
+          usleep(10000);
           receiveMsg();
       }
 

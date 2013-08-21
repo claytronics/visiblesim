@@ -49,9 +49,7 @@ public:
 		debugger = NULL;
 	}
 	
-	void handleDebugCommand(uint64_t* c) {
-		debuggerCommandHandler(c);
-	}
+	void handleDebugCommand(DebbuggerVMCommand *c);
 	
 	void timeOut(int num);
 	
@@ -75,7 +73,7 @@ inline void pauseSimulation(int t) { getDebugger()->pauseSim(t); }
 
 inline void unPauseSimulation() { getDebugger()->unPauseSim(); }
 
-inline void handleDebugCommand(uint64_t* c) { getDebugger()->handleDebugCommand(c); }
+inline void handleDebugCommand(DebbuggerVMCommand *c) { getDebugger()->handleDebugCommand(c); }
 
 inline void quit() {
 	BlinkyBlocksDebugger::threadHasFinished = true;

@@ -173,7 +173,7 @@ public:
 class ReceiveMessageVMCommand : public VMCommand, public Message {
 public:
 	ReceiveMessageVMCommand(SendMessageVMCommand &c);
-	unsigned int size();
+	unsigned int size(); // redefine virtual size function of Message
 	~ReceiveMessageVMCommand();
 };
 
@@ -255,6 +255,7 @@ public:
 class DebbuggerVMCommand : public VMCommand {
 public:
 	DebbuggerVMCommand(commandType *d);
+	commandType getDebuggerCommand();
 };
 
 //===========================================================================================================
