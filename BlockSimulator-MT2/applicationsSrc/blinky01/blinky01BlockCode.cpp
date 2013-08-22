@@ -153,7 +153,7 @@ void Blinky01BlockCode::handleDeterministicMode(VMCommand &command){
 	if(!hasWork && command.getType() != VM_COMMAND_STOP && command.getType() != VM_COMMAND_RESUME_COMPUTATION) {
 		hasWork = true;
 #ifdef TEST_DETER
-		cout << hostBlock->blockId << " has work again at " << BaseSimulator::getScheduler()->now() << endl;
+		//cout << hostBlock->blockId << " has work again at " << BaseSimulator::getScheduler()->now() << endl;
 #endif
 		if (BlinkyBlocks::getScheduler()->getMode() == SCHEDULER_MODE_FASTEST_2) {
 			BlinkyBlocks::getScheduler()->schedule(new VMResumeComputationEvent(std::max(BaseSimulator::getScheduler()->now(), endComputingTime), (BlinkyBlocksBlock*)hostBlock, getRandom()));
