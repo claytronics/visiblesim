@@ -132,6 +132,10 @@ void BlinkyBlocksVM::sendCommand(VMCommand &command){
 		idSent = true;
 		hostBlock->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), hostBlock)));
 	}
+	if (command.getType() != VM_COMMAND_DEBUG) {
+		nbSentCommands++;
+	}
+	((BlinkyBlocksBlockCode*)hostBlock->blockCode)->handleDeterministicMode(command);
 	mutex_send.lock();
 	try {
 		boost::asio::write(getSocket(), boost::asio::buffer(command.getData(), command.getSize()));
@@ -139,8 +143,6 @@ void BlinkyBlocksVM::sendCommand(VMCommand &command){
 		ERRPUT << "Connection to the VM "<< hostBlock->blockId << " lost" << endl;
 	}
 	mutex_send.unlock();
-	nbSentCommands++;
-	((BlinkyBlocksBlockCode*)hostBlock->blockCode)->handleDeterministicMode(command);
 }
 
 void BlinkyBlocksVM::handleQueuedCommands() {

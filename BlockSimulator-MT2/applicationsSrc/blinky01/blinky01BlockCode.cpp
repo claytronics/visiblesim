@@ -63,7 +63,7 @@ void Blinky01BlockCode::handleCommand(VMCommand &command) {
 	OUTPUT << "current local time " << currentLocalDate << "timestamp" << command.getTimestamp() << endl;
 
 	if (BlinkyBlocks::getScheduler()->getMode() == SCHEDULER_MODE_FASTEST_1) {
-		assert(currentLocalDate <= command.getTimestamp());
+		//assert(currentLocalDate <= command.getTimestamp());
 		dateToSchedule = command.getTimestamp();
 	} else {
 		dateToSchedule = BlinkyBlocks::getScheduler()->now();
@@ -120,7 +120,7 @@ void Blinky01BlockCode::handleCommand(VMCommand &command) {
 			} else {
 				if (c.getNbProcessedMsg() == bb->vm->nbSentCommands) {
 					hasWork = false;
-				}
+				} else { OUTPUT << bb->blockId << "end work NON PRIS EN COMPTE : " << c.getNbProcessedMsg() << "/"<< bb->vm->nbSentCommands << endl; }
 			}
 			}
 			break;
@@ -139,7 +139,7 @@ void Blinky01BlockCode::handleCommand(VMCommand &command) {
 
 bool Blinky01BlockCode::mustBeQueued(VMCommand &command) {
 	if(hostBlock->getState() == BlinkyBlocksBlock::COMPUTING) {
-		return command.getType() == VM_COMMAND_SEND_MESSAGE or command.getType() ==  VM_COMMAND_SET_COLOR;
+		return (command.getType() == VM_COMMAND_SEND_MESSAGE) or (command.getType() ==  VM_COMMAND_SET_COLOR);
 	} else {
 		return false;
 	}
@@ -150,7 +150,7 @@ void Blinky01BlockCode::handleDeterministicMode(VMCommand &command){
 		return;
 	}
 	currentLocalDate = max(BaseSimulator::getScheduler()->now(), currentLocalDate);
-	if(!hasWork && command.getType() != VM_COMMAND_STOP && command.getType() != VM_COMMAND_RESUME_COMPUTATION) {
+	if(!hasWork && (command.getType() != VM_COMMAND_STOP) && (command.getType() != VM_COMMAND_RESUME_COMPUTATION)) {
 		hasWork = true;
 #ifdef TEST_DETER
 		//cout << hostBlock->blockId << " has work again at " << BaseSimulator::getScheduler()->now() << endl;
@@ -178,13 +178,15 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	switch (pev->eventType) {
 		case EVENT_SET_ID:
 			{
-			commandType c [5];			
+			commandType c[5];
+			OUTPUT << "event set id " << hostBlock->blockId << endl;
 			switch(BlinkyBlocks::getScheduler()->getMode()) {
 				case SCHEDULER_MODE_FASTEST_1:
 				case SCHEDULER_MODE_FASTEST_2:
 				{
 					SetDeterministicModeVMCommand determinismCommand(c, bb->blockId, BlinkyBlocks::getScheduler()->getMode());
 					vm->sendCommand(determinismCommand);
+					OUTPUT << "deterministic mode enable on the VM " << hostBlock->blockId << endl;
 				}
 				break;
 				default:

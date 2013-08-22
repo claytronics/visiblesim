@@ -503,7 +503,7 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		static uint64_t minReallyReached = 0;
 		uint64_t min, min2;
 		int alive = 0, hasNoWork = 0;
-		if (date <= minReallyReached) {
+		if (date < minReallyReached) {
 			return true;
 		}
 		map<int, BaseSimulator::BuildingBlock*>::iterator it;
@@ -523,7 +523,7 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 					min2 = bc->currentLocalDate;
 				}
 			} else {
-				if (alive - 1 == hasNoWork) {
+				if ((alive - 1) == hasNoWork) {
 					min = bc->currentLocalDate;
 				} else if (bc->currentLocalDate < min) {
 					min = bc->currentLocalDate;
@@ -533,13 +533,10 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 				}
 			}
 		}
-		//cout << "alive: " << alive <<", hasNoWork: " << hasNoWork << endl;
 		if (alive==hasNoWork) {
 			return true;
 		}
 		minReallyReached = min2;
-		//cout << date << "<" << min << endl;
-		//cout << "min" << minReallyReached << endl;
 		return (date < min);
 	}
 	

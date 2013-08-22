@@ -72,6 +72,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	OUTPUT << "\033[1;33m" << "Scheduler : start order received " << systemStartTime << "\033[0m" << endl;
 	switch (schedulerMode) {
 		case SCHEDULER_MODE_FASTEST_1:
+			OUTPUT << "fastest mode 1 scheduler\n" << endl;
 			do {
 			while (!eventsMap.empty()){
 				do {
@@ -79,12 +80,14 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 					first = eventsMap.begin();		
 					pev = (*first).second;
 					unlock();
-					if (pev->date == now()) { 
+					if (pev->date == now()) {
 						break;
 					}
-					if (getWorld()->dateHasBeenReachedByAll(pev->date))
-						break;		
+					if (getWorld()->dateHasBeenReachedByAll(pev->date)) {
+						break;
+					}
 					waitForOneVMCommand();
+					//checkForReceivedVMCommands();
 				} while (true);
 				currentDate = pev->date;
 				pev->consume();
@@ -107,6 +110,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 #endif
 		break;
 		case SCHEDULER_MODE_FASTEST_2:
+		OUTPUT << "fastest mode 2 scheduler\n" << endl;
 		BaseSimulator::getScheduler()->schedule(new CodeEndSimulationEvent(BaseSimulator::getScheduler()->now()+100000));
 
 			while (!eventsMap.empty()) {
@@ -130,8 +134,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 			break;
 
 		case SCHEDULER_MODE_REALTIME:
-			OUTPUT << "Realtime mode scheduler\n";
-			cout << "start  SCHEDULER_MODE_REALTIME" << endl;
+			OUTPUT << "Realtime mode scheduler\n" << endl;
 			while (state != ENDED) {
 				systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000 - pausedTime;
 				systemCurrentTimeMax = systemCurrentTime - systemStartTime;
