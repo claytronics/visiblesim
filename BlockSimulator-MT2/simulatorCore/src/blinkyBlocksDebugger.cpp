@@ -55,6 +55,10 @@ void BlinkyBlocksDebugger::pauseSim(int t) {
 			getScheduler()->pause(BlinkyBlocks::getScheduler()->now());
 		}
 	} else {
+		ostringstream msg;
+		msg << "Time break point set at " << t << endl;
+		debuggerCommandHandler(debugger::pack(debugger::PRINTCONTENT, msg.str(),1));
+		debuggerCommandHandler(debugger::pack(debugger::PRINTCONTENT,"2",0));
 		getScheduler()->pause(t);
 	}
 }
@@ -71,8 +75,18 @@ void BlinkyBlocksDebugger::sendTerminateCmd(int id) {
 	//debugger::sendCmd(id,debugger::TERMINATE,"");
 }
 
+/* Unfreezes the debugger thread when the user presses "p" in the
+ * simulator graphical window.
+ */
 void BlinkyBlocksDebugger::handlePauseRequest() {
 	debugger::handlePauseCommand();
+}
+
+void BlinkyBlocksDebugger::handleBreakAtTimeReached(uint64_t t) {
+	ostringstream msg;
+	msg << "Time break point reached at " << t << endl;
+	debuggerCommandHandler(debugger::pack(debugger::TIME, msg.str(),1));
+	debuggerCommandHandler(debugger::pack(debugger::TIME,"2",0));
 }
 
 BlinkyBlocksDebugger::~BlinkyBlocksDebugger() {};

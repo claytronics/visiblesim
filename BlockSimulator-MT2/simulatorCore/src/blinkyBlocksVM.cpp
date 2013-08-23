@@ -132,13 +132,11 @@ void BlinkyBlocksVM::sendCommand(VMCommand &command){
 		idSent = true;
 		hostBlock->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), hostBlock)));
 	}
-	
+	mutex_send.lock();
 	if (command.getType() != VM_COMMAND_DEBUG) {
 		nbSentCommands++;
 		((BlinkyBlocksBlockCode*)hostBlock->blockCode)->handleDeterministicMode(command);
 	}
-	
-	mutex_send.lock();
 	try {
 		boost::asio::write(getSocket(), boost::asio::buffer(command.getData(), command.getSize()));
 	} catch (std::exception& e) {

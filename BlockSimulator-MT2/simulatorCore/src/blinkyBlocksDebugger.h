@@ -59,6 +59,8 @@ public:
 	
 	void handlePauseRequest();
 	
+	void handleBreakAtTimeReached(uint64_t t);
+	
 };
 
 inline void createDebugger() { BlinkyBlocksDebugger::createDebugger(); }
