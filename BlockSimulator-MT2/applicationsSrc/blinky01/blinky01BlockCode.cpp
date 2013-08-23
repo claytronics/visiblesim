@@ -1,4 +1,4 @@
-/*
+re/*
  * blinky01BlockCode.cpp
  *
  *  Created on: 26 mars 2013
@@ -60,16 +60,15 @@ void Blinky01BlockCode::handleCommand(VMCommand &command) {
 	OUTPUT << bb->blockId << " message received: date: " <<command.getTimestamp() << ", type: " << VMCommand::getString(command.getType()) << endl;
 	//assert(hasWork); // mode 1
 	OUTPUT << "scheduler time " << BlinkyBlocks::getScheduler()->now() << endl;
-	OUTPUT << "current local time " << currentLocalDate << "timestamp" << command.getTimestamp() << endl;
-
+	OUTPUT << "current local time " << currentLocalDate << "timestamp" << command.getTimestamp() << endl;	
+	
+	currentLocalDate = max(BlinkyBlocks::getScheduler()->now(), command.getTimestamp());
 	if (BlinkyBlocks::getScheduler()->getMode() == SCHEDULER_MODE_FASTEST_1) {
-		//assert(currentLocalDate <= command.getTimestamp());
-		dateToSchedule = command.getTimestamp();
+		//assert(currentLocalDate <= command.getTimestamp()); -- not true because of asynchrone debug commands
+		dateToSchedule = currentLocalDate;
 	} else {
 		dateToSchedule = BlinkyBlocks::getScheduler()->now();
 	}
-	
-	currentLocalDate = command.getTimestamp();
 	
 	switch (command.getType()) {
 		case VM_COMMAND_SET_COLOR:	
@@ -146,9 +145,6 @@ bool Blinky01BlockCode::mustBeQueued(VMCommand &command) {
 }
 
 void Blinky01BlockCode::handleDeterministicMode(VMCommand &command){
-	if (command.getType() == VM_COMMAND_DEBUG){
-		return;
-	}
 	currentLocalDate = max(BaseSimulator::getScheduler()->now(), currentLocalDate);
 	if(!hasWork && (command.getType() != VM_COMMAND_STOP) && (command.getType() != VM_COMMAND_RESUME_COMPUTATION)) {
 		hasWork = true;
@@ -178,7 +174,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	switch (pev->eventType) {
 		case EVENT_SET_ID:
 			{
-			commandType c[5];
+			static commandType c[5];
 			OUTPUT << "event set id " << hostBlock->blockId << endl;
 			switch(BlinkyBlocks::getScheduler()->getMode()) {
 				case SCHEDULER_MODE_FASTEST_1:
@@ -276,10 +272,6 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			vm->sendCommand(command);
 			info << "shake";
 			}
-			break;
-		case EVENT_HANDLE_DEBUG_COMMAND:
-			cout << "debug command handled!" << endl;
-			handleDebugCommand((boost::static_pointer_cast<VMHandleDebugCommandEvent>(pev))->command);
 			break;
 		case EVENT_SET_DETERMINISTIC:
 			{

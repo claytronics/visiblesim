@@ -299,9 +299,7 @@ commandType WorkEndVMCommand::getNbProcessedMsg() { return data[PARAM1]; }
 DebbuggerVMCommand::DebbuggerVMCommand(commandType *d) : VMCommand(d) {};
 
 commandType DebbuggerVMCommand::getDebuggerCommand() {
-	int *d = (int*) (data+PARAM1);
-	cout << "heee" << d[1] << endl;
-	
+	int *d = (int*) (data+PARAM1);	
 	return d[1];
 }
 
