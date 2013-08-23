@@ -1,4 +1,4 @@
-/*
+re/*
  * blinky01BlockCode.cpp
  *
  *  Created on: 26 mars 2013
@@ -26,6 +26,7 @@ Blinky01BlockCode::Blinky01BlockCode(BlinkyBlocksBlock *host): BlinkyBlocksBlock
 	willHaveWork = true; // mode fastest 2
 	computing = false; // mode fastest 2	
 	generator = boost::rand48(hostBlock->blockId); // mode fastest 2
+	currentLocalDate = 0;
 }
 
 int Blinky01BlockCode::getRandom() {
@@ -55,13 +56,15 @@ void Blinky01BlockCode::handleCommand(VMCommand &command) {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
 	uint64_t dateToSchedule;
 	
-	OUTPUT << "Blinky01BlockCode: type: " << VMCommand::getString(command.getType()) << " size: " << command.getSize() << endl;
-	//cout << bb->blockId << " message received: date: " <<command.getTimestamp() << ", type: " << VMCommand::getString(command.getType()) << endl;
+	//OUTPUT << "Blinky01BlockCode: type: " << VMCommand::getString(command.getType()) << " size: " << command.getSize() << endl;
+	OUTPUT << bb->blockId << " message received: date: " <<command.getTimestamp() << ", type: " << VMCommand::getString(command.getType()) << endl;
 	//assert(hasWork); // mode 1
+	OUTPUT << "scheduler time " << BlinkyBlocks::getScheduler()->now() << endl;
+	OUTPUT << "current local time " << currentLocalDate << "timestamp" << command.getTimestamp() << endl;	
 	
-	currentLocalDate = command.getTimestamp();
-	
+	currentLocalDate = max(BlinkyBlocks::getScheduler()->now(), command.getTimestamp());
 	if (BlinkyBlocks::getScheduler()->getMode() == SCHEDULER_MODE_FASTEST_1) {
+		//assert(currentLocalDate <= command.getTimestamp()); -- not true because of asynchrone debug commands
 		dateToSchedule = currentLocalDate;
 	} else {
 		dateToSchedule = BlinkyBlocks::getScheduler()->now();
@@ -92,8 +95,9 @@ void Blinky01BlockCode::handleCommand(VMCommand &command) {
 		case VM_COMMAND_DEBUG:
 			{
 			// Copy the message because it will be queued
-			command.copyData();
-			handleDebugCommand(command.getData());
+			DebbuggerVMCommand *c = new DebbuggerVMCommand(command.getData());
+			c->copyData();
+			handleDebugCommand(c);
 			}
 			break;
 		case VM_COMMAND_COMPUTATION_PAUSE:
@@ -115,18 +119,16 @@ void Blinky01BlockCode::handleCommand(VMCommand &command) {
 			} else {
 				if (c.getNbProcessedMsg() == bb->vm->nbSentCommands) {
 					hasWork = false;
-				}
+				} else { OUTPUT << bb->blockId << "end work NON PRIS EN COMPTE : " << c.getNbProcessedMsg() << "/"<< bb->vm->nbSentCommands << endl; }
 			}
 			}
 			break;
 		case VM_COMMAND_TIME_INFO:
 			;
 			break;
-		case VM_COMMAND_POLL_START:
-			//PollStartVMCommand c(command.getData());
-			//cout << "schedule end poll for: " << dateToSchedule << "(scheduler: " << BlinkyBlocks::getScheduler()->now() << ")" << endl;
-			polling = true;
+		case VM_COMMAND_POLL_START:		
 			BlinkyBlocks::getScheduler()->schedule(new VMEndPollEvent(dateToSchedule, bb));
+			polling = true;
 			break;
 		default:
 			ERRPUT << "*** ERROR *** : unsupported message received from VM (" << command.getType() <<")" << endl;
@@ -136,7 +138,7 @@ void Blinky01BlockCode::handleCommand(VMCommand &command) {
 
 bool Blinky01BlockCode::mustBeQueued(VMCommand &command) {
 	if(hostBlock->getState() == BlinkyBlocksBlock::COMPUTING) {
-		return command.getType() == VM_COMMAND_SEND_MESSAGE or command.getType() ==  VM_COMMAND_SET_COLOR;
+		return (command.getType() == VM_COMMAND_SEND_MESSAGE) or (command.getType() ==  VM_COMMAND_SET_COLOR);
 	} else {
 		return false;
 	}
@@ -144,7 +146,7 @@ bool Blinky01BlockCode::mustBeQueued(VMCommand &command) {
 
 void Blinky01BlockCode::handleDeterministicMode(VMCommand &command){
 	currentLocalDate = max(BaseSimulator::getScheduler()->now(), currentLocalDate);
-	if(!hasWork && command.getType() != VM_COMMAND_STOP && command.getType() != VM_COMMAND_RESUME_COMPUTATION) {
+	if(!hasWork && (command.getType() != VM_COMMAND_STOP) && (command.getType() != VM_COMMAND_RESUME_COMPUTATION)) {
 		hasWork = true;
 #ifdef TEST_DETER
 		//cout << hostBlock->blockId << " has work again at " << BaseSimulator::getScheduler()->now() << endl;
@@ -163,8 +165,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	
 	info.str("");
 	
-	OUTPUT << "Blinky01BlockCode: process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
-	//cout << bb->blockId << " processLocalEvent: date: "<< BaseSimulator::getScheduler()->now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << ", random number : " << pev->randomNumber << endl;
+	//OUTPUT << "Blinky01BlockCode: process event " << pev->getEventName() << "(" << pev->eventType << ")" << endl;
+	OUTPUT << bb->blockId << " processLocalEvent: date: "<< BaseSimulator::getScheduler()->now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << ", random number : " << pev->randomNumber << endl;
 
 #ifdef TEST_DETER
 	cout << bb->blockId << " processLocalEvent: date: "<< BaseSimulator::getScheduler()->now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << ", random number : " << pev->randomNumber << endl;
@@ -172,13 +174,15 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	switch (pev->eventType) {
 		case EVENT_SET_ID:
 			{
-			commandType c [5];			
+			static commandType c[5];
+			OUTPUT << "event set id " << hostBlock->blockId << endl;
 			switch(BlinkyBlocks::getScheduler()->getMode()) {
 				case SCHEDULER_MODE_FASTEST_1:
 				case SCHEDULER_MODE_FASTEST_2:
 				{
 					SetDeterministicModeVMCommand determinismCommand(c, bb->blockId, BlinkyBlocks::getScheduler()->getMode());
 					vm->sendCommand(determinismCommand);
+					OUTPUT << "deterministic mode enable on the VM " << hostBlock->blockId << endl;
 				}
 				break;
 				default:

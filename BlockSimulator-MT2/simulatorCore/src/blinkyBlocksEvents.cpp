@@ -298,36 +298,34 @@ const string VMShakeEvent::getEventName() {
 
 //===========================================================================================================
 //
-//          VMDebugMessageEvent  (class)
+//          VMHandleDebugMessageEvent  (class)
 //
 //===========================================================================================================
-/*
-VMDebugMessageEvent::VMDebugMessageEvent(uint64_t t, BlinkyBlocksBlock *conBlock, VMDebugMessage *mes): BlockEvent(t, conBlock) {
+
+VMHandleDebugCommandEvent::VMHandleDebugCommandEvent(uint64_t t, BlinkyBlocksBlock *conBlock, DebbuggerVMCommand *c): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
-	eventType = EVENT_DEBUG_MESSAGE;
-	priority = PRIORITY_EVENT_DEBUG_MESSAGE;
-	message = VMDebugMessagePtr(mes);
+	eventType = EVENT_HANDLE_DEBUG_COMMAND;
+	command = c;
 }
 
-VMDebugMessageEvent::VMDebugMessageEvent(VMDebugMessageEvent *ev) : BlockEvent(ev) {
+VMHandleDebugCommandEvent::VMHandleDebugCommandEvent(VMHandleDebugCommandEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
-	message = ev->message;
+	command = ev->command;
 }
 
-VMDebugMessageEvent::~VMDebugMessageEvent() {
+VMHandleDebugCommandEvent::~VMHandleDebugCommandEvent() {
 	EVENT_DESTRUCTOR_INFO();
-	message.reset();
 }
 
-void VMDebugMessageEvent::consumeBlockEvent() {
+void VMHandleDebugCommandEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
-	concernedBlock->scheduleLocalEvent(EventPtr(new VMDebugMessageEvent(this)));
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMHandleDebugCommandEvent(this)));
 }
 
-const string VMDebugMessageEvent::getEventName() {
-	return("VMDebugMessage Event");
+const string VMHandleDebugCommandEvent::getEventName() {
+	return("VMHandleDebugCommand Event");
 }
-*/
+
 //===========================================================================================================
 //
 //          VMDebugPauseSimEvent  (class)
