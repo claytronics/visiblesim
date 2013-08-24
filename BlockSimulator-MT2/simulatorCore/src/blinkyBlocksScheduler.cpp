@@ -86,7 +86,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 					if (getWorld()->dateHasBeenReachedByAll(pev->date)) {
 						break;
 					}
-					if (BlinkyBlocksVM::isInDebuggingMode) {
+					if (BlinkyBlocksVM::isInDebuggingMode()) {
 						checkForReceivedVMCommands();
 						usleep(500);
 					} else {
