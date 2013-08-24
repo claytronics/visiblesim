@@ -1,6 +1,6 @@
 
 		<?xml version="1.0" standalone="no" ?>
-		<vm serverport="5000" vmPath="/home/ubuntu/Bureau/meld/meld" programPath="/home/ubuntu/Bureau/meld/examples/rainbowRetract.m" debugging="False" />
+		<vm serverport="5000" vmPath="/home/ubuntu/Bureau/meld/meld" programPath="/home/ubuntu/Bureau/meld/examples/rainbowRetract.m" debugging="True" />
 
 		<world gridsize="10,10,10">
 			<camera target="200,200,200" directionSpherical="0,70,400" angle="45"/>
