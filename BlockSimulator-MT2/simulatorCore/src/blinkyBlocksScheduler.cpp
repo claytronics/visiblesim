@@ -86,8 +86,13 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 					if (getWorld()->dateHasBeenReachedByAll(pev->date)) {
 						break;
 					}
-					waitForOneVMCommand();
-					//checkForReceivedVMCommands();
+					if (BlinkyBlocksVM::isInDebuggingMode) {
+						checkForReceivedVMCommands();
+						usleep(500);
+					} else {
+						waitForOneVMCommand();
+					}
+					//
 				} while (true);
 				currentDate = pev->date;
 				pev->consume();
