@@ -174,7 +174,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	switch (pev->eventType) {
 		case EVENT_SET_ID:
 			{
-			static commandType c[5];
+			commandType c[5];
 			OUTPUT << "event set id " << hostBlock->blockId << endl;
 			switch(BlinkyBlocks::getScheduler()->getMode()) {
 				case SCHEDULER_MODE_FASTEST_1:

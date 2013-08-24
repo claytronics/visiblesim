@@ -204,16 +204,16 @@ namespace debugger {
         if (instruction == CONTINUE || instruction == UNPAUSE){
             okayToBroadcastPause = true;
             okayToPauseSimulation = true;
-            unPauseSimulation();
             printLimitation = false;
-            numberExpected = sendMsg(-1,CONTINUE,"X",BROADCAST);
+            numberExpected = sendMsg(-1,CONTINUE,"X",BROADCAST);            
+            unPauseSimulation();
         } else if (instruction == RUN){
             okayToBroadcastPause = true;
             okayToPauseSimulation = true;
             printLimitation = false;
             /*continue a paused system by broadcasting an CONTINUE signal*/
-            unPauseSimulation();
             numberExpected = sendMsg(-1,CONTINUE,"X",BROADCAST);
+            unPauseSimulation();
         } else if (instruction == DUMP) {
 
             /*broadcast the message to all VMs*/

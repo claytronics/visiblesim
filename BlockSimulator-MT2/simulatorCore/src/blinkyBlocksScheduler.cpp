@@ -96,7 +96,11 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 				eventsMapSize--;
 				unlock();
 				if (state == PAUSED) {
-					sem_schedulerStart->wait();
+					if (BlinkyBlocksVM::isInDebuggingMode()) {
+						getDebugger()->handleBreakAtTimeReached(currentDate);
+					} else {
+						sem_schedulerStart->wait();
+					}
 					setState(RUNNING);
 				}
 				checkForReceivedVMCommands();
@@ -222,7 +226,7 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 
 	OUTPUT << "BlinkyBlocksScheduler: Schedule a " << pev->getEventName() << " (" << ev->id << ") with " << ev->priority << endl;
 
-	if (pev->date < Scheduler::currentDate) {
+	/*if (pev->date < Scheduler::currentDate) {
 		cout << "ERROR : An event cannot be schedule in the past !\n" << endl;
 		OUTPUT << "ERROR : An event cannot be schedule in the past !\n";
 	    OUTPUT << "current time : " << Scheduler::currentDate << endl;
@@ -236,7 +240,7 @@ bool BlinkyBlocksScheduler::schedule(Event *ev) {
 		OUTPUT << "pev->date : " << pev->date << endl;
 		OUTPUT << "maximumDate : " << maximumDate << endl;
 	    return(false);
-	}
+	}*/
 	
 	lock();
 	switch (schedulerMode) {
