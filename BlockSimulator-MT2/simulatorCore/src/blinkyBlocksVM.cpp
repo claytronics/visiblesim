@@ -21,6 +21,7 @@ tcp::acceptor *BlinkyBlocksVM::acceptor = NULL;
 string BlinkyBlocksVM::vmPath;
 string BlinkyBlocksVM::programPath;
 bool BlinkyBlocksVM::debugging = false;
+boost::interprocess::interprocess_mutex BlinkyBlocksVM::mutex_read;
 
 BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 	assert(ios != NULL && acceptor != NULL);
@@ -132,7 +133,9 @@ void BlinkyBlocksVM::sendCommand(VMCommand &command){
 		idSent = true;
 		hostBlock->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), hostBlock)));
 	}
-	mutex_send.lock();
+	if (isInDebuggingMode) {
+		mutex_send.lock();
+	}
 	if (command.getType() != VM_COMMAND_DEBUG) {
 		nbSentCommands++;
 		((BlinkyBlocksBlockCode*)hostBlock->blockCode)->handleDeterministicMode(command);
@@ -141,8 +144,13 @@ void BlinkyBlocksVM::sendCommand(VMCommand &command){
 		boost::asio::write(getSocket(), boost::asio::buffer(command.getData(), command.getSize()));
 	} catch (std::exception& e) {
 		ERRPUT << "Connection to the VM "<< hostBlock->blockId << " lost" << endl;
+		if (isInDebuggingMode) {
+			mutex_send.unlock();
+		}
 	}
-	mutex_send.unlock();
+	if (isInDebuggingMode) {
+		mutex_send.unlock();
+	}
 }
 
 void BlinkyBlocksVM::handleQueuedCommands() {
@@ -158,15 +166,29 @@ void BlinkyBlocksVM::handleQueuedCommands() {
 
 void BlinkyBlocksVM::checkForReceivedCommands() {
 	if (ios != NULL) {
-		ios->poll();
-		ios->reset();
+		if (isInDebuggingMode()) {
+			mutex_read.lock();
+			ios->poll();
+			ios->reset();		
+			mutex_read.unlock();
+		} else {
+			ios->poll();
+			ios->reset();	
+		}
 	}
 }
 
 void BlinkyBlocksVM::waitForOneCommand() {
 	if (ios != NULL) {
-		ios->run_one();
-		ios->reset();
+		if (isInDebuggingMode()) {
+			mutex_read.lock();
+			ios->run_one();
+			ios->reset();
+			mutex_read.unlock();
+		} else {
+			ios->run_one();
+			ios->reset();
+		}
 	}
 	checkForReceivedCommands();
 }
