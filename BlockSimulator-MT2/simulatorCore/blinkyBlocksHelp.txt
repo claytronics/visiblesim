@@ -6,6 +6,7 @@ Keyboard:
           [r]: start in realtime mode
           [R]: start in fastest mode 
           [h]: show/hide help window
+     	  [s]: enable/disable screen saving mode
 [q]/[Q]/[ESC]: quit
 
 Mouse:

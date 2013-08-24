@@ -60,6 +60,13 @@ BlinkyBlocksWorld::~BlinkyBlocksWorld() {
 	delete objBlockForPicking;
 	delete objRepere;
 	delete camera;
+	/* free Scenario Events */
+	vector<ScenarioEvent*>::const_iterator it=tabEvents.begin();
+	while (it!=tabEvents.end()) {
+		delete (*it);
+		it++;
+	}
+	tabEvents.clear();
 }
 
 

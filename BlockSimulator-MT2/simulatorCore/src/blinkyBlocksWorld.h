@@ -15,6 +15,8 @@
 #include "objLoader.h"
 #include <boost/asio.hpp>
 #include "trace.h"
+#include <blinkyBlocksScenario.h>
+#include <vector>
 
 namespace BlinkyBlocks {
 
@@ -29,6 +31,7 @@ protected:
 	GLushort numSelectedFace;
 	GLuint numSelectedBlock;
 	GLint menuId;
+	vector<ScenarioEvent*> tabEvents;
 
 	BlinkyBlocksWorld(int slx,int sly,int slz, int argc, char *argv[]);
 	virtual ~BlinkyBlocksWorld();
@@ -81,6 +84,7 @@ public:
 	bool equilibrium();
 	
 	void killAllVMs();
+	void addScenarioEvent(ScenarioEvent *ev) { tabEvents.push_back(ev); };
 };
 
 inline void createWorld(int slx,int sly,int slz, int argc, char *argv[]) {
