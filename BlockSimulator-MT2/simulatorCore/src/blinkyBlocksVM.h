@@ -36,6 +36,7 @@ protected:
 	queue<VMCommand> inQueue;
 	/* Mutex used when sending message */
 	boost::interprocess::interprocess_mutex mutex_send;
+	static boost::interprocess::interprocess_mutex mutex_read;
 	/* True if the id was sent */
 	bool idSent;
 	
