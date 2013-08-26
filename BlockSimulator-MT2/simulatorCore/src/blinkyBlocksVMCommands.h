@@ -28,17 +28,13 @@
 #define VM_COMMAND_DEBUG						16
 
 #define VM_COMMAND_SET_DETERMINISTIC_MODE		20
-#define VM_COMMAND_RESUME_COMPUTATION			21
-#define VM_COMMAND_COMPUTATION_PAUSE			22
-#define VM_COMMAND_POLL_START					23
-#define VM_COMMAND_END_POLL						24
-#define VM_COMMAND_WORK_END						25
+#define VM_COMMAND_POLL_START					21
+#define VM_COMMAND_END_POLL						22
+#define VM_COMMAND_WORK_END						23
 
-#define VM_COMMAND_TIME_INFO					26
-
+#define VM_COMMAND_TIME_INFO					24
 
 typedef uint64_t commandType;
-
 
 namespace BlinkyBlocks {
 
@@ -54,18 +50,10 @@ protected:
 	commandType *data;
 	VMCommand(commandType *d, commandType s, commandType t, commandType src);
 public:
-	//commandType *dommand;
-	/*dommandType size;
-	commandType type;
-	commandType	timestamp;
-	commandType source;*/
-	//IncomingVMCommand(commandType *d);
+
 	VMCommand(commandType *d);
-	//static commandType getContentSize(commandType *d);
-	//static commandType getTotalSize(commandType *d);
 	static commandType getType(commandType *d);
 	static commandType getTimestamp(commandType *d);
-	//static commandType getSource(commandType *d);
 	
 	commandType getContentSize();
 	commandType getSize();
@@ -207,30 +195,7 @@ public:
 
 class SetDeterministicModeVMCommand : public VMCommand {
 public:
-	SetDeterministicModeVMCommand(commandType *d, commandType src, commandType m);	
-};
-
-//===========================================================================================================
-//
-//          ResumeComputationVMCommand  (class)
-//
-//===========================================================================================================
-
-class ResumeComputationVMCommand : public VMCommand {
-public:
-	ResumeComputationVMCommand(commandType *c, commandType src, commandType d);	
-};
-
-//===========================================================================================================
-//
-//          ComputationPauseVMCommand  (class)
-//
-//===========================================================================================================
-
-class ComputationPauseVMCommand : public VMCommand {
-public:
-	
-	ComputationPauseVMCommand(commandType *d);
+	SetDeterministicModeVMCommand(commandType *d, commandType src);	
 };
 
 //===========================================================================================================
@@ -257,17 +222,6 @@ public:
 	DebbuggerVMCommand(commandType *d);
 	commandType getDebuggerCommand();
 };
-
-//===========================================================================================================
-//
-//          PollStartVMCommand  (class)
-//
-//===========================================================================================================
-/*
-class PollStartVMCommand : public VMCommand {
-public:
-	PollStartVMCommand(commandType *c);	
-};*/
 
 //===========================================================================================================
 //

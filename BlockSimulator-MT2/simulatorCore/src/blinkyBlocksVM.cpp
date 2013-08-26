@@ -1,7 +1,7 @@
-
 #include "blinkyBlocksVM.h"
 #include "blinkyBlocksBlock.h"
 #include "blinkyBlocksBlockCode.h"
+#include <boost/asio/io_service.hpp>
 #include <sys/wait.h>
 #include <stdio.h>
 #include <boost/bind.hpp>
@@ -10,6 +10,7 @@
 #include <string.h>
 #include "events.h"
 #include "blinkyBlocksEvents.h"
+#include "openglViewer.h"
 
 using namespace boost;
 using asio::ip::tcp;
@@ -21,7 +22,6 @@ tcp::acceptor *BlinkyBlocksVM::acceptor = NULL;
 string BlinkyBlocksVM::vmPath;
 string BlinkyBlocksVM::programPath;
 bool BlinkyBlocksVM::debugging = false;
-boost::interprocess::interprocess_mutex BlinkyBlocksVM::mutex_read;
 
 BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 	assert(ios != NULL && acceptor != NULL);
@@ -30,9 +30,12 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 	socket = boost::shared_ptr<tcp::socket>(new tcp::socket(*ios));
 	// Start the VM
 	pid = 0;
+	//ios->notify_fork(boost::asio::io_service::fork_prepare);
 	pid = fork();
 	if(pid < 0) {ERRPUT << "Error when starting the VM" << endl;}
     if(pid == 0) {
+		//ios->notify_fork(boost::asio::io_service::fork_child);
+		acceptor->close();
         stringstream output;
 		output << "VM" << hostBlock->blockId << ".log";
 		int fd = open(output.str().c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
@@ -49,7 +52,8 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 			execv(vmPath.c_str(), const_cast<char**>(cmd));
 		}
 	}
-	acceptor->accept(*(socket.get()));	
+	//ios->notify_fork(boost::asio::io_service::fork_parent;
+	acceptor->accept(*(socket.get()));
 	idSent = false;
 	nbSentCommands = 0;
 	asyncReadCommand();
@@ -57,10 +61,15 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 
 BlinkyBlocksVM::~BlinkyBlocksVM() {
 	closeSocket();
-	terminate();
+	killProcess();
 }
 
 void BlinkyBlocksVM::terminate() {
+	waitpid(pid, NULL, 0);
+}
+
+void BlinkyBlocksVM::killProcess() {
+	kill(pid, SIGTERM);
 	waitpid(pid, NULL, 0);
 }
 
@@ -99,13 +108,7 @@ void BlinkyBlocksVM::asyncReadCommandHandler(const boost::system::error_code& er
 void BlinkyBlocksVM::handleInBuffer() {
 	BlinkyBlocksBlockCode *bbc = (BlinkyBlocksBlockCode*)hostBlock->blockCode;
 	VMCommand command(inBuffer);
-	
-	if (bbc->mustBeQueued(command)) {
-		command.copyData();
-		inQueue.push(command);
-	} else {
-		bbc->handleCommand(command);
-	}
+	bbc->handleCommand(command);
 }
 
 void BlinkyBlocksVM::asyncReadCommand() {
@@ -124,17 +127,14 @@ void BlinkyBlocksVM::asyncReadCommand() {
 	}
 }
 
-void BlinkyBlocksVM::sendCommand(VMCommand &command){
+int BlinkyBlocksVM::sendCommand(VMCommand &command){
 	if (socket == NULL) {
 		ERRPUT << "Simulator is not connected to the VM "<< hostBlock->blockId << endl;
-		return;
+		return 0;
 	}
 	if (!idSent) {
 		idSent = true;
 		hostBlock->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), hostBlock)));
-	}
-	if (isInDebuggingMode()) {
-		mutex_send.lock();
 	}
 	if (command.getType() != VM_COMMAND_DEBUG) {
 		nbSentCommands++;
@@ -144,51 +144,22 @@ void BlinkyBlocksVM::sendCommand(VMCommand &command){
 		boost::asio::write(getSocket(), boost::asio::buffer(command.getData(), command.getSize()));
 	} catch (std::exception& e) {
 		ERRPUT << "Connection to the VM "<< hostBlock->blockId << " lost" << endl;
-		if (isInDebuggingMode()) {
-			mutex_send.unlock();
-		}
+		return 0;
 	}
-	if (isInDebuggingMode()) {
-		mutex_send.unlock();
-	}
+	return 1;
 }
-
-void BlinkyBlocksVM::handleQueuedCommands() {
-	BlinkyBlocksBlockCode *bbc = (BlinkyBlocksBlockCode*)hostBlock->blockCode;
-	while (!inQueue.empty()) {
-		VMCommand &command = inQueue.front();
-		bbc->handleCommand(command);
-		delete[] command.getData();
-		inQueue.pop();
-	}
-}
-
 
 void BlinkyBlocksVM::checkForReceivedCommands() {
 	if (ios != NULL) {
-		if (isInDebuggingMode()) {
-			mutex_read.lock();
-			ios->poll();
-			ios->reset();		
-			mutex_read.unlock();
-		} else {
-			ios->poll();
-			ios->reset();	
+		ios->poll();
+		ios->reset();	
 		}
-	}
 }
 
 void BlinkyBlocksVM::waitForOneCommand() {
 	if (ios != NULL) {
-		if (isInDebuggingMode()) {
-			mutex_read.lock();
-			ios->run_one();
-			ios->reset();
-			mutex_read.unlock();
-		} else {
-			ios->run_one();
-			ios->reset();
-		}
+		ios->run_one();
+		ios->reset();
 	}
 	checkForReceivedCommands();
 }
@@ -211,6 +182,5 @@ void BlinkyBlocksVM::deleteServer() {
 	delete ios;
 	ios = NULL; acceptor = NULL;
 }
-
 
 }

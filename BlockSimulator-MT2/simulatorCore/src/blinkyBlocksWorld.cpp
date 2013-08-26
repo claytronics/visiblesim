@@ -450,12 +450,16 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		for(it = buildingBlocksMap.begin(); 
 				it != buildingBlocksMap.end(); it++) {
 			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-			if (bb->getState() >= BlinkyBlocksBlock::ALIVE) {
-				aliveBlocks += getDebugger()->sendCmd(bb->blockId, c);
-			}
+				aliveBlocks += bb->sendCommand(c);
 		}
 		return aliveBlocks;
 	}
+	
+	int BlinkyBlocksWorld::sendCommand(int id, VMCommand &c) {
+		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*)getBlockById(id);
+		return bb->sendCommand(c);
+	}
+
 	
 	void BlinkyBlocksWorld::stopBlock(uint64_t date, int bId) {
 		if (bId < 0) {
@@ -545,12 +549,8 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		for(it = buildingBlocksMap.begin(); 
 				it != buildingBlocksMap.end(); it++) {	
 			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-			if(bb->getState() >= BlinkyBlocksBlock::ALIVE && bb->vm != NULL) {
-				kill(bb->vm->pid, SIGTERM);
-				waitpid(bb->vm->pid, NULL, 0);
-				bb->vm = NULL;
-			}
-		}	
+			bb->killVM();
+		}
 	}
 	
 	bool BlinkyBlocksWorld::equilibrium() {

@@ -76,6 +76,7 @@ public:
 	 * Returns to how many nodes the message has been sent.
 	 */
 	int broadcastDebugCommand(DebbuggerVMCommand &c);
+	int sendCommand(int id, VMCommand &c);
 	
 	bool dateHasBeenReachedByAll(uint64_t date);
 	bool equilibrium();

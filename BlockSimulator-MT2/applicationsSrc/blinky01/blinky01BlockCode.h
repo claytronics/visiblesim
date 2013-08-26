@@ -15,13 +15,8 @@
 
 class Blinky01BlockCode : public BlinkyBlocks::BlinkyBlocksBlockCode {
 private:
-	bool computing; // fastest mode 2
-	uint64_t endComputingTime; // fastest mode 2
-	bool willHaveWork; // fastest mode 2
-	boost::rand48 generator; // fastest mode 2
 	
 public:
-
 	Blinky01BlockCode(BlinkyBlocks::BlinkyBlocksBlock *host);
 	~Blinky01BlockCode();
 
@@ -29,9 +24,6 @@ public:
 	void processLocalEvent(EventPtr pev);
 	void handleCommand(BlinkyBlocks::VMCommand &command);
 	void handleDeterministicMode(BlinkyBlocks::VMCommand &command);
-	bool mustBeQueued(BlinkyBlocks::VMCommand &command);
-	void handleDeterministicMode();
-	int getRandom();
 	static BlinkyBlocks::BlinkyBlocksBlockCode *buildNewBlockCode(BlinkyBlocks::BlinkyBlocksBlock *host);
 };
 

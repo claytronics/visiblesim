@@ -19,9 +19,7 @@
 using namespace std;
 
 #define SCHEDULER_MODE_FASTEST		1
-#define SCHEDULER_MODE_FASTEST_1	SCHEDULER_MODE_FASTEST
-#define SCHEDULER_MODE_FASTEST_2	2
-#define SCHEDULER_MODE_REALTIME		3
+#define SCHEDULER_MODE_REALTIME		2
 
 namespace BaseSimulator {
 
