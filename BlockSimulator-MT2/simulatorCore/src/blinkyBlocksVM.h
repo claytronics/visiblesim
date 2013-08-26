@@ -59,7 +59,8 @@ public:
 	pid_t pid;
 	/* buffer used to receive tcp message */
 	commandType inBuffer[VM_COMMAND_MAX_LENGHT];	
-	commandType outBuffer[VM_COMMAND_MAX_LENGHT];	
+	//commandType outBuffer[VM_COMMAND_MAX_LENGHT];
+		
 	commandType nbSentCommands; // mode fastest 1
 			
 	/* send and receive message from the associated VM program */

@@ -220,9 +220,9 @@ void BlinkyBlocksScheduler::stop(uint64_t date){
 
 bool BlinkyBlocksScheduler::scheduleLock(Event *ev) {
 	bool ret;
-	//lock();
+	lock();
 	ret = schedule(ev);
-	//unlock();
+	unlock();
 	return ret;
 }
 

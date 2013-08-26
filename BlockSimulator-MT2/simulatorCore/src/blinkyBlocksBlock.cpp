@@ -182,11 +182,6 @@ int BlinkyBlocksBlock::sendCommand(VMCommand &c) {
 }
 
 void BlinkyBlocksBlock::killVM() {
-	// BUG: debugger kills the VM (exit(0)) => the socket is not free correctly
-	/*if(BlinkyBlocksVM::isInDebuggingMode()) {
-		vm = NULL;
-		return;
-	}*/
 	lockVM();
 	if(vm != NULL) {
 		delete vm;

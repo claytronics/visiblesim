@@ -80,7 +80,7 @@ inline void handleDebugCommand(DebbuggerVMCommand *c) { getDebugger()->handleDeb
 inline void quit() {
 	BlinkyBlocksDebugger::threadHasFinished = true;
 	if(getScheduler()->getState() != Scheduler::ENDED)
-		glutLeaveMainLoop(); 
+		glutLeaveMainLoop();
 	}
 
 }

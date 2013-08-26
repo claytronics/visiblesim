@@ -122,7 +122,6 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	stringstream info;
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
 	BlinkyBlocksVM *vm = bb->vm;
-
 	assert(vm != NULL);
 	info.str("");
 	
@@ -151,33 +150,35 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			{
 			if(BlinkyBlocksVM::isInDebuggingMode()) {
 				//getDebugger()->sendTerminateMsg(bb->blockId);
+				delete vm;
+				bb->vm = NULL;
 			} else {
-				StopVMCommand command(vm->outBuffer, bb->blockId);
-				vm->sendCommand(command);
-			}
-			bb->killVM();
+				StopVMCommand command(outBuffer, bb->blockId);
+				bb->sendCommand(command);
+				bb->killVM();
+			}			
 			info << "VM stopped";
 			}
 			break;
 		case EVENT_ADD_NEIGHBOR:
 			{
-			AddNeighborVMCommand command(vm->outBuffer, bb->blockId, (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->target,
+			AddNeighborVMCommand command(outBuffer, bb->blockId, (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->target,
 				(boost::static_pointer_cast<VMAddNeighborEvent>(pev))->face);
-			vm->sendCommand(command);
+			bb->sendCommand(command);
 			info << "Add neighbor "<< (boost::static_pointer_cast<VMAddNeighborEvent>(pev))->target << " at face " << BlinkyBlocks::NeighborDirection::getString(BlinkyBlocks::NeighborDirection::getOpposite((boost::static_pointer_cast<VMAddNeighborEvent>(pev))->face));
 			}
 			break;
 		case EVENT_REMOVE_NEIGHBOR:
 			{
-			RemoveNeighborVMCommand command(vm->outBuffer, bb->blockId, (boost::static_pointer_cast<VMRemoveNeighborEvent>(pev))->face);
-			vm->sendCommand(command);
+			RemoveNeighborVMCommand command(outBuffer, bb->blockId, (boost::static_pointer_cast<VMRemoveNeighborEvent>(pev))->face);
+			bb->sendCommand(command);
 			info << "Remove neighbor at face " << BlinkyBlocks::NeighborDirection::getString(BlinkyBlocks::NeighborDirection::getOpposite((boost::static_pointer_cast<VMAddNeighborEvent>(pev))->face));
 			}
 			break;
 		case EVENT_TAP:
 			{
-			TapVMCommand command(vm->outBuffer, bb->blockId);
-			vm->sendCommand(command);
+			TapVMCommand command(outBuffer, bb->blockId);
+			bb->sendCommand(command);
 			info << "tapped";
 			}
 			break;
@@ -204,7 +205,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			{
 			ReceiveMessageVMCommand *command = (ReceiveMessageVMCommand*) (boost::static_pointer_cast<NetworkInterfaceReceiveEvent>(pev))->message.get();
 			command->setTimestamp(BlinkyBlocks::getScheduler()->now());
-			vm->sendCommand(*command);
+			bb->sendCommand(*command);
 #ifdef TEST_DETER
 			cout << "message received from " << command->sourceInterface->hostBlock->blockId << endl;
 #endif
@@ -213,23 +214,23 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			break;
 		case EVENT_ACCEL:
 			{
-			AccelVMCommand command(vm->outBuffer, bb->blockId, (boost::static_pointer_cast<VMAccelEvent>(pev))->x, (boost::static_pointer_cast<VMAccelEvent>(pev))->y,
+			AccelVMCommand command(outBuffer, bb->blockId, (boost::static_pointer_cast<VMAccelEvent>(pev))->x, (boost::static_pointer_cast<VMAccelEvent>(pev))->y,
 			(boost::static_pointer_cast<VMAccelEvent>(pev))->z);
-			vm->sendCommand(command);
+			bb->sendCommand(command);
 			info << "accel";
 			}
 			break;
 		case EVENT_SHAKE:
 			{
-			ShakeVMCommand command(vm->outBuffer, bb->blockId, (boost::static_pointer_cast<VMShakeEvent>(pev))->force);
-			vm->sendCommand(command);
+			ShakeVMCommand command(outBuffer, bb->blockId, (boost::static_pointer_cast<VMShakeEvent>(pev))->force);
+			bb->sendCommand(command);
 			info << "shake";
 			}
 			break;
 		case EVENT_SET_DETERMINISTIC:
 			{
-			SetDeterministicModeVMCommand command(vm->outBuffer, bb->blockId);
-			vm->sendCommand(command);
+			SetDeterministicModeVMCommand command(outBuffer, bb->blockId);
+			bb->sendCommand(command);
 			OUTPUT << "VM set in deterministic mode " << hostBlock->blockId << endl;
 			info << "VM set in deterministic mode";
 			}
@@ -237,8 +238,8 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 		case EVENT_END_POLL: 
 			{
 			polling = false;
-			EndPollVMCommand command(vm->outBuffer, bb->blockId);
-			vm->sendCommand(command);
+			EndPollVMCommand command(outBuffer, bb->blockId);
+			bb->sendCommand(command);
 			}
 			break;
 		default:

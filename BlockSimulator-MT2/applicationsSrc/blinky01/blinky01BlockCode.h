@@ -15,6 +15,7 @@
 
 class Blinky01BlockCode : public BlinkyBlocks::BlinkyBlocksBlockCode {
 private:
+	commandType outBuffer[VM_COMMAND_MAX_LENGHT];
 	
 public:
 	Blinky01BlockCode(BlinkyBlocks::BlinkyBlocksBlock *host);
