@@ -450,7 +450,10 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		for(it = buildingBlocksMap.begin(); 
 				it != buildingBlocksMap.end(); it++) {
 			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-				aliveBlocks += bb->sendCommand(c);
+			BlinkyBlocksBlockCode* bbc = (BlinkyBlocksBlockCode*) bb->blockCode;
+			/* Send id & set deterministic mode if necessary */
+			bbc->init();
+			aliveBlocks += bb->sendCommand(c);
 		}
 		return aliveBlocks;
 	}

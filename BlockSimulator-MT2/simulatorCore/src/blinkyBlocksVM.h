@@ -31,9 +31,6 @@ protected:
 	BlinkyBlocksBlock* hostBlock;
 	/* socket connected to the associated VM program */
 	boost::shared_ptr<tcp::socket> socket;
-		
-	/* True if the id was sent */
-	bool idSent;
 	
 	inline tcp::socket& getSocket() { 
 		assert(socket != NULL);
@@ -58,11 +55,16 @@ public:
 	/* associated VM program pid */
 	pid_t pid;
 	/* buffer used to receive tcp message */
-	commandType inBuffer[VM_COMMAND_MAX_LENGHT];	
-	//commandType outBuffer[VM_COMMAND_MAX_LENGHT];
+	commandType inBuffer[VM_COMMAND_MAX_LENGHT];
 		
 	commandType nbSentCommands; // mode fastest 1
-			
+	
+	/* True only if the id was sent */
+	bool idSent;
+	/* True only if the simulation is in fastest mode and it has been
+	 * set on the VM. */
+	bool deterministicSet;
+	
 	/* send and receive message from the associated VM program */
 	int sendCommand(VMCommand &command);
 	void asyncReadCommand();	

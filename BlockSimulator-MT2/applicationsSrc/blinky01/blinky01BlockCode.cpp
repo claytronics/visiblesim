@@ -30,13 +30,42 @@ Blinky01BlockCode::~Blinky01BlockCode() {
 	OUTPUT << "Blinky01BlockCode destructor" << endl;
 }
 
-void Blinky01BlockCode::startup() {	
+void Blinky01BlockCode::init() {
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) hostBlock;
+	stringstream info;
+	commandType c[5];
+	BlinkyBlocksVM *vm;
+	
+	bb->lockVM();
+	vm = bb->vm;
+	if((vm != NULL)) {
+		if((BlinkyBlocks::getScheduler()->getMode() == SCHEDULER_MODE_FASTEST) && !vm->deterministicSet) {
+			vm->deterministicSet = true;
+			SetDeterministicModeVMCommand determinismCommand(c, bb->blockId);
+			vm->sendCommand(determinismCommand);
+			info << "deterministic mode set";		
+			BlinkyBlocks::getScheduler()->trace(info.str(),hostBlock->blockId);
+			OUTPUT << "deterministic mode enable on the VM " << hostBlock->blockId << endl;
+		}
+		if(!vm->idSent) {
+			vm->idSent = true;
+			SetIdVMCommand idCommand(c, bb->blockId);	
+			vm->sendCommand(idCommand);
+			info << "ID sent";			
+			BlinkyBlocks::getScheduler()->trace(info.str(),hostBlock->blockId);
+			OUTPUT << "ID sent to the VM " << hostBlock->blockId << endl;
+		}
+	}
+	bb->unlockVM();
+}
+
+void Blinky01BlockCode::startup() {
 	stringstream info;
 	
 	currentLocalDate = BaseSimulator::getScheduler()->now();
 	info << "  Starting Blinky01BlockCode in block " << hostBlock->blockId;
 	BlinkyBlocks::getScheduler()->trace(info.str(),hostBlock->blockId);
+	init();
 }
 
 void Blinky01BlockCode::handleCommand(VMCommand &command) {
@@ -98,8 +127,9 @@ void Blinky01BlockCode::handleCommand(VMCommand &command) {
 		case VM_COMMAND_TIME_INFO:
 			;
 			break;
-		case VM_COMMAND_POLL_START:		
-			BlinkyBlocks::getScheduler()->scheduleLock(new VMEndPollEvent(dateToSchedule, bb));
+		case VM_COMMAND_POLL_START:
+			// Polling lasts 1us
+			BlinkyBlocks::getScheduler()->scheduleLock(new VMEndPollEvent(dateToSchedule+1, bb));
 			polling = true;
 			break;
 		default:
@@ -131,21 +161,6 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 	cout << bb->blockId << " processLocalEvent: date: "<< BaseSimulator::getScheduler()->now() << " process event " << pev->getEventName() << "(" << pev->eventType << ")" << ", random number : " << pev->randomNumber << endl;
 #endif
 	switch (pev->eventType) {
-		case EVENT_SET_ID:
-			{
-			commandType c[5];
-			OUTPUT << "event set id " << hostBlock->blockId << endl;
-			if (BlinkyBlocks::getScheduler()->getMode() == SCHEDULER_MODE_FASTEST) {
-					SetDeterministicModeVMCommand determinismCommand(c, bb->blockId);
-					vm->sendCommand(determinismCommand);
-					OUTPUT << "deterministic mode enable on the VM " << hostBlock->blockId << endl;
-			}	
-			SetIdVMCommand idCommand(c, bb->blockId);	
-			vm->sendCommand(idCommand);
-			OUTPUT << "ID sent to the VM " << hostBlock->blockId << endl;
-			info << "ID sent";
-			}
-			break;
 		case EVENT_STOP:
 			{
 			if(BlinkyBlocksVM::isInDebuggingMode()) {

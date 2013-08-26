@@ -55,6 +55,7 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 	//ios->notify_fork(boost::asio::io_service::fork_parent;
 	acceptor->accept(*(socket.get()));
 	idSent = false;
+	deterministicSet = false;
 	nbSentCommands = 0;
 	asyncReadCommand();
 }
@@ -131,10 +132,6 @@ int BlinkyBlocksVM::sendCommand(VMCommand &command){
 	if (socket == NULL) {
 		ERRPUT << "Simulator is not connected to the VM "<< hostBlock->blockId << endl;
 		return 0;
-	}
-	if (!idSent) {
-		idSent = true;
-		hostBlock->blockCode->processLocalEvent(EventPtr (new VMSetIdEvent(BaseSimulator::getScheduler()->now(), hostBlock)));
 	}
 	if (command.getType() != VM_COMMAND_DEBUG) {
 		nbSentCommands++;

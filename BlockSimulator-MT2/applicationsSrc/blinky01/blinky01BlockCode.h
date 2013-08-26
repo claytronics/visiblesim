@@ -22,6 +22,7 @@ public:
 	~Blinky01BlockCode();
 
 	void startup();
+	void init();
 	void processLocalEvent(EventPtr pev);
 	void handleCommand(BlinkyBlocks::VMCommand &command);
 	void handleDeterministicMode(BlinkyBlocks::VMCommand &command);
