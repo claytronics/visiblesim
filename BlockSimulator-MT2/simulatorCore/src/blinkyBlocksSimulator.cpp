@@ -30,8 +30,6 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 	BlinkyBlocksWorld *world = NULL;
 	buildNewBlockCode = blinkyBlocksBlockCodeBuildingFunction;
 	
-	createScheduler();
-	
 	/* reading the xml file */
 	/* VM part */	
 	TiXmlNode *node = xmlDoc->FirstChild("vm");
@@ -77,7 +75,8 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 		ERRPUT << "ERROR : NO world in XML file" << endl;
 		exit(1);
 	}
-
+		
+	createScheduler();
 	// loading the camera parameters
 	TiXmlNode *nodeConfig = node->FirstChild("camera");
 	if (nodeConfig) {

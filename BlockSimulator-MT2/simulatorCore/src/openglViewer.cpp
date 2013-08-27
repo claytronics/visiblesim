@@ -35,18 +35,20 @@ void GlutContext::init(int argc, char **argv) {
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE,GLUT_ACTION_CONTINUE_EXECUTION);
 	OUTPUT << "Après glutSetOption()" << endl;
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
-
+	
 	// creation of a new graphic window
 	glutInitWindowPosition(0, 0);
+	
 	glutInitWindowSize(screenWidth,screenHeight);
+		cout << "shaders init" << endl;
 	if (glutCreateWindow("OpenGL BlockSimulator") == GL_FALSE) {
 		puts("ERREUR : echec à la création de la fenêtre graphique");
 		exit(EXIT_FAILURE);
 	}
-
+	cout << "will init" << endl;
 	//glutFullScreen();
 	initShaders();
-
+	
 	////// GL parameters /////////////////////////////////////
 	glEnable(GL_DEPTH_TEST);
 	glShadeModel(GL_SMOOTH);
