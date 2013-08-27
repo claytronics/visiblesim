@@ -79,6 +79,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 		SemWaitOrReadDebugMessage();
 	}
 #else
+	sem_schedulerStart->wait();
 	schedulerMode = SCHEDULER_MODE_FASTEST;
 #endif
 	state = RUNNING;

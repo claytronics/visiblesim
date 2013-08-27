@@ -1,13 +1,13 @@
 
 		<?xml version="1.0" standalone="no" ?>
-		<vm serverport="5000" vmPath="/home/andre/Bureau/meld/meld" programPath="/home/andre/Bureau/meld/examples/rainbowRetract.m" debugging="True" />
+		<vm serverport="5000" vmPath="/home/andre/Bureau/meld/meld" programPath="/home/andre/Bureau/meld/examples/rainbow.m" debugging="True" />
 
 		<world gridsize="10,10,10">
 			<camera target="200,200,200" directionSpherical="0,70,400" angle="45"/>
 			<spotlight target="200,20,200" directionSpherical="45,60,500" angle="40"/>
 
-		<blockList color="0,255,0" size="1,1,1" blocksize="40,40,41" > 
-		<block position="3,3,2"/> 
+			<blockList color="0,255,0" size="1,1,1" blocksize="40,40,41" > 
+<block position="3,3,2"/> 
 		<block position="3,3,3"/>
 		<block position="3,3,4"/>
 		<block position="3,3,5"/>		
@@ -72,5 +72,6 @@
 		<block position="5,7,6"/>
 		<block position="5,7,7"/>
 		<block position="5,7,8"/>
+
 			</blockList>
 			</world>
