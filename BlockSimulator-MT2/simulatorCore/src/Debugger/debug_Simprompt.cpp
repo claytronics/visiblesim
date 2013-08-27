@@ -67,9 +67,9 @@ namespace debugger {
       }
 
       if (expectingMessage){
-          messageQueue->wait();
-          receiveMsg();
-      }
+		messageQueue->timed_wait();
+		receiveMsg();
+	  }
       
     }
     return NULL;
