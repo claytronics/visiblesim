@@ -70,7 +70,7 @@ namespace debugger {
           messageQueue->wait();
           receiveMsg();
       }
-
+      
     }
     return NULL;
   }
