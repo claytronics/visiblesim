@@ -51,13 +51,11 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 		if (attr) {
 			if (strcmp(attr, "True") == 0) {
 					debugging = true;
-					createDebugger();
+					//createDebugger();
 			}
 		}
-		//OUTPUT << "server port : " << port << endl;
-		setVMConfiguration(vmPath, programPath, debugging);
-		createVMServer(port);
 	}
+	
 	node = xmlDoc->FirstChild("world");
 	if (node) {
 		TiXmlElement* worldElement = node->ToElement();
@@ -77,6 +75,12 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 	}
 		
 	createScheduler();
+	setVMConfiguration(vmPath, programPath, debugging);
+	createVMServer(port);
+	if(debugging) {
+		createDebugger();
+	}
+	
 	// loading the camera parameters
 	TiXmlNode *nodeConfig = node->FirstChild("camera");
 	if (nodeConfig) {
