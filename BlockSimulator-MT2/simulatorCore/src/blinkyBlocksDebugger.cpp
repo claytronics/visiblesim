@@ -14,7 +14,6 @@
 namespace BlinkyBlocks {
 
 BlinkyBlocksDebugger *BlinkyBlocksDebugger::debugger=NULL;
-bool BlinkyBlocksDebugger::threadHasFinished = false;
 
 BlinkyBlocksDebugger::BlinkyBlocksDebugger() {
 	if (debugger == NULL) {

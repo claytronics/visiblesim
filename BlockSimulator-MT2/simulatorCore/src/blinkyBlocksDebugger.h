@@ -26,7 +26,6 @@ protected:
 	static BlinkyBlocksDebugger *debugger;
 
 public:
-	static bool threadHasFinished;
 	
 	BlinkyBlocksDebugger();
 	~BlinkyBlocksDebugger();
@@ -80,13 +79,10 @@ inline void unPauseSimulation() { getDebugger()->unPauseSim(); }
 inline void handleDebugCommand(DebbuggerVMCommand *c) { getDebugger()->handleDebugCommand(c); }
 
 inline void quit() {
-	BlinkyBlocksDebugger::threadHasFinished = true;
-	/*if(getScheduler()->getState() != Scheduler::ENDED) {
-		glutLeaveMainLoop(); // DOES NOT WORK WITH NVIDIA OPTIMUS CARD...
-	}*/
-	// to at least correctly close the VMs sockets and processes
-	getWorld()->killAllVMs();
-	exit(0);
+	// DOES NOT WORK WITH NVIDIA OPTIMUS CARD...
+	if(getScheduler()->getState() != Scheduler::ENDED) {
+		glutLeaveMainLoop();
+	}
 }
 	
 }

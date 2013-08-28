@@ -182,7 +182,7 @@ namespace debugger {
             delete messageQueue;
             delete rcvMessageList;
             quitDebugger();
-            //pthread_exit(NULL);
+            pthread_exit(NULL);
         } else {
             cout << "unknown command: type 'help' for options " << endl;
             retVal = NOTHING;
