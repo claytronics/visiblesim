@@ -25,6 +25,7 @@ namespace debugger {
     extern void (*quitDebugger)(void);
 
     void joinThread();
+    void detachThread();
 
 }
 

@@ -55,6 +55,8 @@ public:
 	
 	void waitForDebuggerEnd();
 	
+	void detachDebuggerThread();
+	
 	void sendTerminateCmd(int id);
 	
 	void handlePauseRequest();
@@ -79,10 +81,14 @@ inline void handleDebugCommand(DebbuggerVMCommand *c) { getDebugger()->handleDeb
 
 inline void quit() {
 	BlinkyBlocksDebugger::threadHasFinished = true;
-	if(getScheduler()->getState() != Scheduler::ENDED)
-		glutLeaveMainLoop();
-	}
-
+	/*if(getScheduler()->getState() != Scheduler::ENDED) {
+		glutLeaveMainLoop(); // DOES NOT WORK WITH NVIDIA OPTIMUS CARD...
+	}*/
+	// to at least correctly close the VMs sockets and processes
+	getWorld()->killAllVMs();
+	exit(0);
+}
+	
 }
 
 #endif /* BLINKYBLOCKSDEBUGGER_H_ */

@@ -8,6 +8,7 @@
 #include <iostream>
 #include "blinkyBlocksSimulator.h"
 #include "blinkyBlocksBlockCode.h"
+#include "blinkyBlocksWorld.h"
 #include "blinky01BlockCode.h"
 #include "blinkyBlocksDebugger.h"
 #include "blinkyBlocksVM.h"
@@ -32,11 +33,15 @@ int main(int argc, char **argv) {
 	getSimulator()->printInfo();
 	BlinkyBlocks::getScheduler()->printInfo();
 	BaseSimulator::getWorld()->printInfo();
+
+	BlinkyBlocks::getScheduler()->waitForSchedulerEnd();
 	
 	if (BlinkyBlocks::BlinkyBlocksVM::isInDebuggingMode()) {
-		BlinkyBlocks::getDebugger()->waitForDebuggerEnd();
+		BlinkyBlocks::getWorld()->killAllVMs();
+		/* interprocess lock... */
+		return(0);
 	}
-	BlinkyBlocks::getScheduler()->waitForSchedulerEnd();
+
 	deleteSimulator();
 	
 	OUTPUT << "\033[1;33m" << "end (main)" << "\033[0m" << endl;

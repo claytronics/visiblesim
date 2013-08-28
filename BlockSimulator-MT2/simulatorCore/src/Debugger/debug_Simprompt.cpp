@@ -182,7 +182,7 @@ namespace debugger {
             delete messageQueue;
             delete rcvMessageList;
             quitDebugger();
-            pthread_exit(NULL);
+            //pthread_exit(NULL);
         } else {
             cout << "unknown command: type 'help' for options " << endl;
             retVal = NOTHING;
@@ -227,4 +227,8 @@ namespace debugger {
     void joinThread() {
         pthread_join(tid, NULL);
     }
+    
+    void detachThread() {
+        pthread_detach(tid);
+	}
 }

@@ -69,6 +69,10 @@ void BlinkyBlocksDebugger::waitForDebuggerEnd() {
 	debugger::joinThread();
 }
 
+void BlinkyBlocksDebugger::detachDebuggerThread() {
+	debugger::detachThread();
+}
+
 void BlinkyBlocksDebugger::sendTerminateCmd(int id) {
 	//debugger::sendCmd(id,debugger::TERMINATE,"");
 }
@@ -87,6 +91,6 @@ void BlinkyBlocksDebugger::handleBreakAtTimeReached(uint64_t t) {
 	debuggerCommandHandler(debugger::pack(debugger::TIME,"2",0));
 }
 
-BlinkyBlocksDebugger::~BlinkyBlocksDebugger() {};
+BlinkyBlocksDebugger::~BlinkyBlocksDebugger() { };
 
 }
