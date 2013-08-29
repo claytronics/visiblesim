@@ -49,7 +49,7 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 		}
 		attr = vmElement->Attribute("debugging");
 		if (attr) {
-			if (strcmp(attr, "True") == 0) {
+			if ((strcmp(attr, "True") == 0) ||(strcmp(attr, "true") == 0) ) {
 					debugging = true;
 					//createDebugger();
 			}

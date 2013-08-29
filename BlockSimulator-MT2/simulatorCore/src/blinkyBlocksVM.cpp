@@ -29,13 +29,13 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 	OUTPUT << "VM "<< hostBlock->blockId << " constructor" << endl;
 	// Start the VM
 	pid = 0;
-	ios->notify_fork(boost::asio::io_service::fork_prepare);
+	//ios->notify_fork(boost::asio::io_service::fork_prepare);
 	pid = fork();
 	if(pid < 0) {ERRPUT << "Error when starting the VM" << endl;}
     if(pid == 0) {
-		ios->notify_fork(boost::asio::io_service::fork_child);
+		//ios->notify_fork(boost::asio::io_service::fork_child);
 		acceptor->close();
-      getWorld()->closeAllSockets();      
+      //getWorld()->closeAllSockets();      
       stringstream output;
 		output << "VM" << hostBlock->blockId << ".log";
 		int fd = open(output.str().c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
@@ -52,7 +52,7 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 			execv(vmPath.c_str(), const_cast<char**>(cmd));
 		}
 	}   
-	ios->notify_fork(boost::asio::io_service::fork_parent);
+	//ios->notify_fork(boost::asio::io_service::fork_parent);
 	socket = boost::shared_ptr<tcp::socket>(new tcp::socket(*ios));
 	acceptor->accept(*(socket.get()));
 	idSent = false;
