@@ -30,7 +30,7 @@ namespace debugger {
 
     /****************************************************************/
 
-    std::queue<message_type*> *messageQueue;
+    ConcurrentQueue<message_type*> *messageQueue;
     /*global variables to controll main thread*/
     static bool isSystemPaused = true;
     static bool isDebug = false;
@@ -383,7 +383,6 @@ namespace debugger {
      * priority is the number in a message group*/
     message_type* pack(int msgEncode, string content, int priority){
 
-
         utils::byte* msg = (utils::byte*)new message_type[MAXLENGTH];
         int pos = 0;
 
@@ -481,9 +480,7 @@ namespace debugger {
      *  if a whole message has been completed in the cache
      *  reconctruct it and process it in the master contoller*/
     void receiveMsg(void){
-
-
-
+		
         utils::byte *msg;
         int instruction;
         char specification[MAXLENGTH*SIZE];
@@ -493,12 +490,6 @@ namespace debugger {
         int priority;
 
         struct msgListContainer* msgContainer;
-
-		BlinkyBlocks::checkForReceivedVMCommands();
-		if (messageQueue->empty()) {
-			//BlinkyBlocks::checkForReceivedVMCommands();
-			//BlinkyBlocks::waitForOneVMCommand();
-		}
 		
         while(!messageQueue->empty()){
 
@@ -552,7 +543,8 @@ namespace debugger {
                 /* resetup*/
                 memset(specification,0,MAXLENGTH*SIZE);
                 messageQueue->pop();
-                memset(msg,0,MAXLENGTH*SIZE);
+                //memset(msg,0,MAXLENGTH*SIZE);
+                delete[] msg;
                 pos = 0;
                 continue;
             }
@@ -569,7 +561,8 @@ namespace debugger {
             /*set up the variables and buffers for next message*/
             memset(specification,0,MAXLENGTH*SIZE);
             messageQueue->pop();
-            memset(msg,0,MAXLENGTH*SIZE);
+            //memset(msg,0,MAXLENGTH*SIZE);
+            delete[] msg;
             pos = 0;
         }
     }

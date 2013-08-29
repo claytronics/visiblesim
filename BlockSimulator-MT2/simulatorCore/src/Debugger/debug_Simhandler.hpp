@@ -2,9 +2,9 @@
 #define DEBUG_HANDLER_HPP
 
 #include <string>
-#include <queue>
 #include <list>
 #include <stdint.h>
+#include "concurrentQueue.hpp"
 
 
 namespace debugger {
@@ -35,7 +35,7 @@ namespace debugger {
     typedef uint64_t message_type;
 
 
-    extern std::queue<message_type*> *messageQueue;
+    extern ConcurrentQueue<message_type*> *messageQueue;
     extern std::list<struct msgListContainer*>* rcvMessageList;
     extern int numberExpected;
 

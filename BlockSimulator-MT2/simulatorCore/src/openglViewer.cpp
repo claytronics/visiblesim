@@ -117,7 +117,7 @@ void GlutContext::motionFunc(int x,int y) {
 }
 
 void GlutContext::passiveMotionFunc(int x,int y) {
-	int n=mainWindow->mouseFunc(-1,-1,x,screenHeight - y);
+	/*int n=mainWindow->mouseFunc(-1,-1,x,screenHeight - y);
 	if (n>0) return;
 	n=selectFunc(x,y);
 	if (n) {
@@ -127,7 +127,7 @@ void GlutContext::passiveMotionFunc(int x,int y) {
 		popup->show(true);
 	} else {
 		popup->show(false);
-	}
+	}*/
 	if (popupMenu) popupMenu->mouseFunc(-1,-1,x,screenHeight - y);
 	if (helpWindow) helpWindow->mouseFunc(-1,-1,x,screenHeight - y);
 }
@@ -224,11 +224,9 @@ void GlutContext::keyboardFunc(unsigned char c, int x, int y)
 	//  case 'l' : showLinks = !showLinks; break;
       case 'r' : getScheduler()->start(SCHEDULER_MODE_REALTIME); break;
       //case 'p' : getScheduler()->pauseSimulation(getScheduler()->now()); break;
-      case 'p' : BlinkyBlocks::getDebugger()->handlePauseRequest(); break;
+     case 'p' : BlinkyBlocks::getDebugger()->handlePauseRequest(); break;
 	  case 'R' : getScheduler()->start(SCHEDULER_MODE_FASTEST); break;
-	  case 'd' : getScheduler()->start(SCHEDULER_MODE_FASTEST_2); break;
-	  case 'D' : getScheduler()->start(SCHEDULER_MODE_FASTEST_1); break;
-	  //case 'u' : getScheduler()->unPauseSimulation(); break;
+	  case 'u' : BlinkyBlocks::getDebugger()->unPauseSim(); break;
 	  case 'z' : {
 		  World *world = BaseSimulator::getWorld();
 		  GlBlock *slct=world->getSelectedBlock();

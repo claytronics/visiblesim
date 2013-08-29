@@ -26,7 +26,6 @@ protected:
 	static BlinkyBlocksDebugger *debugger;
 
 public:
-	static bool threadHasFinished;
 	
 	BlinkyBlocksDebugger();
 	~BlinkyBlocksDebugger();
@@ -55,6 +54,8 @@ public:
 	
 	void waitForDebuggerEnd();
 	
+	void detachDebuggerThread();
+	
 	void sendTerminateCmd(int id);
 	
 	void handlePauseRequest();
@@ -78,11 +79,12 @@ inline void unPauseSimulation() { getDebugger()->unPauseSim(); }
 inline void handleDebugCommand(DebbuggerVMCommand *c) { getDebugger()->handleDebugCommand(c); }
 
 inline void quit() {
-	BlinkyBlocksDebugger::threadHasFinished = true;
-	if(getScheduler()->getState() != Scheduler::ENDED)
-		glutLeaveMainLoop(); 
+	// DOES NOT WORK WITH NVIDIA OPTIMUS CARD...
+	if(getScheduler()->getState() != Scheduler::ENDED) {
+		glutLeaveMainLoop();
 	}
-
+}
+	
 }
 
 #endif /* BLINKYBLOCKSDEBUGGER_H_ */

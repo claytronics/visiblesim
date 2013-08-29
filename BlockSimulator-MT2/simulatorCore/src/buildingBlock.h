@@ -11,6 +11,8 @@
 //#include <tr1/unordered_set>
 #include <boost/shared_ptr.hpp>
 #include <boost/random.hpp>
+#include <boost/interprocess/sync/interprocess_mutex.hpp>
+
 #include <list>
 
 #include "glBlock.h"
@@ -44,6 +46,14 @@ protected:
 	list<P2PNetworkInterface*> P2PNetworkInterfaceList;
 
 	list<EventPtr> localEventsList;
+	
+	/* Graphical interface and Scheduler can access to the state of
+	 * block. The scheduler only read the state, usually read on int
+	 * can be considered as atomic but it depends on the platform
+	 * architecture. We can also use atomic type (c++11, or boost 1.53)
+	 */
+	boost::interprocess::interprocess_mutex mutex_state;
+	
 public:	
 	// alive state must be associated to a number >= 2
 	enum State {STOPPED = 0, REMOVED = 1, ALIVE = 2, COMPUTING = 3};
@@ -72,8 +82,15 @@ public:
 	
 	virtual void stop() {};
 	
-	inline State getState() { return state; }
-	inline void setState(State s) { state = s; }	
+	/* No guarantee that state value will remind the same, it just avoids
+	 * date race condition.
+	 */
+	inline void lock() { mutex_state.lock(); }
+	inline void unlock() { mutex_state.unlock(); }
+	inline State getState() { lock(); State s = state; unlock(); return s; }
+	inline void setState(State s) { lock(); state = s; unlock();}
+	
+	/* For Blinky Block determinism version */	
 	int getNextRandomNumber();
 };
 

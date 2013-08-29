@@ -14,7 +14,6 @@
 namespace BlinkyBlocks {
 
 BlinkyBlocksDebugger *BlinkyBlocksDebugger::debugger=NULL;
-bool BlinkyBlocksDebugger::threadHasFinished = false;
 
 BlinkyBlocksDebugger::BlinkyBlocksDebugger() {
 	if (debugger == NULL) {
@@ -29,9 +28,7 @@ BlinkyBlocksDebugger::BlinkyBlocksDebugger() {
 
 int BlinkyBlocksDebugger::sendCmd(int id, DebbuggerVMCommand &c) {
 	if (id > 0) {
-		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) getWorld()->getBlockById(id);
-		if (bb != NULL && bb->state >= BlinkyBlocksBlock::ALIVE && bb->vm != NULL) {
-			bb->vm->sendCommand(c);
+		if (getWorld()->sendCommand(id, c) == 1) {
 			return 1;
 		} else {
 			return -1;
@@ -44,10 +41,10 @@ int BlinkyBlocksDebugger::sendCmd(int id, DebbuggerVMCommand &c) {
 	}
 }
 
- void BlinkyBlocksDebugger::handleDebugCommand(DebbuggerVMCommand *c) {
-		debuggerCommandHandler(c->getData());
-		delete c; // delete command object, not the data. The debugger will do it after having processed the command.
- }
+void BlinkyBlocksDebugger::handleDebugCommand(DebbuggerVMCommand *c) {
+	debuggerCommandHandler(c->getData());
+	delete c; // delete command object, not the data. The debugger will do it after having processed the command.
+}
 
 void BlinkyBlocksDebugger::pauseSim(int t) {
 	if (t == -1) {
@@ -71,6 +68,10 @@ void BlinkyBlocksDebugger::waitForDebuggerEnd() {
 	debugger::joinThread();
 }
 
+void BlinkyBlocksDebugger::detachDebuggerThread() {
+	debugger::detachThread();
+}
+
 void BlinkyBlocksDebugger::sendTerminateCmd(int id) {
 	//debugger::sendCmd(id,debugger::TERMINATE,"");
 }
@@ -89,6 +90,6 @@ void BlinkyBlocksDebugger::handleBreakAtTimeReached(uint64_t t) {
 	debuggerCommandHandler(debugger::pack(debugger::TIME,"2",0));
 }
 
-BlinkyBlocksDebugger::~BlinkyBlocksDebugger() {};
+BlinkyBlocksDebugger::~BlinkyBlocksDebugger() { };
 
 }

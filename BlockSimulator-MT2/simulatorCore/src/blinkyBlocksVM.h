@@ -29,24 +29,12 @@ class BlinkyBlocksVM {
 protected:
 	/* associated Block */
 	BlinkyBlocksBlock* hostBlock;
-	/* socket connected to the associated VM program */
-	boost::shared_ptr<tcp::socket> socket;
-	
-	/* queue used to store incoming message when necessary*/
-	queue<VMCommand> inQueue;
-	/* Mutex used when sending message */
-	boost::interprocess::interprocess_mutex mutex_send;
-	static boost::interprocess::interprocess_mutex mutex_read;
-	/* True if the id was sent */
-	bool idSent;
 	
 	inline tcp::socket& getSocket() { 
 		assert(socket != NULL);
 		return *(socket.get()); };
 	/* kill the associated VM program (and wait for the effective end) */
 	void terminate();
-	/* close the socket associated to the VM program */
-	void closeSocket();
 	
 	//static int port;
 	static boost::asio::io_service *ios;
@@ -56,6 +44,10 @@ protected:
 	static bool debugging;
 
 public:
+
+
+	/* socket connected to the associated VM program */
+	boost::shared_ptr<tcp::socket> socket;
 	
 	BlinkyBlocksVM(BlinkyBlocksBlock* bb);
 	~BlinkyBlocksVM();
@@ -63,19 +55,27 @@ public:
 	/* associated VM program pid */
 	pid_t pid;
 	/* buffer used to receive tcp message */
-	commandType inBuffer[VM_COMMAND_MAX_LENGHT];	
-	commandType outBuffer[VM_COMMAND_MAX_LENGHT];	
+	commandType inBuffer[VM_COMMAND_MAX_LENGHT];
+		
 	commandType nbSentCommands; // mode fastest 1
-			
+	
+	/* True only if the id was sent */
+	bool idSent;
+	/* True only if the simulation is in fastest mode and it has been
+	 * set on the VM. */
+	bool deterministicSet;
+	
 	/* send and receive message from the associated VM program */
-	void sendCommand(VMCommand &command);
+	int sendCommand(VMCommand &command);
 	void asyncReadCommand();	
 	void asyncReadCommandHandler(const boost::system::error_code& error, std::size_t bytes_transferred);
 	void handleInBuffer();
-	void handleQueuedCommands();
-	/* close the socket */
-	void stop();
 	
+	/* kill the VM process */
+	void killProcess();
+	/* close the socket associated to the VM program */
+	void closeSocket();
+   
 	inline static bool isInDebuggingMode() { return debugging; };
 	static void setConfiguration(string v, string p, bool d);
 	static void createServer(int p);

@@ -22,7 +22,7 @@ do
 	do
 		echo '
 		<?xml version="1.0" standalone="no" ?>
-		<vm serverport="5000" vmPath="/home/ubuntu/Bureau/meld/meld" programPath="/home/ubuntu/Bureau/meld/examples/'$program.m'" debugging="False" />
+		<vm serverport="5000" vmPath="/home/andre/Bureau/meld/meld" programPath="/home/andre/Bureau/meld/examples/'$program.m'" debugging="False" />
 
 		<world gridsize="10,10,10">
 			<camera target="200,200,200" directionSpherical="0,70,400" angle="45"/>

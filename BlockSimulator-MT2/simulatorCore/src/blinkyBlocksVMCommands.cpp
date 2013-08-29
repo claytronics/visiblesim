@@ -39,15 +39,6 @@ VMCommand::VMCommand(commandType *d) {
 	data = d;
 }
 
-/*
-static commandType VMCommand::getContentSize(commandType *d) {
-	return c[0];
-}
-
-static commandType VMCommand::getTotalSize(commandType *d) {
-	return getContentSize(c) + sizeof(commandType);
-} */
-
 commandType VMCommand::getType(commandType *d) {
 	return d[TYPE];
 }
@@ -101,12 +92,6 @@ string VMCommand::getString(commandType t) {
 			break;
 		case VM_COMMAND_DEBUG:
 			return string("VM_COMMAND_DEBUG");
-			break;
-		case VM_COMMAND_RESUME_COMPUTATION:
-			return string("VM_COMMAND_RESUME_COMPUTATION");
-			break;
-		case VM_COMMAND_COMPUTATION_PAUSE:
-			return string("VM_COMMAND_COMPUTATION_PAUSE");
 			break;
 		case VM_COMMAND_WORK_END:
 			return string("VM_COMMAND_WORK_END");
@@ -256,29 +241,8 @@ ShakeVMCommand::ShakeVMCommand(commandType *d, commandType src, commandType f):
 //
 //===========================================================================================================
 
-SetDeterministicModeVMCommand::SetDeterministicModeVMCommand(commandType *d, commandType src, commandType m):
-	VMCommand(d, 4*sizeof(commandType), VM_COMMAND_SET_DETERMINISTIC_MODE, src) {
-	data[PARAM1] = m;
-}
-
-//===========================================================================================================
-//
-//          ComputationPauseVMCommand  (class)
-//
-//===========================================================================================================
-
-ComputationPauseVMCommand::ComputationPauseVMCommand(commandType *d): VMCommand(d) {};
-
-//===========================================================================================================
-//
-//          ResumeComputationVMCommand  (class)
-//
-//===========================================================================================================
-
-ResumeComputationVMCommand::ResumeComputationVMCommand(commandType *c, commandType src, commandType d):
-	VMCommand(c, 4*sizeof(commandType), VM_COMMAND_RESUME_COMPUTATION, src) {
-	data[PARAM1] = d;
-}
+SetDeterministicModeVMCommand::SetDeterministicModeVMCommand(commandType *d, commandType src):
+	VMCommand(d, 3*sizeof(commandType), VM_COMMAND_SET_DETERMINISTIC_MODE, src) {};
 
 //===========================================================================================================
 //
