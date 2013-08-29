@@ -240,16 +240,16 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 			attr = element->Attribute("type");
 			if (attr) {
 				string strAttr(attr);
-				if (strAttr=="tapp") {
+				if (strAttr=="tap") {
 					attr = element->Attribute("id");
 					eventBlockId=-1;
 					if (attr) {
 						eventBlockId=atoi(attr);
 					}
 					if (eventBlockId==-1) {
-						ERRPUT << "SCENARIO:No id for tapp event" << endl;
+						ERRPUT << "SCENARIO:No id for tap event" << endl;
 					} else {
-						OUTPUT << "SCENARIO: tapp(" << eventTime << "," << eventBlockId << ")" << endl;
+						OUTPUT << "SCENARIO: tap(" << eventTime << "," << eventBlockId << ")" << endl;
 						world->addScenarioEvent(new ScenarioTappEvent(eventTime,eventBlockId));
 					}
 				} else if (strAttr=="debug") {
