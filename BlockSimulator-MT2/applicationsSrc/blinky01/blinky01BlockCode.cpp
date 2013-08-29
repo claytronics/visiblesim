@@ -101,6 +101,10 @@ void Blinky01BlockCode::handleCommand(VMCommand &command) {
 			SendMessageVMCommand c(command.getData());
 			interface = bb->getInterfaceDestId(c.getDestId());
 			if (interface == NULL) {
+				stringstream info;
+				info.str("");
+				info << "Warning: sends a message to " << endl << "the non-connected block " << c.getDestId();
+				BlinkyBlocks::getScheduler()->trace(info.str(),hostBlock->blockId);
 				ERRPUT << "Interface not found" << endl;
 				return;
 			}
@@ -255,6 +259,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			polling = false;
 			EndPollVMCommand command(outBuffer, bb->blockId);
 			bb->sendCommand(command);
+			info << "Polling time period ended" << endl;
 			}
 			break;
 		default:

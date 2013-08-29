@@ -82,6 +82,7 @@ public:
 	bool equilibrium();
 	
 	void killAllVMs();
+   void closeAllSockets();
 };
 
 inline void createWorld(int slx,int sly,int slz, int argc, char *argv[]) {

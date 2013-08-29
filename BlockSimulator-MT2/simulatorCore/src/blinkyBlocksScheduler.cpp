@@ -161,9 +161,9 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 						checkForReceivedVMCommands();
 				}
 				if (state == PAUSED) {
-					int pauseBeginning = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
+            	int pauseBeginning = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
 					SemWaitOrReadDebugMessage();
-					setState(RUNNING);	
+					setState(RUNNING);
 					pausedTime += ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000 - pauseBeginning;
 				}
 #ifdef WIN32
@@ -206,7 +206,7 @@ void BlinkyBlocksScheduler::pause(uint64_t date) {
 }
 
 void BlinkyBlocksScheduler::unPause() {
-	BlinkyBlocksScheduler* sbs = (BlinkyBlocksScheduler*)scheduler;
+   BlinkyBlocksScheduler* sbs = (BlinkyBlocksScheduler*)scheduler;
 	if (state != RUNNING) {
 		sbs->sem_schedulerStart->post();
 	}

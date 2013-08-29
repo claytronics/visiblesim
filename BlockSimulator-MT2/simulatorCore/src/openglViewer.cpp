@@ -224,9 +224,9 @@ void GlutContext::keyboardFunc(unsigned char c, int x, int y)
 	//  case 'l' : showLinks = !showLinks; break;
       case 'r' : getScheduler()->start(SCHEDULER_MODE_REALTIME); break;
       //case 'p' : getScheduler()->pauseSimulation(getScheduler()->now()); break;
-      case 'p' : BlinkyBlocks::getDebugger()->handlePauseRequest(); break;
+     case 'p' : BlinkyBlocks::getDebugger()->handlePauseRequest(); break;
 	  case 'R' : getScheduler()->start(SCHEDULER_MODE_FASTEST); break;
-	  //case 'u' : getScheduler()->unPauseSimulation(); break;
+	  case 'u' : BlinkyBlocks::getDebugger()->unPauseSim(); break;
 	  case 'z' : {
 		  World *world = BaseSimulator::getWorld();
 		  GlBlock *slct=world->getSelectedBlock();

@@ -555,7 +555,17 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 			bb->killVM();
 		}
 	}
-	
+   
+   void BlinkyBlocksWorld::closeAllSockets() {
+		map<int, BaseSimulator::BuildingBlock*>::iterator it;
+		for(it = buildingBlocksMap.begin(); 
+				it != buildingBlocksMap.end(); it++) {	
+			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
+         bb->vm->socket->close();
+			bb->vm->socket.reset();
+		}
+	}
+   	
 	bool BlinkyBlocksWorld::equilibrium() {
 		map<int, BaseSimulator::BuildingBlock*>::iterator it;
 		for(it = buildingBlocksMap.begin(); 
