@@ -131,7 +131,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
          if(hasProcessed) {
             hasProcessed = false;
             ostringstream s;
-            s << "Scheduler end at "<< now() << "...";
+            s << "Simulation ends at "<< now() << "...";
             BlinkyBlocksDebugger::print(s.str(), false);
             if (BlinkyBlocksVM::isInDebuggingMode()) {
                BlinkyBlocks::getDebugger()->handlePauseRequest();
@@ -155,7 +155,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 				checkForReceivedVMCommands();
 				while (true) {
 						// Lock from here, to be sure that the element
-						// was not destroyed in antother thread
+						// is not destroyed in antother thread
 						// (previously the graphic interface was doing
 						// it).
 						lock();

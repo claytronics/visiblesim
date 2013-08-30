@@ -184,7 +184,11 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 		
 		bb->stop(getScheduler()->now(), BlinkyBlocksBlock::REMOVED); // schedule stop event, set REMOVED state
 		linkBlocks();
-	}
+	}   
+	if (selectedBlock == bb->ptrGlBlock) {
+      selectedBlock = NULL;
+      GlutContext::mainWindow->select(NULL);
+   }
 	// remove the associated glBlock
 	std::vector<GlBlock*>::iterator cit=tabGlBlocks.begin();
 	if (*cit==bb->ptrGlBlock) tabGlBlocks.erase(cit);
@@ -194,7 +198,6 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 		}
 		if (*cit==bb->ptrGlBlock) tabGlBlocks.erase(cit);
 	}
-	if (selectedBlock == bb->ptrGlBlock) {selectedBlock = NULL;}
 	delete bb->ptrGlBlock;
 }
 
@@ -408,7 +411,7 @@ void BlinkyBlocksWorld::menuChoice(int n) {
 		} break;
 		case 2 : {
 			OUTPUT << "DEL num block : " << tabGlBlocks[numSelectedBlock]->blockId << endl;
-			BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(tabGlBlocks[numSelectedBlock]->blockId);
+         BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(tabGlBlocks[numSelectedBlock]->blockId);
 			deleteBlock(bb);
 		} break;
 		case 3 : {
