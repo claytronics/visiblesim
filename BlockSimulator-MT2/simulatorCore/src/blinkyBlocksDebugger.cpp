@@ -90,6 +90,13 @@ void BlinkyBlocksDebugger::handleBreakAtTimeReached(uint64_t t) {
 	debuggerCommandHandler(debugger::pack(debugger::TIME,"2",0));
 }
 
+void BlinkyBlocksDebugger::print(string s, bool arrow) {   
+      cout << s << endl;
+      if (BlinkyBlocksVM::isInDebuggingMode() && arrow) {
+         cout << ">";
+      }
+}
+
 BlinkyBlocksDebugger::~BlinkyBlocksDebugger() { };
 
 }

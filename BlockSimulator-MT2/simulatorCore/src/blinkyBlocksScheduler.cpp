@@ -63,6 +63,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	pausedTime = 0;
 	int seed = 500;
 	srand (seed);
+   bool hasProcessed = false;
 	
 	// 1) world ready
 	// 2) user start order
@@ -92,39 +93,53 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	switch (schedulerMode) {
 		case SCHEDULER_MODE_FASTEST:
 			OUTPUT << "fastest mode scheduler\n" << endl;
-			do {
-			while (!eventsMap.empty()){
-				do {
-					lock();
-					first = eventsMap.begin();		
-					pev = (*first).second;
-					if (pev->date == now()) {
-						break;
-					}
-					if (getWorld()->dateHasBeenReachedByAll(pev->date)) {
-						break;
-					}
-					unlock();
-					waitForOneVMCommand();
-				} while (true);
-				currentDate = pev->date;
-				pev->consume();
-				eventsMap.erase(first);
-				eventsMapSize--;
-				unlock();
-				if (state == PAUSED) {
-					if (BlinkyBlocksVM::isInDebuggingMode()) {
-						getDebugger()->handleBreakAtTimeReached(currentDate);
-					} else {
-						sem_schedulerStart->wait();
-					}
-					setState(RUNNING);
-				}
-				checkForReceivedVMCommands();
-			}
-			checkForReceivedVMCommands();
-		} while (!getWorld()->equilibrium() || !eventsMap.empty());
-		cout << "Scheduler end at "<< now() << "..." << endl;
+         BlinkyBlocksDebugger::print("Simulation starts in deterministic mode");
+			while (state != ENDED) {
+            do {
+            while (!eventsMap.empty()) {
+               hasProcessed = true;
+               do {
+                  lock();
+                  first = eventsMap.begin();		
+                  pev = (*first).second;
+                  if (pev->date == now()) {
+                     break;
+                  }
+                  if (getWorld()->dateHasBeenReachedByAll(pev->date)) {
+                     break;
+                  }
+                  unlock();
+                  waitForOneVMCommand();
+               } while (true);
+               currentDate = pev->date;
+               pev->consume();
+               eventsMap.erase(first);
+               eventsMapSize--;
+               unlock();
+               if (state == PAUSED) {
+                  if (BlinkyBlocksVM::isInDebuggingMode()) {
+                     getDebugger()->handleBreakAtTimeReached(currentDate);
+                  } else {
+                     sem_schedulerStart->wait();
+                  }
+                  setState(RUNNING);
+               }
+               checkForReceivedVMCommands();
+            }
+            checkForReceivedVMCommands();
+         } while (!getWorld()->equilibrium() || !eventsMap.empty());
+         if(hasProcessed) {
+            hasProcessed = false;
+            ostringstream s;
+            s << "Scheduler end at "<< now() << "...";
+            BlinkyBlocksDebugger::print(s.str(), false);
+            if (BlinkyBlocksVM::isInDebuggingMode()) {
+               BlinkyBlocks::getDebugger()->handlePauseRequest();
+            }
+         }
+         checkForReceivedVMCommands();
+         usleep(5000);
+      }
 #ifdef TEST_DETER
 		getWorld()->killAllVMs();
 		exit(0);
@@ -132,6 +147,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 		break;
 		case SCHEDULER_MODE_REALTIME:
 			OUTPUT << "Realtime mode scheduler\n" << endl;
+         BlinkyBlocksDebugger::print("Simulation starts in real time mode");
 			while (state != ENDED) {
 				systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000 - pausedTime;
 				systemCurrentTimeMax = systemCurrentTime - systemStartTime;
