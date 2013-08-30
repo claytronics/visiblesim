@@ -131,7 +131,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
          if(hasProcessed) {
             hasProcessed = false;
             ostringstream s;
-            s << "Simulation ends at "<< now() << "...";
+            s << "Equilibrium reached at "<< now() << "us ...";
             BlinkyBlocksDebugger::print(s.str(), false);
             if (BlinkyBlocksVM::isInDebuggingMode()) {
                BlinkyBlocks::getDebugger()->handlePauseRequest();

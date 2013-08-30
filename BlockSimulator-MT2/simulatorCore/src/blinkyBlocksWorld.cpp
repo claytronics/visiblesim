@@ -564,8 +564,10 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		for(it = buildingBlocksMap.begin(); 
 				it != buildingBlocksMap.end(); it++) {	
 			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-         bb->vm->socket->close();
-			bb->vm->socket.reset();
+         if(bb->vm != NULL) {
+            bb->vm->socket->close();
+            bb->vm->socket.reset();
+         }
 		}
 	}
    	
