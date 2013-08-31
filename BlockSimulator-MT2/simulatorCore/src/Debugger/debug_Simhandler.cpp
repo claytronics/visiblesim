@@ -216,6 +216,8 @@ namespace debugger {
             numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
         } else if (instruction == DUMP) {
 
+
+            okayToPauseSimulation = false;
             /*broadcast the message to all VMs*/
             if (specification == "all"){
 
@@ -233,6 +235,8 @@ namespace debugger {
             /*handle the breakpoints in the lists*/
         } else if (instruction == REMOVE||instruction == BREAKPOINT) {
 
+
+            okayToPauseSimulation = false;
             /*extract the destination*/
             node = getNode(specification);
             if (node == ""){
@@ -253,12 +257,15 @@ namespace debugger {
 
         } else if (instruction == PRINTLIST) {
 
+            okayToPauseSimulation = false;
             printLimitation = false;
             /*broadcast  a PRINT LIST message*/
             numberExpected = sendMsg(-1,PRINTLIST,"",BROADCAST);
 
         } else if (instruction == MODE) {
 
+
+            okayToPauseSimulation = false;
             printLimitation = true;
             /*set flags and tell the VMs of the update*/
             setFlags(specification);
