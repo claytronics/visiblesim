@@ -1,50 +1,31 @@
-<?xml version="1.0" standalone="no" ?>
 
-<!-- to disable debugging mode
-<vm serverport="5000" vmPath="/home/ubuntu/Bureau/CMU/meld/meld" programPath="/home/ubuntu/Bureau/CMU/meld/examples/ends.m"  />
-<vm serverport="5000" vmPath="/home/ubuntu/Bureau/CMU/meld/meld" programPath="/home/ubuntu/Bureau/CMU/meld/examples/ends.m" debugging="True" />
-<vm serverport="5000" vmPath="VMEmulator" programPath="ends.m" debugging="True" />
-<vm serverport="5000" vmPath="/home/ubuntu/Bureau/CMU/meld/meld" programPath="/home/ubuntu/Bureau/CMU/programs/tree-alg/broadcast.m" debugging="True" />
-
-<vm serverport="5000" vmPath="/home/ubuntu/Bureau/CMU/meld/meld" programPath="/home/ubuntu/Bureau/CMU/meld/examples/rainbow.m" debugging="True" />
-<vm serverport="5000" vmPath="/home/bpiranda/git-simulateur/meld/meld" programPath="/home/bpiranda/git-simulateur/meld/examples/rainbow.m" debugging="False" />
-
+		<?xml version="1.0" standalone="no" ?>
+		<vm serverport="5000" vmPath="/home/andre/Bureau/meld/meld" programPath="/home/andre/Bureau/meld/examples/rainbowRetract.m" debugging="false" />
+	<!--	<vm serverport="5000" vmPath="/home/andre/Bureau/meld/meld" programPath="/home/andre/Bureau/meld/examples/HS-leader-election-classical-j.m" debugging="false" />
 -->
+		<world gridsize="10,10,10">
+			<camera target="200,200,200" directionSpherical="0,70,400" angle="45"/>
+			<spotlight target="200,20,200" directionSpherical="45,60,500" angle="40"/>
 
-<vm serverport="5000" vmPath="/home/dcampbel/Research/meld/meld" programPath="/home/dcampbel/Research/meld/examples/rainbow.m" debugging="True" />
-
-<world gridsize="10,10,10">
-	<camera target="200,200,200" directionSpherical="0,70,400" angle="45"/>
-	<spotlight target="200,20,200" directionSpherical="45,60,500" angle="40"/>
-
-	<blockList color="0,255,0" size="1,1,1" blocksize="40,40,41" >
-
-		<block position="5,5,5"/>
-
-		<block position="5,5,6"/>
-
-		<block position="5,5,7"/>
+			<blockList color="0,255,0" size="1,1,1" blocksize="40,40,41" > 
+	<block position="3,5,2"/> 
+		<block position="3,5,3"/>
+		<block position="3,5,4"/>
+		<block position="3,5,5"/>		
+		<block position="3,5,6"/>
+		
 		<block position="4,5,6"/>
+		<block position="5,5,6"/>
 		<block position="6,5,6"/>
-
-		<!-- grande croix
-		<block position="5,5,8"/>
-		<block position="5,5,9"/>
-
-		<block position="3,5,7"/>
-		<block position="4,5,7"/>
-		<block position="6,5,7"/>
-		<block position="7,5,7"/>-->
-
-	<!-- Back
-		<block position="5,6,5"/>
-		<block position="5,7,5"/>
-		<block position="5,8,5"/> -->
-
-	</blockList>
-	<scenario>
-		<action date="2.0" type="addblock" position="5,5,4"/>
-	</scenario>
-</world>
-
-
+		<block position="7,5,6"/>
+		
+		<block position="7,5,5"/>
+		<block position="7,5,4"/>
+		<block position="7,5,3"/>
+		
+		<block position="7,5,2"/>
+		<block position="5,5,2"/>
+		<block position="4,5,2"/>
+		<block position="6,5,2"/>
+			</blockList>
+			</world>

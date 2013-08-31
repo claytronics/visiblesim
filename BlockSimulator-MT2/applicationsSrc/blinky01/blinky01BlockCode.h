@@ -10,32 +10,22 @@
 
 #include "blinkyBlocksBlockCode.h"
 #include "blinkyBlocksSimulator.h"
-
-class VMDataMessage : public Message {	
-public:
-	uint64_t *message;
-	
-	VMDataMessage(uint64_t src, uint64_t* m);
-	VMDataMessage(VMDataMessage *m);
-	~VMDataMessage();	
-	virtual unsigned int size();
-};
+#include "blinkyBlocksVMCommands.h"
+#include <boost/random.hpp>
 
 class Blinky01BlockCode : public BlinkyBlocks::BlinkyBlocksBlockCode {
 private:
-	bool computing; // deterministic mode 2
-	uint64_t endComputingTime; // deterministic mode 2
+	commandType outBuffer[VM_COMMAND_MAX_LENGHT];
 	
 public:
-
 	Blinky01BlockCode(BlinkyBlocks::BlinkyBlocksBlock *host);
 	~Blinky01BlockCode();
 
 	void startup();
+	void init();
 	void processLocalEvent(EventPtr pev);
-	void handleNewMessage(uint64_t *message);
-	bool mustBeQueued();
-	void handleDeterministicMode();
+	void handleCommand(BlinkyBlocks::VMCommand &command);
+	void handleDeterministicMode(BlinkyBlocks::VMCommand &command);
 	static BlinkyBlocks::BlinkyBlocksBlockCode *buildNewBlockCode(BlinkyBlocks::BlinkyBlocksBlock *host);
 };
 

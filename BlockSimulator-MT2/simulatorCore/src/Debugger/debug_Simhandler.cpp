@@ -30,7 +30,7 @@ namespace debugger {
 
     /****************************************************************/
 
-    std::queue<message_type*> *messageQueue;
+    ConcurrentQueue<message_type*> *messageQueue;
     /*global variables to controll main thread*/
     static bool isSystemPaused = true;
     static bool isDebug = false;
@@ -204,16 +204,16 @@ namespace debugger {
         if (instruction == CONTINUE || instruction == UNPAUSE){
             okayToBroadcastPause = true;
             okayToPauseSimulation = true;
-            unPauseSimulation();
             printLimitation = false;
-            numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
+            numberExpected = sendMsg(-1,CONTINUE,"X",BROADCAST);            
+            unPauseSimulation();
         } else if (instruction == RUN){
             okayToBroadcastPause = true;
             okayToPauseSimulation = true;
             printLimitation = false;
             /*continue a paused system by broadcasting an CONTINUE signal*/
+            numberExpected = sendMsg(-1,CONTINUE,"X",BROADCAST);
             unPauseSimulation();
-            numberExpected = sendMsg(-1,CONTINUE,"",BROADCAST);
         } else if (instruction == DUMP) {
 
 
@@ -390,7 +390,6 @@ namespace debugger {
      * priority is the number in a message group*/
     message_type* pack(int msgEncode, string content, int priority){
 
-
         utils::byte* msg = (utils::byte*)new message_type[MAXLENGTH];
         int pos = 0;
 
@@ -455,7 +454,6 @@ namespace debugger {
 
 
                 if (broadcast){
-
                     expected = debugSendMsg(-1,msg,msgSize);
 
                 } else {
@@ -489,9 +487,7 @@ namespace debugger {
      *  if a whole message has been completed in the cache
      *  reconctruct it and process it in the master contoller*/
     void receiveMsg(void){
-
-
-
+		
         utils::byte *msg;
         int instruction;
         char specification[MAXLENGTH*SIZE];
@@ -501,10 +497,7 @@ namespace debugger {
         int priority;
 
         struct msgListContainer* msgContainer;
-
-
-		BlinkyBlocks::checkForReceivedVMMessages();
-
+		
         while(!messageQueue->empty()){
 
             /*process each message until empty*/
@@ -557,7 +550,8 @@ namespace debugger {
                 /* resetup*/
                 memset(specification,0,MAXLENGTH*SIZE);
                 messageQueue->pop();
-                memset(msg,0,MAXLENGTH*SIZE);
+                //memset(msg,0,MAXLENGTH*SIZE);
+                delete[] msg;
                 pos = 0;
                 continue;
             }
@@ -574,7 +568,8 @@ namespace debugger {
             /*set up the variables and buffers for next message*/
             memset(specification,0,MAXLENGTH*SIZE);
             messageQueue->pop();
-            memset(msg,0,MAXLENGTH*SIZE);
+            //memset(msg,0,MAXLENGTH*SIZE);
+            delete[] msg;
             pos = 0;
         }
     }

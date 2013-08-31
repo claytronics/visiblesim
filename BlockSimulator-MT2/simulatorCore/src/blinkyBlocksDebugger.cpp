@@ -13,24 +13,12 @@
 
 namespace BlinkyBlocks {
 
-VMDebugMessage::VMDebugMessage(int s, uint64_t *m) {
-	size = s;
-	message = new uint64_t[s / sizeof(uint64_t)];
-	memcpy(message, m, size);
-}
-
-VMDebugMessage::~VMDebugMessage() {
-	delete[] message;
-}
-
 BlinkyBlocksDebugger *BlinkyBlocksDebugger::debugger=NULL;
-bool BlinkyBlocksDebugger::threadHasFinished = false;
-int cur_timeout = 0;
 
 BlinkyBlocksDebugger::BlinkyBlocksDebugger() {
 	if (debugger == NULL) {
 		debugger = this;
-		debuggerMessageHandler = debugger::initDebugger(&sendMessage, &pauseSimulation, &unPauseSimulation, &quit);
+		debuggerCommandHandler = debugger::initDebugger(&sendCommand, &pauseSimulation, &unPauseSimulation, &quit);
 	} else {
 		ERRPUT << "\033[1;31m" << "Only one Debugger instance can be created, aborting !" << "\033[0m" << endl;
 		exit(EXIT_FAILURE);
@@ -38,28 +26,36 @@ BlinkyBlocksDebugger::BlinkyBlocksDebugger() {
 }
 
 
-int BlinkyBlocksDebugger::sendMsg(int id, int size, uint64_t *message) {
-
+int BlinkyBlocksDebugger::sendCmd(int id, DebbuggerVMCommand &c) {
 	if (id > 0) {
-		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*) getWorld()->getBlockById(id);
-		if (bb != NULL && bb->state >= BlinkyBlocksBlock::ALIVE && bb->vm != NULL) {
-			bb->vm->sendMessage(size, message);
+		if (getWorld()->sendCommand(id, c) == 1) {
 			return 1;
 		} else {
 			return -1;
 		}
 	} else if (id == -1) {
 		// send to all vm
-		return getWorld()->broadcastDebugMessage(size, message);
+		return getWorld()->broadcastDebugCommand(c);
 	} else {
 		return -1;
 	}
 }
 
+void BlinkyBlocksDebugger::handleDebugCommand(DebbuggerVMCommand *c) {
+	debuggerCommandHandler(c->getData());
+	delete c; // delete command object, not the data. The debugger will do it after having processed the command.
+}
+
 void BlinkyBlocksDebugger::pauseSim(int t) {
 	if (t == -1) {
-		getScheduler()->pause(BlinkyBlocks::getScheduler()->now());
+		if (getScheduler()->getMode() == SCHEDULER_MODE_REALTIME) {
+			getScheduler()->pause(BlinkyBlocks::getScheduler()->now());
+		}
 	} else {
+		ostringstream msg;
+		msg << "Time break point set at " << t << endl;
+		debuggerCommandHandler(debugger::pack(debugger::PRINTCONTENT, msg.str(),1));
+		debuggerCommandHandler(debugger::pack(debugger::PRINTCONTENT,"2",0));
 		getScheduler()->pause(t);
 	}
 }
@@ -72,14 +68,35 @@ void BlinkyBlocksDebugger::waitForDebuggerEnd() {
 	debugger::joinThread();
 }
 
-void BlinkyBlocksDebugger::sendTerminateMsg(int id) {
-	debugger::sendMsg(id,debugger::TERMINATE,"");
+void BlinkyBlocksDebugger::detachDebuggerThread() {
+	debugger::detachThread();
 }
 
+void BlinkyBlocksDebugger::sendTerminateCmd(int id) {
+	//debugger::sendCmd(id,debugger::TERMINATE,"");
+}
+
+/* Unfreezes the debugger thread when the user presses "p" in the
+ * simulator graphical window.
+ */
 void BlinkyBlocksDebugger::handlePauseRequest() {
 	debugger::handlePauseCommand();
 }
 
-BlinkyBlocksDebugger::~BlinkyBlocksDebugger() {};
+void BlinkyBlocksDebugger::handleBreakAtTimeReached(uint64_t t) {
+	ostringstream msg;
+	msg << "Time break point reached at " << t << endl;
+	debuggerCommandHandler(debugger::pack(debugger::TIME, msg.str(),1));
+	debuggerCommandHandler(debugger::pack(debugger::TIME,"2",0));
+}
+
+void BlinkyBlocksDebugger::print(string s, bool arrow) {   
+      cout << s << endl;
+      if (BlinkyBlocksVM::isInDebuggingMode() && arrow) {
+         cout << ">";
+      }
+}
+
+BlinkyBlocksDebugger::~BlinkyBlocksDebugger() { };
 
 }

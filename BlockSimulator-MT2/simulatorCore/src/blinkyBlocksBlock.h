@@ -25,11 +25,14 @@ public:
 };
 
 class BlinkyBlocksBlockCode;
-class BlinkyBlocksVM;
+class meldVM;
 
 class BlinkyBlocksBlock : public BaseSimulator::BuildingBlock {
 	P2PNetworkInterface *tabInterfaces[6];
 
+protected:
+	boost::interprocess::interprocess_mutex mutex_vm;
+	
 public:
 	BlinkyBlocksGlBlock *ptrGlBlock;
 	Vecteur color; // color of the block
@@ -58,7 +61,7 @@ public:
 	}
 	NeighborDirection::Direction getDirection(P2PNetworkInterface*);
 
-	void stopVM();
+	void killVM();
 
 	/* schedule the appropriate event for this action */
 	void tap(uint64_t date);
@@ -67,6 +70,12 @@ public:
 	void addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target);
 	void removeNeighbor(P2PNetworkInterface *ni);	
 	void stop(uint64_t date, State s);
+	
+	/* Lock activated only in debugging mode */
+	void lockVM();
+	void unlockVM();
+	
+	int sendCommand(VMCommand &c);
 
 };
 

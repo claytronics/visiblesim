@@ -35,7 +35,7 @@ namespace debugger {
         cin.rdbuf(i.rdbuf());
         cout.rdbuf(o.rdbuf());
 
-        messageQueue = new std::queue<message_type*>();
+        messageQueue = new ConcurrentQueue<message_type*>();
         rcvMessageList = new std::list<struct msgListContainer*>();
 
         debugSendMsg = sendMsg;
@@ -67,10 +67,10 @@ namespace debugger {
       }
 
       if (expectingMessage){
-          usleep(10000);
-          receiveMsg();
-      }
-
+		messageQueue->timed_wait();
+		receiveMsg();
+	  }
+      
     }
     return NULL;
   }
@@ -227,4 +227,8 @@ namespace debugger {
     void joinThread() {
         pthread_join(tid, NULL);
     }
+    
+    void detachThread() {
+        pthread_detach(tid);
+	}
 }

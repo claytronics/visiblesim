@@ -112,6 +112,7 @@ public:
 	Vecteur color;
 
 	VMSetColorEvent(uint64_t, BlinkyBlocksBlock *conBlock, float r, float g, float b, float a);
+	VMSetColorEvent(uint64_t, BlinkyBlocksBlock *conBlock, Vecteur &c);
 	VMSetColorEvent(VMSetColorEvent *ev);
 	~VMSetColorEvent();
 	void consumeBlockEvent();
@@ -135,29 +136,6 @@ public:
 	void consumeBlockEvent();
 	const virtual string getEventName();
 };
-
-
-//===========================================================================================================
-//
-//          VMReceiveMessageEvent  (class)
-//
-//===========================================================================================================
-/*
-class VMReceiveMessageEvent : public Event {
-public:
-	BlinkyBlocksBlock *concernedBlock;
-	uint64_t sender;
-	uint64_t face;
-	uint64_t size;
-	uint64_t *message;
-	
-	VMReceiveMessageEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint64_t se, uint64_t f, uint64_t si, uint64_t* m);
-	VMReceiveMessageEvent(VMReceiveMessageEvent *ev);
-	~VMReceiveMessageEvent();
-	void consume();
-	const virtual string getEventName();
-}; */
-
 
 //===========================================================================================================
 //
@@ -197,18 +175,18 @@ public:
 
 //===========================================================================================================
 //
-//          VMDebugMessageEvent  (class)
+//          VMHandleDebugCommandEvent  (class)
 //
 //===========================================================================================================
 
-class VMDebugMessageEvent : public BlockEvent {
+class VMHandleDebugCommandEvent : public BlockEvent {
 
 public:
-	VMDebugMessagePtr message;
+	DebbuggerVMCommand *command;
 	
-	VMDebugMessageEvent(uint64_t, BlinkyBlocksBlock *conBlock, VMDebugMessage *mes);
-	VMDebugMessageEvent(VMDebugMessageEvent *ev);
-	~VMDebugMessageEvent();
+	VMHandleDebugCommandEvent(uint64_t, BlinkyBlocksBlock *conBlock, DebbuggerVMCommand *c);
+	VMHandleDebugCommandEvent(VMHandleDebugCommandEvent *ev);
+	~VMHandleDebugCommandEvent();
 	void consumeBlockEvent();
 	const virtual string getEventName();
 };
@@ -232,49 +210,16 @@ public:
 
 //===========================================================================================================
 //
-//          VMStartComputationEvent  (class)
+//          VMEndPollEvent  (class)
 //
 //===========================================================================================================
 
-class VMStartComputationEvent : public BlockEvent {
-public:
-	uint64_t duration;
-
-	VMStartComputationEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint64_t dur);
-	VMStartComputationEvent(VMStartComputationEvent *ev);
-	~VMStartComputationEvent();
-	void consumeBlockEvent();
-	const virtual string getEventName();
-};
-
-//===========================================================================================================
-//
-//          VMExpectedEndComputationEvent  (class)
-//
-//===========================================================================================================
-
-class VMExpectedEndComputationEvent : public BlockEvent {
+class VMEndPollEvent : public BlockEvent {
 public:
 
-	VMExpectedEndComputationEvent(uint64_t, BlinkyBlocksBlock *conBlock);
-	VMExpectedEndComputationEvent(VMExpectedEndComputationEvent *ev);
-	~VMExpectedEndComputationEvent();
-	void consumeBlockEvent();
-	const virtual string getEventName();
-};
-
-//===========================================================================================================
-//
-//          VMEffectiveEndComputationEvent  (class)
-//
-//===========================================================================================================
-
-class VMEffectiveEndComputationEvent : public BlockEvent {
-public:
-
-	VMEffectiveEndComputationEvent(uint64_t, BlinkyBlocksBlock *conBlock);
-	VMEffectiveEndComputationEvent(VMEffectiveEndComputationEvent *ev);
-	~VMEffectiveEndComputationEvent();
+	VMEndPollEvent(uint64_t, BlinkyBlocksBlock *conBlock);
+	VMEndPollEvent(VMEndPollEvent *ev);
+	~VMEndPollEvent();
 	void consumeBlockEvent();
 	const virtual string getEventName();
 };

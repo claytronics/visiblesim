@@ -75,9 +75,14 @@ public:
 	/* Sends directly (not scheduled) a message to all the active VMs of the world.
 	 * Returns to how many nodes the message has been sent.
 	 */
-	int broadcastDebugMessage(int size, uint64_t* message);
+	int broadcastDebugCommand(DebbuggerVMCommand &c);
+	int sendCommand(int id, VMCommand &c);
 	
 	bool dateHasBeenReachedByAll(uint64_t date);
+	bool equilibrium();
+	
+	void killAllVMs();
+   void closeAllSockets();
 };
 
 inline void createWorld(int slx,int sly,int slz, int argc, char *argv[]) {

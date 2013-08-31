@@ -19,8 +19,6 @@
 
 using namespace boost;
 
-#define SCHEDULER_MODE_FASTEST2 3
-
 namespace BlinkyBlocks {
 
 class BlinkyBlocksScheduler : public BaseSimulator::Scheduler {
@@ -66,7 +64,14 @@ public:
 		return !r;
 	}
 	
+	/* In the scheduler thread, schedule function is called. In the
+	 * other thread scheduleLock should be called to not interfer
+	 * with the scheduler thread.
+	 */
 	bool schedule(Event *ev);
+	bool scheduleLock(Event *ev);
+	
+	void SemWaitOrReadDebugMessage();
 	
 	inline int getMode() { return schedulerMode; }
 		
