@@ -47,7 +47,7 @@ void BlinkyBlocksDebugger::handleDebugCommand(DebbuggerVMCommand *c) {
 }
 
 void BlinkyBlocksDebugger::pauseSim(int t) {
-	if (t == -1) {
+   if (t == -1) {
 		if (getScheduler()->getMode() == SCHEDULER_MODE_REALTIME) {
 			getScheduler()->pause(BlinkyBlocks::getScheduler()->now());
 		}

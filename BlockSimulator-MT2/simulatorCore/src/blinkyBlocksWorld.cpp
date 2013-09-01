@@ -463,7 +463,9 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 	
 	int BlinkyBlocksWorld::sendCommand(int id, VMCommand &c) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*)getBlockById(id);
-		return bb->sendCommand(c);
+      BlinkyBlocksBlockCode* bbc = (BlinkyBlocksBlockCode*) bb->blockCode;
+		bbc->init();
+      return bb->sendCommand(c);
 	}
 
 	
