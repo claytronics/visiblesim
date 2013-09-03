@@ -191,7 +191,11 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 		
 		bb->stop(getScheduler()->now(), BlinkyBlocksBlock::REMOVED); // schedule stop event, set REMOVED state
 		linkBlocks();
-	}
+	}   
+	if (selectedBlock == bb->ptrGlBlock) {
+      selectedBlock = NULL;
+      GlutContext::mainWindow->select(NULL);
+   }
 	// remove the associated glBlock
 	std::vector<GlBlock*>::iterator cit=tabGlBlocks.begin();
 	if (*cit==bb->ptrGlBlock) tabGlBlocks.erase(cit);
@@ -201,7 +205,6 @@ void BlinkyBlocksWorld::deleteBlock(BlinkyBlocksBlock *bb) {
 		}
 		if (*cit==bb->ptrGlBlock) tabGlBlocks.erase(cit);
 	}
-	if (selectedBlock == bb->ptrGlBlock) {selectedBlock = NULL;}
 	delete bb->ptrGlBlock;
 }
 
@@ -415,7 +418,7 @@ void BlinkyBlocksWorld::menuChoice(int n) {
 		} break;
 		case 2 : {
 			OUTPUT << "DEL num block : " << tabGlBlocks[numSelectedBlock]->blockId << endl;
-			BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(tabGlBlocks[numSelectedBlock]->blockId);
+         BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(tabGlBlocks[numSelectedBlock]->blockId);
 			deleteBlock(bb);
 		} break;
 		case 3 : {
@@ -467,7 +470,9 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 	
 	int BlinkyBlocksWorld::sendCommand(int id, VMCommand &c) {
 		BlinkyBlocksBlock *bb = (BlinkyBlocksBlock*)getBlockById(id);
-		return bb->sendCommand(c);
+      BlinkyBlocksBlockCode* bbc = (BlinkyBlocksBlockCode*) bb->blockCode;
+		bbc->init();
+      return bb->sendCommand(c);
 	}
 
 	
@@ -568,8 +573,10 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		for(it = buildingBlocksMap.begin(); 
 				it != buildingBlocksMap.end(); it++) {	
 			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
-         bb->vm->socket->close();
-			bb->vm->socket.reset();
+         if(bb->vm != NULL) {
+            bb->vm->socket->close();
+            bb->vm->socket.reset();
+         }
 		}
 	}
    	

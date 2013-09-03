@@ -2,7 +2,7 @@ visiblesim
 ==========
 
 Dependencies:
-	- Boost C++ Libraries
+	- Boost C++ Libraries >= 1.47.0
 	- GLUT 
 	- GLEW
 

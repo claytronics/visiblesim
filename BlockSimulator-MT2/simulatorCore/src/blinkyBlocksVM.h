@@ -29,7 +29,8 @@ class BlinkyBlocksVM {
 protected:
 	/* associated Block */
 	BlinkyBlocksBlock* hostBlock;
-	
+	static boost::interprocess::interprocess_mutex mutex_ios;
+   
 	inline tcp::socket& getSocket() { 
 		assert(socket != NULL);
 		return *(socket.get()); };
@@ -70,7 +71,7 @@ public:
 	void asyncReadCommand();	
 	void asyncReadCommandHandler(const boost::system::error_code& error, std::size_t bytes_transferred);
 	void handleInBuffer();
-	
+	void handle_write(const boost::system::error_code& error);
 	/* kill the VM process */
 	void killProcess();
 	/* close the socket associated to the VM program */

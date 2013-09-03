@@ -85,11 +85,8 @@ public:
 	bool equilibrium();
 	
 	void killAllVMs();
-<<<<<<< HEAD
 	void addScenarioEvent(ScenarioEvent *ev) { tabEvents.push_back(ev); };
-=======
    void closeAllSockets();
->>>>>>> fa5c75dd0fb6665cedd1d57c65a174b043b79de4
 };
 
 inline void createWorld(int slx,int sly,int slz, int argc, char *argv[]) {

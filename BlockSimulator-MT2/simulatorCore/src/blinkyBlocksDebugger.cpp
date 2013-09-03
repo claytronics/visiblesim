@@ -47,7 +47,7 @@ void BlinkyBlocksDebugger::handleDebugCommand(DebbuggerVMCommand *c) {
 }
 
 void BlinkyBlocksDebugger::pauseSim(int t) {
-	if (t == -1) {
+   if (t == -1) {
 		if (getScheduler()->getMode() == SCHEDULER_MODE_REALTIME) {
 			getScheduler()->pause(BlinkyBlocks::getScheduler()->now());
 		}
@@ -88,6 +88,13 @@ void BlinkyBlocksDebugger::handleBreakAtTimeReached(uint64_t t) {
 	msg << "Time break point reached at " << t << endl;
 	debuggerCommandHandler(debugger::pack(debugger::TIME, msg.str(),1));
 	debuggerCommandHandler(debugger::pack(debugger::TIME,"2",0));
+}
+
+void BlinkyBlocksDebugger::print(string s, bool arrow) {   
+      cout << s << endl;
+      if (BlinkyBlocksVM::isInDebuggingMode() && arrow) {
+         cout << ">";
+      }
 }
 
 BlinkyBlocksDebugger::~BlinkyBlocksDebugger() { };
