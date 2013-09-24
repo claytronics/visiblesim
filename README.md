@@ -42,6 +42,6 @@ SIMULATION DEBUGGING MODE -- type help for options
 >
 ```
 
-**NOTE: you must press 'r' in the simulator window before you can start running commands from the console.**
+**NOTE: you must press '<shift>-r' in the simulator window before you can start running commands from the console.**
 
-After pressing 'r' in the simulation window, typing `run` in the console should start your program.
+After pressing '<shift>-r' in the simulation window, typing `run` in the console should start your program.
