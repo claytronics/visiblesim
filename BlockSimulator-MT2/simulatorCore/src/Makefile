@@ -59,14 +59,17 @@ all: libsimMultiCores.a libsimBlinkyBlocks.a libsimSmartBlocks.a #$(OUT)
 #	cp $(OUT) ../lib
 
 libsimMultiCores.a: $(BASESIMULATOR_OBJS) $(MULTICORES_OBJS)
+	mkdir -p ../lib
 	ar rcs libsimMultiCores.a $(BASESIMULATOR_OBJS) $(MULTICORES_OBJS)
 	cp libsimMultiCores.a ../lib
 
 libsimBlinkyBlocks.a: $(BASESIMULATOR_OBJS) $(BLINKYBLOCKS_OBJS)
+	mkdir -p ../lib
 	ar rcs libsimBlinkyBlocks.a $(BASESIMULATOR_OBJS) $(BLINKYBLOCKS_OBJS)
 	cp libsimBlinkyBlocks.a ../lib
 
 libsimSmartBlocks.a: $(BASESIMULATOR_OBJS) $(SMARTBLOCKS_OBJS)
+	mkdir -p ../lib
 	ar rcs libsimSmartBlocks.a $(BASESIMULATOR_OBJS) $(SMARTBLOCKS_OBJS)
 	cp libsimSmartBlocks.a ../lib
 
