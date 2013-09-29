@@ -77,7 +77,12 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
       bool connected = false;
       
       acceptor->async_accept(*(socket.get()), boost::bind(&BlinkyBlocksVM::asyncAcceptHandler, this, error , &connected));
-      while(!connected &&  (pid != waitpid(pid, NULL, WNOHANG)));
+      while(!connected &&  (pid != waitpid(pid, NULL, WNOHANG))) {
+         	if (!BlinkyBlocksVM::isInDebuggingMode()) { // In debugging mode the scheduler thread is looking for connections
+               checkForReceivedVMCommands(); // it is actually check for connection
+               usleep(10000);
+            }
+      }
       if(!connected) {
          ifstream file (vmLogFile.str().c_str());
          string line;
