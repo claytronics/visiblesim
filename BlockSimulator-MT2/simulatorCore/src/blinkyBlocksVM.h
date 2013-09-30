@@ -66,7 +66,9 @@ public:
 	 * set on the VM. */
 	bool deterministicSet;
 	
-	/* send and receive message from the associated VM program */
+	void asyncAcceptHandler(boost::system::error_code& error, bool* connected);
+   
+   /* send and receive message from the associated VM program */
 	int sendCommand(VMCommand &command);
 	void asyncReadCommand();	
 	void asyncReadCommandHandler(const boost::system::error_code& error, std::size_t bytes_transferred);

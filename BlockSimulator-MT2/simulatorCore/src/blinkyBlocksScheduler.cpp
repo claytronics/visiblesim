@@ -177,6 +177,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 						checkForReceivedVMCommands();
 				}
 				if (state == PAUSED) {
+               cout << "paused" << endl;
             	int pauseBeginning = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000;
 					SemWaitOrReadDebugMessage();
 					setState(RUNNING);
