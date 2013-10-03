@@ -213,6 +213,7 @@ void BlinkyBlocksWorld::glDraw() {
 	static const GLfloat white[]={1.0,1.0,1.0,1.0},
 			gray[]={0.6,0.6,0.6,1.0};
 
+
 	glPushMatrix();
 	glTranslatef(0.5*blockSize[0],0.5*blockSize[1],0);
 	glDisable(GL_TEXTURE_2D);
@@ -298,7 +299,6 @@ void BlinkyBlocksWorld::glDraw() {
 	glPopMatrix();
 	// draw the axes
 	objRepere->glDraw();
-
 }
 
 void BlinkyBlocksWorld::glDrawId() {

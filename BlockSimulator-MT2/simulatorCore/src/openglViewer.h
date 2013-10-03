@@ -32,6 +32,8 @@ class GlutContext {
 	static int screenWidth, screenHeight;
 	static bool fullScreenMode;
 	static bool saveScreenMode;
+	static int lastMotionTime;
+	static int lastMousePos[2];
 //	bool showLinks;
 
 	static void init(int argc, char **argv);

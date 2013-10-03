@@ -100,6 +100,8 @@ public :
 	void glDraw();
 	void addTrace(int id,const string &str);
 	void select(GlBlock *sb);
+	inline bool hasSelectedBlock()  { return selectedBlock!=NULL; };
+	inline bool isOpened() { return openingLevel!=0; }
 };
 
 class GlutPopupWindow : public GlutWindow {

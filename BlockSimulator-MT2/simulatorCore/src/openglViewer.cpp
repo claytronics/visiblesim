@@ -21,6 +21,8 @@
 int GlutContext::screenWidth = 1024;
 int GlutContext::screenHeight = 800;
 int GlutContext::keyboardModifier = 0;
+int GlutContext::lastMotionTime=0;
+int GlutContext::lastMousePos[2];
 //bool GlutContext::showLinks=false;
 bool GlutContext::fullScreenMode=false;
 bool GlutContext::saveScreenMode=false;
@@ -30,11 +32,8 @@ GlutPopupMenuWindow *GlutContext::popupMenu=NULL;
 GlutHelpWindow *GlutContext::helpWindow=NULL;
 
 void GlutContext::init(int argc, char **argv) {
-	OUTPUT << "Avant glutInit()" << endl;
 	glutInit(&argc,argv);
-	OUTPUT << "Après glutInit()" << endl;
 	glutSetOption(GLUT_ACTION_ON_WINDOW_CLOSE,GLUT_ACTION_CONTINUE_EXECUTION);
-	OUTPUT << "Après glutSetOption()" << endl;
 	glutInitDisplayMode(GLUT_RGBA | GLUT_DEPTH | GLUT_DOUBLE);
 
 	// creation of a new graphic window
@@ -90,7 +89,8 @@ void *GlutContext::lanceScheduler(void *param) {
 // - width  : largeur (x) de la zone de visualisation
 // - height : hauteur (y) de la zone de visualisation
 void GlutContext::reshapeFunc(int w,int h) {
-	screenWidth=w;
+
+ 	screenWidth=w;
 	screenHeight=h;
 	Camera* camera=getWorld()->getCamera();
 	camera->setW_H(double(w)/double(h));
@@ -113,23 +113,18 @@ void GlutContext::motionFunc(int x,int y) {
 	if (keyboardModifier!=GLUT_ACTIVE_CTRL) { // rotation du point de vue
 		Camera* camera=getWorld()->getCamera();
 		camera->mouseMove(x,y);
+		glutPostRedisplay();
 	}
 }
 
 void GlutContext::passiveMotionFunc(int x,int y) {
-	/*int n=mainWindow->mouseFunc(-1,-1,x,screenHeight - y);
+	int n=mainWindow->mouseFunc(-1,-1,x,screenHeight - y);
 	if (n>0) return;
-	n=selectFunc(x,y);
-	if (n) {
-		GlBlock *slct=BaseSimulator::getWorld()->getBlockByNum(n-1);
-		popup->setCenterPosition(x,screenHeight - y);
-		popup->setInfo(slct->getPopupInfo());
-		popup->show(true);
-	} else {
-		popup->show(false);
-	}*/
 	if (popupMenu) popupMenu->mouseFunc(-1,-1,x,screenHeight - y);
 	if (helpWindow) helpWindow->mouseFunc(-1,-1,x,screenHeight - y);
+	lastMotionTime = glutGet(GLUT_ELAPSED_TIME);
+	lastMousePos[0]=x;
+	lastMousePos[1]=y;
 }
 
 //////////////////////////////////////////////////////////////////////////////
@@ -272,24 +267,42 @@ void GlutContext::idleFunc(void) {
 		sprintf(title,"save%04d.ppm",num++);
 		saveScreen(title);
 	}
-	glutPostRedisplay();
+	if (lastMotionTime) {
+		int tm = glutGet(GLUT_ELAPSED_TIME);
+		if (tm-lastMotionTime>100) {
+			int n=selectFunc(lastMousePos[0],lastMousePos[1]);
+			if (n) {
+				GlBlock *slct=BaseSimulator::getWorld()->getBlockByNum(n-1);
+				popup->setCenterPosition(lastMousePos[0],screenHeight - lastMousePos[1]);
+				popup->setInfo(slct->getPopupInfo());
+				popup->show(true);
+			} else {
+				popup->show(false);
+			}
+			lastMotionTime=0;
+		 	glutPostRedisplay();
+		}
+	}
+	if (mainWindow->hasSelectedBlock() || mainWindow->isOpened() || getScheduler()->state==Scheduler::RUNNING) {
+		glutPostRedisplay(); // for blinking
+	}
 }
 
 void GlutContext::drawFunc(void) {
-	Camera*camera=getWorld()->getCamera();
+	World *wrl = getWorld();
+	Camera*camera=wrl->getCamera();
 
 	shadowedRenderingStep1(camera);
 	glPushMatrix();
-	BaseSimulator::getWorld()->glDraw();
+	wrl->glDraw();
 	glPopMatrix();
 	
 	shadowedRenderingStep2(screenWidth,screenHeight);
 
 	shadowedRenderingStep3(camera);
 	glPushMatrix();
-	BaseSimulator::getWorld()->glDraw();
+	wrl->glDraw();
 	glPopMatrix();
-  
 	shadowedRenderingStep4();
 
 	// drawing of the interface
