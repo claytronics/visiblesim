@@ -25,15 +25,16 @@ Camera::Camera(double t, double p, double d, double SX,double SY) {
 }
 
 void Camera::updatePositionFromAngles() {
-	double dx = cos(phi)*cos(theta),
-	      dy = cos(phi)*sin(theta);
-	position.pt[0] = target.pt[0] + distance*dx;
-	position.pt[1] = target.pt[1] + distance*dy;
-	position.pt[2] = target.pt[2] + distance*sin(phi);
-	X_floor.set(dy,-dx,0);
-	X_floor.normer_interne();
-	Y_floor.set(dx,dy,0);
-	Y_floor.normer_interne();
+	double OCamx = distance*cos(phi)*cos(theta),
+		   OCamy = distance*cos(phi)*sin(theta),
+		   OCamz = distance*sin(phi);
+	position.pt[0] = target.pt[0] + OCamx;
+	position.pt[1] = target.pt[1] + OCamy;
+	position.pt[2] = target.pt[2] + OCamz;
+	Xcam.set(OCamy,-OCamx,0);
+	Xcam.normer_interne();
+	Ycam.set(-OCamx*OCamz,-OCamy*OCamz,OCamx*OCamx+OCamy*OCamy);
+	Ycam.normer_interne();
 }
 
 void Camera::mouseDown(int x, int y,bool tm) {
@@ -44,7 +45,7 @@ void Camera::mouseDown(int x, int y,bool tm) {
 
 void Camera::mouseUp(int x, int y) {
 	if (targetMotion)
-	{ target+=-0.1*(mouse[0]-x)*X_floor + 0.1*(mouse[1]-y)*Y_floor;
+	{ target+=-0.1*(mouse[0]-x)*Xcam + 0.1*(y-mouse[1])*Ycam;
 	} else
 	{ theta += (mouse[0]-x)*sensibilityX;
 	  phi -= (mouse[1]-y)*sensibilityY;
@@ -57,7 +58,7 @@ void Camera::mouseUp(int x, int y) {
 
 void Camera::mouseMove(int x, int y) {
 	if (targetMotion) {
-		target+=-0.1*(mouse[0]-x)*X_floor + 0.1*(mouse[1]-y)*Y_floor;
+		target+=-0.1*(mouse[0]-x)*Xcam + 0.1*(y-mouse[1])*Ycam;
 	} else {
 		theta += (mouse[0]-x)*sensibilityX;
 		phi -= (mouse[1]-y)*sensibilityY;

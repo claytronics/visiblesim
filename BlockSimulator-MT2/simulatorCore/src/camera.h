@@ -45,7 +45,7 @@ public :
 
 class Camera { 
   double phi,theta,distance;
-  Vecteur position,target,X_floor,Y_floor;
+  Vecteur position,target,Xcam,Ycam;
   int mouse[2];
   double sensibilityX,sensibilityY;
   double w_h,near_plane,far_plane,angle;

@@ -118,10 +118,22 @@ void GlutContext::motionFunc(int x,int y) {
 }
 
 void GlutContext::passiveMotionFunc(int x,int y) {
-	int n=mainWindow->mouseFunc(-1,-1,x,screenHeight - y);
-	if (n>0) return;
-	if (popupMenu) popupMenu->mouseFunc(-1,-1,x,screenHeight - y);
-	if (helpWindow) helpWindow->mouseFunc(-1,-1,x,screenHeight - y);
+	if (popup->isShown()) {
+		glutPostRedisplay();
+		popup->show(false);
+	}
+	if (helpWindow && helpWindow->passiveMotionFunc(x,screenHeight - y)) {
+		glutPostRedisplay();
+		return;
+	}
+	if (popupMenu && popupMenu->passiveMotionFunc(x,screenHeight - y)) {
+		glutPostRedisplay();
+		return;
+	}
+	if (mainWindow->passiveMotionFunc(x,screenHeight - y)) {
+		glutPostRedisplay();
+		return;
+	}
 	lastMotionTime = glutGet(GLUT_ELAPSED_TIME);
 	lastMousePos[0]=x;
 	lastMousePos[1]=y;
@@ -133,7 +145,10 @@ void GlutContext::passiveMotionFunc(int x,int y) {
 // - state : état des touches du clavier
 // - x,y : coordonnée du curseur dans la fenêtre
 void GlutContext::mouseFunc(int button,int state,int x,int y) {
-	if (mainWindow->mouseFunc(button,state,x,screenHeight - y)>0) return;
+	if (mainWindow->mouseFunc(button,state,x,screenHeight - y)>0) {
+		glutPostRedisplay();
+		return;
+	}
 	if (popupMenu) {
 		int n=popupMenu->mouseFunc(button,state,x,screenHeight - y);
 		if (n) {
@@ -177,7 +192,7 @@ void GlutContext::mouseFunc(int button,int state,int x,int y) {
 			break;
 		}
 	} else { // selection of the clicked block
-		if (state==GLUT_DOWN) {
+		if (state==GLUT_UP) {
 			if (button==GLUT_LEFT_BUTTON) {
 				int n=selectFunc(x,y);
 				GlBlock *slct=BaseSimulator::getWorld()->getSelectedBlock();
@@ -283,7 +298,7 @@ void GlutContext::idleFunc(void) {
 		 	glutPostRedisplay();
 		}
 	}
-	if (mainWindow->hasSelectedBlock() || mainWindow->isOpened() || getScheduler()->state==Scheduler::RUNNING) {
+	if (mainWindow->hasSelectedBlock() || getScheduler()->state==Scheduler::RUNNING) {
 		glutPostRedisplay(); // for blinking
 	}
 }
