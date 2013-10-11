@@ -6,7 +6,7 @@
  */
 
 #include <iostream>
-#include <stdlib.h>lock
+#include <stdlib.h>
 #include "assert.h"
 #include "scheduler.h"
 #include "trace.h"
