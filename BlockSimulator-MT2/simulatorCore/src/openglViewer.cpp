@@ -210,7 +210,7 @@ void GlutContext::mouseFunc(int button,int state,int x,int y) {
 // - x,y : coordonnée du curseur dans la fenètre
 void GlutContext::keyboardFunc(unsigned char c, int x, int y)
 {
-	static int modeScheduler;
+  //  static int modeScheduler;
 	Camera* camera=getWorld()->getCamera();
 	
 	switch(c)
