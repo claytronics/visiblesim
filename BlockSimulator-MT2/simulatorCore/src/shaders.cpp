@@ -30,7 +30,7 @@ GLcharARB *lectureCodeShader(const char* titre)
   return code;
 }
 
-GLhandleARB loadShader(char *titreVP,char *titreFP) {
+GLhandleARB loadShader(const char *titreVP, const char *titreFP) {
 	GLhandleARB VShader,FShader;
 	GLcharARB* code;
 	GLhandleARB prog;          
