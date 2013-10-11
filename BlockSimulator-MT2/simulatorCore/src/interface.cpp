@@ -67,6 +67,16 @@ int GlutWindow::mouseFunc(int button,int state,int mx,int my) {
 	return 0;
 }
 
+bool GlutWindow::passiveMotionFunc(int mx,int my) {
+	vector <GlutWindow*>::const_iterator cw = children.begin();
+	while (cw!=children.end()) {
+		if ((*cw)->passiveMotionFunc(mx-x,my-y)) return true;
+		cw++;
+	}
+	return false;
+}
+
+
 void GlutWindow::bindTexture() {
 	glEnable(GL_TEXTURE_2D);
 	glBindTexture(GL_TEXTURE_2D,idTexture);
@@ -305,6 +315,11 @@ int GlutButton::mouseFunc(int button,int state,int mx,int my) {
 	  return (isActive && state==GLUT_UP)? id:0;
 	}
 	return 0;
+}
+
+bool GlutButton::passiveMotionFunc(int mx,int my) {
+	isHighlighted=(mx>x && mx<x+w && my>y && my<y+h);
+	return isHighlighted;
 }
 
 /////////////////////////////////////////////////////////////////////////////

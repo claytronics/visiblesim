@@ -30,8 +30,8 @@ SmartBlock1BlockCode::~SmartBlock1BlockCode() {
 void SmartBlock1BlockCode::startup() {
 	stringstream info;
 
-	info << "  Starting SmartBlock1BlockCode in block " << hostBlock->blockId;
-	scheduler->trace(info.str());
+	info << "Starting ";
+	scheduler->trace(info.str(),hostBlock->blockId);
 
 	distance_dealer = NULL;
 	my_distance = MAX_DIST;
@@ -40,7 +40,7 @@ void SmartBlock1BlockCode::startup() {
 	if( hostBlock->blockId == 1)
 	{
 		#ifndef NDEBUG
-		cout << "Block #" << hostBlock->blockId << " : I am a master block !" << endl;
+		cout << "Block #" << hostBlock->blockId << " : is master block !" << endl;
 		#endif
 
 		my_distance = 0;
@@ -52,7 +52,7 @@ void SmartBlock1BlockCode::startup() {
 			P2PNetworkInterface *p2p = smartBlock->getInterface(NeighborDirection(i));
 			if( p2p->connectedInterface)
 			{
-				time_offset = (i+1)*10000;
+				time_offset = (i+1)*1000;
 				send_dist( my_distance + 1, p2p, time_offset);
 				isAck[i] = false;
 			}
@@ -76,50 +76,55 @@ void SmartBlock1BlockCode::processLocalEvent(EventPtr pev) {
 
 			switch( message->id) {
 				//If i receive a distance message :
-				case DIST_MSG_ID :
-				{
+				case DIST_MSG_ID : {
 					//TODO completement experimental, je ne sais pas précisement les effets de cette ligne
 					Dist_message_ptr recv_message = boost::static_pointer_cast<Dist_message>(message);
 
 					sourceId = recv_message->sourceInterface->hostBlock->blockId;
 					info.str("");
-					info << "Block " << hostBlock->blockId << " received a Dist_message '" << recv_message->getDistance() << "' from " << sourceId << endl;
+					info << " rec. Dist_message '" << recv_message->getDistance() << "' from " << sourceId;
 					//info << "data : " << msg->data();
-					scheduler->trace(info.str());
+					scheduler->trace(info.str(),hostBlock->blockId);
 
 					//I compare its distance with mine
-					if( recv_message->getDistance() < my_distance)
-					{
+					if( recv_message->getDistance() < my_distance) {
 						my_distance = recv_message->getDistance();
-						smartBlock->setColor(my_distance);
+	//					smartBlock->setColor(my_distance);
 
 						distance_dealer = recv_message->destinationInterface;
 
 						//I send my new distance to all my neighbors except to its sender
-						for( i = North; i <= West; i++)
-						{
+						for( i = North; i <= West; i++) {
 							P2PNetworkInterface * p2p = smartBlock->getInterface( NeighborDirection(i));
 							if( p2p->connectedInterface) {
 								//except to the sender
 								if( p2p != recv_interface) {
-									time_offset = (i+1)*1000000;
+									time_offset = (i+1)*1000;
 									send_dist( my_distance + 1, p2p, time_offset);
 
 									isAck[i] = false;
 								}
 								//I'm not waiting for an Ack from the sender of the distance
-								else { isAck[i] = true;	}
+								else { 
+									isAck[i] = true;	
+							  }
 							}
 							//From where there is no neighbor, i'm not waiting for an Ack
-							else { isAck[i] = true; }
+							else { 
+								isAck[i] = true; 
+							}
 						}
 						//Now, i check if i can already acknowledge my new distance
-						if( i_can_ack()){ send_ack( my_distance, recv_interface, 1000); }
+						if( i_can_ack()) { 
+							send_ack((hostBlock->blockId==2),my_distance, recv_interface, 1000); 
+						}
 					}
-					//If my distance was better than the one i received, i ack
-					else{	send_ack( my_distance, recv_interface, 1000);	}
-					break;
+/*					//If my distance was better than the one i received, i ack
+					else { 
+						send_ack((hostBlock->blockId==2),my_distance, recv_interface, 1000);	
+					}*/
 				}
+				break;
 
 				case ACK_MSG_ID :
 				{
@@ -130,11 +135,29 @@ void SmartBlock1BlockCode::processLocalEvent(EventPtr pev) {
 
 					sourceId = message->sourceInterface->hostBlock->blockId;
 					info.str("");
-					info << "Block " << hostBlock->blockId << " received a Ack_message '" << recv_message->getDistance() << "' from " << sourceId << endl;
+					info << " rec. Ack_message '" << recv_message->getDistance() << "' from " << sourceId;
 
 					//info << "data : " << msg->data();
-					scheduler->trace(info.str());
-
+					scheduler->trace(info.str(),hostBlock->blockId);
+					if (recv_message->getPath() && recv_message->getDistance()==my_distance+1) {
+						smartBlock->setColor(recv_message->getPath());
+						//I send my new distance to all my neighbors except to its sender
+						for( i = North; i <= West; i++) {
+							P2PNetworkInterface * p2p = smartBlock->getInterface( NeighborDirection(i));
+							if( p2p->connectedInterface) {
+								//except to the sender
+								if( p2p != recv_interface) {
+									time_offset = (i+1)*1000;
+									send_ack(1,my_distance, p2p, time_offset);
+								}
+							}
+							//From where there is no neighbor, i'm not waiting for an Ack
+							else { 
+								isAck[i] = true; 
+							}
+						}
+					}				
+/*
 					//I want to be sure that my neighbors is acknowledging the last distance i sent
 					if( recv_message->getDistance() < my_distance + 2)
 					{
@@ -150,9 +173,9 @@ void SmartBlock1BlockCode::processLocalEvent(EventPtr pev) {
 
 							}
 							//else i have to acknowledge
-							else{	send_ack( my_distance, distance_dealer, 1000); }
+							else{	send_ack( my_distance, distance_dealer, 100000); }
 						}
-					}
+					}*/
 					break;
 				}
 
@@ -175,8 +198,8 @@ void SmartBlock1BlockCode::send_dist( unsigned int distance,  P2PNetworkInterfac
 	scheduler->schedule( new NetworkInterfaceEnqueueOutgoingEvent( scheduler->now() + time_offset, message, by_interface));
 }
 
-void SmartBlock1BlockCode::send_ack( unsigned int distance,  P2PNetworkInterface * by_interface, uint64_t time_offset) {
-	Ack_message * ack = new Ack_message( distance);
+void SmartBlock1BlockCode::send_ack(unsigned int path, unsigned int distance,  P2PNetworkInterface * by_interface, uint64_t time_offset) {
+	Ack_message * ack = new Ack_message(path, distance);
 	scheduler->schedule( new NetworkInterfaceEnqueueOutgoingEvent( scheduler->now() + time_offset, ack, by_interface));
 }
 
@@ -201,9 +224,10 @@ Dist_message::Dist_message(unsigned int d):Message(){
 Dist_message::~Dist_message() {
 }
 
-Ack_message::Ack_message(unsigned int d):Message() {
+Ack_message::Ack_message(unsigned int p,unsigned int d):Message() {
 	id = ACK_MSG_ID;
 	distance = d;
+  path=p;
 }
 
 Ack_message::~Ack_message() {

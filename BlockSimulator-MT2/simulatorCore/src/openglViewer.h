@@ -31,6 +31,9 @@ class GlutContext {
     static GlutHelpWindow *helpWindow;
 	static int screenWidth, screenHeight;
 	static bool fullScreenMode;
+	static bool saveScreenMode;
+	static int lastMotionTime;
+	static int lastMousePos[2];
 //	bool showLinks;
 
 	static void init(int argc, char **argv);
@@ -48,7 +51,7 @@ private :
 	static int selectFunc(int x,int y);
 	static int selectFaceFunc(int x,int y);
 	static int processHits(GLint hits, GLuint *buffer);
-	static bool saveScreen(char *titre);
+	static bool saveScreen(char *title);
 	static void *lanceScheduler(void *param);
 };
 

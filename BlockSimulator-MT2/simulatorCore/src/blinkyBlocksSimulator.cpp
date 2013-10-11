@@ -113,6 +113,16 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 			float angle = atof(attr);
 			world->getCamera()->setAngle(angle);
 		}
+		double def_near=1,def_far=1500;
+		attr=cameraElement->Attribute("near");
+		if (attr) {
+			def_near = atof(attr);
+		}
+		attr=cameraElement->Attribute("far");
+		if (attr) {
+			def_far = atof(attr);
+		}
+		world->getCamera()->setNearFar(def_near,def_far);
 	}
 
 	// loading the spotlight parameters
@@ -145,6 +155,7 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 		}
 		float farplane=2.0*dist*tan(angle*M_PI/180.0);
 		world->getCamera()->setLightParameters(target,az,ele,dist,angle,10.0,farplane);
+
 	}
 
 	// loading the blocks
@@ -208,9 +219,90 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 		ERRPUT << "no Block List" << endl;
 	}
 	
+	// loading the scenario
+	TiXmlNode *nodeScenario = node->FirstChild("scenario");
+	if (nodeScenario) {
+		bool autostart=false;
+		TiXmlElement* element = nodeScenario->ToElement();
+		const char *attr= element->Attribute("autostart");
+		if (attr) {
+			string str(attr);
+			autostart=(str=="True" || str=="true");
+		}
+		OUTPUT << "SCENARIO: Autostart=" << autostart << endl;
+		/* Reading an event */
+		nodeScenario = nodeScenario->FirstChild("event");
+		float eventTime =0.0;
+		int eventBlockId=-1;
+		while (nodeScenario) {
+			element = nodeScenario->ToElement();
+			attr = element->Attribute("time");
+			if (attr) {
+				eventTime = atof(attr);
+			}
+			attr = element->Attribute("type");
+			if (attr) {
+				string strAttr(attr);
+				if (strAttr=="tap") {
+					attr = element->Attribute("id");
+					eventBlockId=-1;
+					if (attr) {
+						eventBlockId=atoi(attr);
+					}
+					if (eventBlockId==-1) {
+						ERRPUT << "SCENARIO:No id for tap event" << endl;
+					} else {
+						OUTPUT << "SCENARIO: tap(" << eventTime << "," << eventBlockId << ")" << endl;
+						world->addScenarioEvent(new ScenarioTappEvent(eventTime,eventBlockId));
+					}
+				} else if (strAttr=="debug") {
+					attr = element->Attribute("id");
+					bool open=true;
+					if (attr) {
+						string str(attr);
+						open = (str=="true" || str=="True");
+					}
+					OUTPUT << "SCENARIO: debug(" << eventTime << "," << open << ")" << endl;
+					world->addScenarioEvent(new ScenarioDebugEvent(eventTime,open));
+				} else if (strAttr=="selectBlock") {
+					attr = element->Attribute("id");
+					eventBlockId=-1;
+					if (attr) {
+						eventBlockId=atoi(attr);
+					}
+					OUTPUT << "SCENARIO: selectBlock(" << eventTime << "," << eventBlockId << ")" << endl;
+					world->addScenarioEvent(new ScenarioSelectBlockEvent(eventTime,eventBlockId));
+				} else if (strAttr=="addBlock") {
+					attr = element->Attribute("position");
+					if (attr) {
+						string str(attr);
+						int pos1 = str.find_first_of(','),
+						pos2 = str.find_last_of(',');
+						Vecteur position;
+						position.pt[0] = atoi(str.substr(0,pos1).c_str());
+						position.pt[1] = atoi(str.substr(pos1+1,pos2-pos1-1).c_str());
+						position.pt[2] = atoi(str.substr(pos2+1,str.length()-pos1-1).c_str());
+						OUTPUT << "SCENARIO: addBlock(" << eventTime << "," << position << ")" << endl;
+						world->addScenarioEvent(new ScenarioAddBlockEvent(eventTime,position));
+					} else {
+						ERRPUT << "SCENARIO: No position for addBlock event" << endl;
+					}
+
+				} else {
+					ERRPUT << "SCENARIO: event '" << attr << "': unknown !" << endl;
+				}
+
+			} else {
+				ERRPUT << "SCENARIO: no Event type " << endl;
+			}
+			nodeScenario = nodeScenario->NextSibling("event");
+		} // while(nodeScenario)
+	}
 	world->linkBlocks();
+
 	getScheduler()->sem_schedulerStart->post();
 	getScheduler()->setState(Scheduler::NOTSTARTED);
+
 #ifndef TEST_DETER
 	GlutContext::mainLoop();
 #endif

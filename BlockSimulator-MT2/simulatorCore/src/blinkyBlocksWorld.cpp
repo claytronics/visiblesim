@@ -60,6 +60,13 @@ BlinkyBlocksWorld::~BlinkyBlocksWorld() {
 	delete objBlockForPicking;
 	delete objRepere;
 	delete camera;
+	/* free Scenario Events */
+	vector<ScenarioEvent*>::const_iterator it=tabEvents.begin();
+	while (it!=tabEvents.end()) {
+		delete (*it);
+		it++;
+	}
+	tabEvents.clear();
 }
 
 
@@ -206,6 +213,7 @@ void BlinkyBlocksWorld::glDraw() {
 	static const GLfloat white[]={1.0,1.0,1.0,1.0},
 			gray[]={0.6,0.6,0.6,1.0};
 
+
 	glPushMatrix();
 	glTranslatef(0.5*blockSize[0],0.5*blockSize[1],0);
 	glDisable(GL_TEXTURE_2D);
@@ -291,7 +299,6 @@ void BlinkyBlocksWorld::glDraw() {
 	glPopMatrix();
 	// draw the axes
 	objRepere->glDraw();
-
 }
 
 void BlinkyBlocksWorld::glDrawId() {
@@ -352,6 +359,7 @@ void BlinkyBlocksWorld::createPopupMenu(int ix, int iy) {
 		GlutContext::popupMenu->addButton(4,"../../simulatorCore/blinkyBlocksTextures/menu_save.tga");
 		GlutContext::popupMenu->addButton(5,"../../simulatorCore/blinkyBlocksTextures/menu_cancel.tga");
 	}
+	if (iy<GlutContext::popupMenu->h) iy=GlutContext::popupMenu->h;
 	// verify if add is possible for this face
 	BlinkyBlocksBlock *bb = (BlinkyBlocksBlock *)getBlockById(tabGlBlocks[numSelectedBlock]->blockId);
 	bool valid=true;
@@ -508,7 +516,7 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 	void BlinkyBlocksWorld::createHelpWindow() {
 		if (GlutContext::helpWindow) 
 			delete GlutContext::helpWindow;
-		GlutContext::helpWindow = new GlutHelpWindow(NULL,10,40,540,480,"../../simulatorCore/blinkyBlocksHelp.txt");
+		GlutContext::helpWindow = new GlutHelpWindow(NULL,10,40,540,500,"../../simulatorCore/blinkyBlocksHelp.txt");
 	}
 	
 	bool BlinkyBlocksWorld::dateHasBeenReachedByAll(uint64_t date) {

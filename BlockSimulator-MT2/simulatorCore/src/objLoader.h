@@ -113,13 +113,21 @@ public :
 
 /////////////////////////////////////////////////////////////////////////////
 // objData : sub-objects data
+struct vertexPosNrmTx {
+	GLfloat x,y,z;
+	GLfloat nx,ny,nz;
+	GLfloat s,t;
+};
+
+#define BUFFER_OFFSET(i) ((char *)NULL+i)
 class ObjData
 { public :
   std::vector <Sommet*> tabVertex;
   std::vector <FaceTri*> tabFaces;
-  GLfloat *tabVertices,*tabNormals,*tabTexCoords;
+  vertexPosNrmTx *tabVertices;
   GLuint *tabIndices;
   GLuint nbreIndices;
+  GLuint vboId,indexVboId;
 
   char nom[128],nomOriginal[64];
   Mtl *objMtl;

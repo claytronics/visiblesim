@@ -77,6 +77,7 @@ libsimSmartBlocks.a: $(BASESIMULATOR_OBJS) $(SMARTBLOCKS_OBJS)
 
 clean:
 	rm -f *~ $(OBJS) $(OUT) $(DEPS) ../lib/*.a ../include/*.h
+	rm -rf ../lib
 	
 %.depends: %.cpp
 	$(CC) -M $(CCFLAGS) $(INCLUDES) $< > $@

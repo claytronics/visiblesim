@@ -36,7 +36,8 @@ protected :
 	inline void setGeometry(GLint px,GLint py,GLint pw,GLint ph) { x=px; y=py; w=pw; h=ph; };
 
 	virtual void glDraw();
-	virtual int mouseFunc(int button,int state,int x,int y);
+	virtual int mouseFunc(int button,int state,int mx,int my);
+	virtual bool passiveMotionFunc(int mx,int my);
 	virtual void reshapeFunc(int mw,int mh) {};
 	static GLuint loadTexture(const char *titre,int &tw,int &th);
 	static unsigned char *lectureTarga(const char *titre, int& width, int& height ,bool retourner=false);
@@ -53,6 +54,7 @@ public :
 
 	inline void activate(bool v) { isActive=v; };
 	int mouseFunc(int button,int state,int x,int y);
+	bool passiveMotionFunc(int mx,int my);
 	void glDraw();
 };
 
@@ -100,6 +102,8 @@ public :
 	void glDraw();
 	void addTrace(int id,const string &str);
 	void select(GlBlock *sb);
+	inline bool hasSelectedBlock()  { return selectedBlock!=NULL; };
+	inline bool isOpened() { return openingLevel!=0; }
 };
 
 class GlutPopupWindow : public GlutWindow {
@@ -110,6 +114,7 @@ public :
 	virtual ~GlutPopupWindow() {};
 
 	void show(bool v) { isVisible=v;};
+	inline bool isShown() { return isVisible; };
 	void setCenterPosition(int ix,int iy) { x=ix-w/2; y=iy; };
 	void setInfo(const string &str) { info=str; };
 	void glDraw();

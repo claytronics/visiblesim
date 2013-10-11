@@ -1,10 +1,10 @@
 /////////////////////////////////////////////////////////////////////////////
 // File:        objLoader.cpp
 // Project:     OBJ models file loader
-// Author:      Beno�t Piranda
+// Author:      Benoit Piranda
 // Modified by:
 // Created:     2008-09-29
-// Copyright:   (c) Beno�t Piranda
+// Copyright:   (c) Benoit Piranda
 // Licence:     UFC licence
 // Version: 1.6 Windows
 /////////////////////////////////////////////////////////////////////////////
@@ -68,7 +68,9 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
 		ERRPUT << "File error : " << txt << endl;
 		exit(EXIT_FAILURE);
 	}
-
+#ifdef DEBUG
+   OUTPUT << "Open " << txt  << " file..."<< endl;
+#endif
 	mtls=NULL;
  
 	// chargement des points
@@ -185,13 +187,15 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
     						numeroPoint(str_pt1,numVert[0],numNorm[0],numTex[0]);
     						numeroPoint(str_pt2,numVert[1],numNorm[1],numTex[1]);
     						numeroPoint(str_pt3,numVert[2],numNorm[2],numTex[2]);
+/*
 #ifdef DEBUG
     						OUTPUT << "Face : (" << numVert[0] << "," << numNorm[0] << "," << numTex[0] << ")";
     						OUTPUT << "(" << numVert[1] << "," << numNorm[1] << "," << numTex[1] << ")";
     						OUTPUT << "(" << numVert[2] << "," << numNorm[2] << "," << numTex[2] << ")" << endl;
 #endif
+*/
     						if (numTex[0]==0 || numTex[1]==0 || numTex[2]==0) {
-    							ERRPUT << "No texture coordiantes for this objcet : " << objCourant->nomOriginal << endl;
+    							ERRPUT << "No texture coordinates for this object : " << objCourant->nomOriginal << endl;
     							system("PAUSE");
     						}
     						S1.set(tabVertex[numVert[0]-1].v,tabNormal[numNorm[0]-1].v,tabTexture[numTex[0]-1].v);
@@ -368,8 +372,6 @@ ObjData::ObjData(const char *str) {
 	objMtl=NULL;
 	nbreIndices=0;
 	tabVertices=NULL;
-	tabNormals=NULL;
-	tabTexCoords=NULL;
 	tabIndices=NULL,
 #ifdef WIN32
   strncpy_s(nomOriginal,str,64);
@@ -380,27 +382,36 @@ ObjData::ObjData(const char *str) {
 
 ObjData::~ObjData() {
 	delete [] tabVertices;
-	delete [] tabNormals;
-	delete [] tabTexCoords;
 	delete [] tabIndices;
 }
 
 void ObjData::glDraw(void) {
 	objMtl->glBind();
-	glEnableClientState(GL_NORMAL_ARRAY);
+	// Bind our buffers much like we would for texturing
+	glBindBuffer(GL_ARRAY_BUFFER, vboId);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVboId);
+
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
-	glNormalPointer(GL_FLOAT, 0, tabNormals);
-	glTexCoordPointer(2, GL_FLOAT, 0, tabTexCoords);
-	glVertexPointer(3, GL_FLOAT, 0, tabVertices);
-	glDrawElements(GL_TRIANGLES, nbreIndices,GL_UNSIGNED_INT,tabIndices);
-	glDisableClientState(GL_VERTEX_ARRAY);  // disable vertex arrays
+
+	// Resetup our pointers.  This doesn't reinitialise any data, only how we walk through it
+	glTexCoordPointer(2, GL_FLOAT, sizeof(vertexPosNrmTx), BUFFER_OFFSET(24));
+	glNormalPointer(GL_FLOAT, sizeof(vertexPosNrmTx), BUFFER_OFFSET(12));
+	glVertexPointer(3, GL_FLOAT, sizeof(vertexPosNrmTx), BUFFER_OFFSET(0));
+
+	// Actually do our drawing, parameters are Primative (Triangles, Quads, Triangle Fans etc), Elements to
+	// draw, Type of each element, Start Offset
+	glDrawElements(GL_TRIANGLES, nbreIndices, GL_UNSIGNED_INT, BUFFER_OFFSET(0));
+
+	// Disable our client state back to normal drawing
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 void ObjData::glDrawId(void) {
-	glEnableClientState(GL_NORMAL_ARRAY);
+	/*glEnableClientState(GL_NORMAL_ARRAY);
 	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 	glNormalPointer(GL_FLOAT, 0, tabNormals);
@@ -409,7 +420,27 @@ void ObjData::glDrawId(void) {
 	glDrawElements(GL_TRIANGLES, nbreIndices,GL_UNSIGNED_INT,tabIndices);
 	glDisableClientState(GL_VERTEX_ARRAY);  // disable vertex arrays
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+	glDisableClientState(GL_NORMAL_ARRAY);*/
+
+	glBindBuffer(GL_ARRAY_BUFFER, vboId);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVboId);
+
+	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+	glEnableClientState(GL_NORMAL_ARRAY);
+	glEnableClientState(GL_VERTEX_ARRAY);
+
+	// Resetup our pointers.  This doesn't reinitialise any data, only how we walk through it
+	glTexCoordPointer(2, GL_FLOAT, sizeof(vertexPosNrmTx), BUFFER_OFFSET(24));
+	glNormalPointer(GL_FLOAT, sizeof(vertexPosNrmTx), BUFFER_OFFSET(12));
+	glVertexPointer(3, GL_FLOAT, sizeof(vertexPosNrmTx), BUFFER_OFFSET(0));
+
+	// Actually do our drawing, parameters are Primative (Triangles, Quads, Triangle Fans etc), Elements to
+	// draw, Type of each element, Start Offset
+	glDrawElements(GL_TRIANGLES, nbreIndices, GL_UNSIGNED_INT, BUFFER_OFFSET(0));
+	// Disable our client state back to normal drawing
+	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
+	glDisableClientState(GL_VERTEX_ARRAY);
 }
 
 void ObjData::addFace(Sommet &ptr1,Sommet &ptr2,Sommet &ptr3) {
@@ -437,22 +468,21 @@ GLuint ObjData::addVertex(const Sommet &s) {
 }
 
 void ObjData::createVertexArray() {
-	int siz = tabVertex.size();
-	tabVertices = new GLfloat[3*siz];
-	tabNormals = new GLfloat[3*siz];
-	tabTexCoords = new GLfloat[2*siz];
-	GLfloat *ptrV = tabVertices,
-			*ptrN = tabNormals,
-			*ptrT = tabTexCoords;
+	int sizeVert = tabVertex.size();
+	tabVertices = new vertexPosNrmTx[sizeVert];
+	vertexPosNrmTx *ptrV = tabVertices;
 
 	vector<Sommet*>::const_iterator pv = tabVertex.begin();
 	while(pv!=tabVertex.end()) {
-		memcpy(ptrV,(*pv)->v,3*sizeof(GLfloat));
-		memcpy(ptrN,(*pv)->n,3*sizeof(GLfloat));
-		memcpy(ptrT,(*pv)->t,2*sizeof(GLfloat));
-		ptrV+=3;
-		ptrN+=3;
-		ptrT+=2;
+		ptrV->x = (*pv)->v[0];
+		ptrV->y = (*pv)->v[1];
+		ptrV->z = (*pv)->v[2];
+		ptrV->nx = (*pv)->n[0];
+		ptrV->ny = (*pv)->n[1];
+		ptrV->nz = (*pv)->n[2];
+		ptrV->s = (*pv)->t[0];
+		ptrV->t = (*pv)->t[1];
+		ptrV++;
 		pv++;
     }
 
@@ -478,6 +508,22 @@ void ObjData::createVertexArray() {
 		pi++;
 	}
 	tabFaces.clear();
+
+	// prepare the VBO
+	glGenBuffers(1,&vboId);
+	glBindBuffer(GL_ARRAY_BUFFER,vboId);
+	glBufferData(GL_ARRAY_BUFFER, sizeof(vertexPosNrmTx) * sizeVert, NULL, GL_STATIC_DRAW);
+	glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(vertexPosNrmTx) * sizeVert, tabVertices);
+	glTexCoordPointer(2, GL_FLOAT, sizeof(vertexPosNrmTx), BUFFER_OFFSET(24));
+	glNormalPointer(GL_FLOAT, sizeof(vertexPosNrmTx), BUFFER_OFFSET(12));
+	glVertexPointer(3, GL_FLOAT, sizeof(vertexPosNrmTx), BUFFER_OFFSET(0));
+
+	glGenBuffers(1, &indexVboId); // Generate buffer
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVboId);
+	glBufferData(GL_ELEMENT_ARRAY_BUFFER, nbreIndices * sizeof(GLuint), tabIndices, GL_STATIC_DRAW);
+
+	glBindBuffer(GL_ARRAY_BUFFER, vboId);
+	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVboId);
 }
 
 /////////////////////////////////////////////////////////////////////////////

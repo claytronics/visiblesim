@@ -72,6 +72,16 @@ SmartBlocksSimulator::SmartBlocksSimulator(int argc, char *argv[], SmartBlocksBl
 			float angle = atof(attr);
 			world->getCamera()->setAngle(angle);
 		}
+		double def_near=1,def_far=1500;
+		attr=cameraElement->Attribute("near");
+		if (attr) {
+			def_near = atof(attr);
+		}
+		attr=cameraElement->Attribute("far");
+		if (attr) {
+			def_far = atof(attr);
+		}
+		world->getCamera()->setNearFar(def_near,def_far);
 	}
 
 	// loading the spotlight parameters
