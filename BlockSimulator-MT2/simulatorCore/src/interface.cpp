@@ -506,7 +506,7 @@ int GlutPopupMenuWindow::mouseFunc(int button,int state,int mx,int my) {
 	return n;
 }
 
-void GlutPopupMenuWindow::activate(int id,bool value) {
+void GlutPopupMenuWindow::activate(unsigned int id,bool value) {
 	std::vector <GlutWindow*>::const_iterator cb=children.begin();
 	while (cb!=children.end() && (*cb)->id!=id) {
 		cb++;
@@ -524,7 +524,7 @@ GlutHelpWindow::GlutHelpWindow(GlutWindow *parent,GLint px,GLint py,GLint pw,GLi
 	isVisible=false;
 	text=NULL;
 	
-	GlutButton *btn = new GlutButton(this, 999,pw-35,ph-35,32,32,"../../simulatorCore/smartBlocksTextures/close.tga");
+	//GlutButton *btn = new GlutButton(this, 999,pw-35,ph-35,32,32,"../../simulatorCore/smartBlocksTextures/close.tga");
 
 	ifstream fin(textFile);
 	if(!fin) { 
