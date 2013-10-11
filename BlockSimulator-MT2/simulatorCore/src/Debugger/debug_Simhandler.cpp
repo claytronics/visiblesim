@@ -32,7 +32,7 @@ namespace debugger {
 
     ConcurrentQueue<message_type*> *messageQueue;
     /*global variables to controll main thread*/
-    static bool isSystemPaused = true;
+  static bool isSystemPaused = true;
     static bool isDebug = false;
     static bool isSimDebug = false;
     static bool isPausedAtBreakpoint = false;
@@ -171,7 +171,7 @@ namespace debugger {
     /*SETFLAGS -- switch to different debugging modes based on user input*/
    void setFlags(string specification){
         ostringstream msg;
-        for (int i = 0; i < specification.length(); i++){
+        for (uint i = 0; i < specification.length(); i++){
             if ((uint)specification[i] == 'V'){
                 verboseMode = true;
             } else if ((uint)specification[i] == 'S'){
