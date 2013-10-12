@@ -61,6 +61,7 @@ BlinkyBlocksWorld::~BlinkyBlocksWorld() {
 	delete objRepere;
 	delete camera;
 	/* free Scenario Events */
+	cerr << "deleting scenario events which has non-virtual destructor.  ERROR. FIX THIS\n";
 	vector<ScenarioEvent*>::const_iterator it=tabEvents.begin();
 	while (it!=tabEvents.end()) {
 		delete (*it);
