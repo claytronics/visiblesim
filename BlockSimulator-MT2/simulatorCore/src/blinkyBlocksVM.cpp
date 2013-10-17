@@ -58,11 +58,11 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 		close(fd);
 		if (debugging) {
 			//./meld -f  /home/ubuntu/Bureau/CMU/meld/examples/ends.m -c sl -D SIM
-		  char* cmd[] = {(char*)vmPath.c_str(), /*(char*)"-a", (char*)"bbsim",*/ (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", (char*) "-D", (char*) "SIM", NULL };
+		  char* cmd[] = {(char*)vmPath.c_str(), (char*)"-a", (char*)"bbsim", (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", (char*) "-D", (char*) "SIM", NULL };
 			ret = execv(vmPath.c_str(), const_cast<char**>(cmd));
 		} else {
 			//./meld -f  /home/ubuntu/Bureau/CMU/meld/examples/ends.m -c sl
-		  char* cmd[] = {(char*)vmPath.c_str(), /*(char*)"-a", (char*)"bbsim",*/ (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", NULL };
+		  char* cmd[] = {(char*)vmPath.c_str(), (char*)"-a", (char*)"bbsim", (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", NULL };
 			ret = execv(vmPath.c_str(), const_cast<char**>(cmd));
 		}
       if(ret == -1) {
