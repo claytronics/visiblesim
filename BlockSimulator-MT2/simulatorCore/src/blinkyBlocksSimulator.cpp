@@ -22,6 +22,7 @@ void BlinkyBlocksSimulator::help() {
    cerr << "VisibleSim:" << endl;
 	cerr << "blinky01 -f <meld program file> [options]" << endl;
 	cerr << "\t -f <name>\tmeld program" << endl;
+   cerr << "\t -c <name>\txml configuration file" << endl;
    cerr << "\t -r \t\tnon-deterministic and CPU-time mode on startup" << endl;
    cerr << "\t -R \t\tdeterministic and timing accurate mode on startup" << endl;
    cerr << "\t -D \t\tdebugging mode" << endl;
@@ -74,6 +75,12 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
             testMode = true;
          }
          break;
+         case 'c': {
+            // Configuration file, already managed in Simulator constructor
+            argc--;
+            argv++;
+         }
+         break;
          default:
             help();
       }
@@ -106,8 +113,9 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 		attr = vmElement->Attribute("debugging");
 		if (attr) {
 			if ((strcmp(attr, "True") == 0) ||(strcmp(attr, "true") == 0) ) {
-					debugging = true;
-					//createDebugger();
+					if (!testMode) {
+                  debugging = true;
+               }
 			}
 		}
 	}
