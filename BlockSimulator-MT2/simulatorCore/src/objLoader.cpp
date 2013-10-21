@@ -436,8 +436,10 @@ void ObjData::glDrawId(void) {
 
 	// Actually do our drawing, parameters are Primative (Triangles, Quads, Triangle Fans etc), Elements to
 	// draw, Type of each element, Start Offset
-	glDrawElements(GL_TRIANGLES, nbreIndices, GL_UNSIGNED_INT, BUFFER_OFFSET(0));
-	// Disable our client state back to normal drawing
+	// BUG:
+   //glDrawElements(GL_TRIANGLES, nbreIndices, GL_UNSIGNED_INT, BUFFER_OFFSET(0));
+   
+   // Disable our client state back to normal drawing
 	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
 	glDisableClientState(GL_NORMAL_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);

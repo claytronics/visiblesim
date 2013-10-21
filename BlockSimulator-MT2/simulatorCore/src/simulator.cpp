@@ -31,9 +31,9 @@ Simulator::Simulator(int argc, char *argv[]) {
 
 	string confFileName = "config.xml";
 
-	if (argc>=2) {
+	/*if (argc>=2) {
 		confFileName= argv[1];
-	}
+	}*/
 
 	xmlDoc = new TiXmlDocument(confFileName.c_str());
 

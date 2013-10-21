@@ -597,5 +597,15 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		}
 		return true;
 	}
+   
+   void BlinkyBlocksWorld::dump() {
+      map<int, BaseSimulator::BuildingBlock*>::iterator it;
+      cout << "World:" << endl;
+		for(it = buildingBlocksMap.begin(); 
+				it != buildingBlocksMap.end(); it++) {
+			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
+         cout << *bb << endl;
+      }
+   }
 
 } // BlinkyBlock namespace
