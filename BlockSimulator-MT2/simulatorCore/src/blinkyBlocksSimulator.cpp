@@ -25,7 +25,8 @@ void BlinkyBlocksSimulator::help() {
    cerr << "\t -r \t\tnon-deterministic and CPU-time mode on startup" << endl;
    cerr << "\t -R \t\tdeterministic and timing accurate mode on startup" << endl;
    cerr << "\t -D \t\tdebugging mode" << endl;
-   cerr << "\t -d \t\tdump database (deterministic mode)" << endl;
+   cerr << "\t -d \t\tdump world (deterministic mode)" << endl;
+   cerr << "\t -h \t\thelp" << endl;
    exit(EXIT_SUCCESS);
 }
 
