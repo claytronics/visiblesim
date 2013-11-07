@@ -29,8 +29,9 @@ class GlutContext {
     static GlutPopupWindow *popup;
     static GlutPopupMenuWindow *popupMenu;
     static GlutHelpWindow *helpWindow;
-	static int screenWidth, screenHeight;
-	static bool fullScreenMode;
+    static int screenWidth, screenHeight;
+    static int initialScreenWidth, initialScreenHeight;
+    static bool fullScreenMode;
 	static bool saveScreenMode;
 	static int lastMotionTime;
 	static int lastMousePos[2];
@@ -40,8 +41,8 @@ class GlutContext {
 	static void deleteContext();
 	static void mainLoop(void);
 	static void addTrace(const string &str,int id);
-private :
     static void reshapeFunc(int w,int h);
+private :
     static void passiveMotionFunc(int x,int y);
     static void motionFunc(int x,int y);
     static void mouseFunc(int button,int state,int x,int y);

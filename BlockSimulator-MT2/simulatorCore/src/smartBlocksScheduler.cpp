@@ -26,10 +26,8 @@ SmartBlocksScheduler::SmartBlocksScheduler() {
 SmartBlocksScheduler::~SmartBlocksScheduler() {
 	cout << "\033[1;31mSmartBlocksScheduler destructor\33[0m" << endl;
 
-	//MODIF NICO
 	delete sem_schedulerStart;
 	delete schedulerThread;
-	//FIN MODIF NICO
 }
 
 void SmartBlocksScheduler::createScheduler() {
@@ -76,15 +74,9 @@ void *SmartBlocksScheduler::startPaused(/*void *param*/) {
 	    	first=eventsMap.begin();
 	    	pev = (*first).second;
 	    	currentDate = pev->date;
-					//MODIF NICO
- 		   		//~ lock();
- 		   		//FIN MODIF NICO
-				pev->consume();
-					//MODIF NICO
-    			//~ unlock();
-    			//FIN MODIF NICO
-				eventsMap.erase(first);
-				eventsMapSize--;
+			pev->consume();
+			eventsMap.erase(first);
+			eventsMapSize--;
 	    }
 		break;
 	case SCHEDULER_MODE_REALTIME:

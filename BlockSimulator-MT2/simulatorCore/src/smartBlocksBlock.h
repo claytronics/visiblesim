@@ -34,6 +34,7 @@ public:
   void setColor(const Vecteur &c);
   void setColor(int num);
   void setPosition(const Vecteur &p);
+  inline void setDisplayedValue(int n) { ptrGlBlock->setDisplayedValue(n); };
   inline P2PNetworkInterface *getInterface(NeighborDirection d) { return tabInterfaces[d]; }
   //MODIF NICO
   NeighborDirection getDirection( P2PNetworkInterface*);

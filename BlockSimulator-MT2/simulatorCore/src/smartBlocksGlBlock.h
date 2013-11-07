@@ -15,12 +15,13 @@ namespace SmartBlocks {
 class SmartBlocksGlBlock:public GlBlock {
 protected :
 //	string popupInfo,textInfo;
+	int displayedValue;
 public :
 	SmartBlocksGlBlock(int id);
 	virtual ~SmartBlocksGlBlock();
 	virtual string getInfo();
 	/*	virtual string getPopupInfo();*/
-
+	void setDisplayedValue(int n) { displayedValue=n; }
 	void glDraw(ObjLoader::ObjLoader *ptrObj);
 	void glDrawId(ObjLoader::ObjLoader *ptrObj);
 };

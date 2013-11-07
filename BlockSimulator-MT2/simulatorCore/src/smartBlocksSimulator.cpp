@@ -19,18 +19,28 @@ SmartBlocksSimulator::SmartBlocksSimulator(int argc, char *argv[], SmartBlocksBl
 
 	buildNewBlockCode = smartBlocksBlockCodeBuildingFunction;
 	createScheduler();
-/* BPI */
+
 	int currentID=1;
 	SmartBlocksWorld *world=NULL;
 /* reading the xml file */
 	TiXmlNode *node = xmlDoc->FirstChild("world");
 	if (node) {
 		TiXmlElement* worldElement = node->ToElement();
-		string str = worldElement->Attribute("gridsize");
+		string str = worldElement->Attribute("gridSize");
 		int pos = str.find_first_of(',');
 		int largeur = atoi(str.substr(0,pos).c_str());
 		int hauteur = atoi(str.substr(pos+1,str.length()-pos-1).c_str());
 		cout << "grid size : " << largeur << " x " << hauteur << endl;
+
+		const char *attr=worldElement->Attribute("windowSize");
+		if (attr) {
+			str=attr;
+			int pos = str.find_first_of(',');
+			GlutContext::initialScreenWidth = atoi(str.substr(0,pos).c_str());
+			GlutContext::initialScreenHeight = atoi(str.substr(pos+1,str.length()-pos-1).c_str());
+			GlutContext::screenWidth = GlutContext::initialScreenWidth;
+			GlutContext::screenHeight = GlutContext::initialScreenHeight;
+		}
 
 		createWorld(largeur,hauteur,argc,argv);
 		world = getWorld();
@@ -40,7 +50,6 @@ SmartBlocksSimulator::SmartBlocksSimulator(int argc, char *argv[], SmartBlocksBl
 		exit(1);
 	}
 
-	// loading the camera parameters
 	TiXmlNode *nodeConfig = node->FirstChild("camera");
 	if (nodeConfig) {
 		TiXmlElement* cameraElement = nodeConfig->ToElement();
@@ -146,18 +155,15 @@ SmartBlocksSimulator::SmartBlocksSimulator(int argc, char *argv[], SmartBlocksBl
 
 /* Reading a smartblock */
 		cout << "default color :" << defaultColor << endl;
-		nodeBlock = nodeBlock->FirstChild("block");
+		TiXmlNode *block = nodeBlock->FirstChild("block");
 		Vecteur color,position;
-		   //MODIF NICO
-		   //~ int i=0;
-		   //FIN MODIF NICO
-		 while (nodeBlock) {
-		   element = nodeBlock->ToElement();
+		while (block) {
+		   element = block->ToElement();
 		   color=defaultColor;
 		   attr = element->Attribute("color");
 		   if (attr) {
-			  string str(attr);
-		      int pos1 = str.find_first_of(','),
+			   string str(attr);
+			   int pos1 = str.find_first_of(','),
 		   		   pos2 = str.find_last_of(',');
 			   color.pt[0] = atof(str.substr(0,pos1).c_str())/255.0;
 		   	   color.pt[1] = atof(str.substr(pos1+1,pos2-pos1-1).c_str())/255.0;
@@ -172,16 +178,68 @@ SmartBlocksSimulator::SmartBlocksSimulator(int argc, char *argv[], SmartBlocksBl
 			   	position.pt[1] = atoi(str.substr(pos+1,str.length()-pos-1).c_str());
 			   	cout << "position : " << position << endl;
 			}
-
 			world->addBlock(currentID++,SmartBlocksSimulator::buildNewBlockCode,position,color);
-			nodeBlock = nodeBlock->NextSibling("block");
-		 } // end while (nodeBlock)
+			block = block->NextSibling("block");
+		 } // end while (block)
 
-		} else // end if(nodeBlock)
-		{ cerr << "no Block List" << endl;
+		 block = nodeBlock->FirstChild("blocksLine");
+		 int line;
+		 while (block) {
+			element = block->ToElement();
+			color=defaultColor;
+			attr = element->Attribute("color");
+			if (attr) {
+				string str(attr);
+				int pos1 = str.find_first_of(','),
+					pos2 = str.find_last_of(',');
+				color.pt[0] = atof(str.substr(0,pos1).c_str())/255.0;
+				color.pt[1] = atof(str.substr(pos1+1,pos2-pos1-1).c_str())/255.0;
+				color.pt[2] = atof(str.substr(pos2+1,str.length()-pos1-1).c_str())/255.0;
+			}
+			attr = element->Attribute("line");
+			if (attr) {
+				line = atoi(attr);
+			}
+			attr = element->Attribute("values");
+			if (attr) {
+				string str(attr);
+				position.pt[1] = line;
+			    for(int i=0; i<str.length(); i++) {
+			    	if  (str[i]=='1') {
+			    		position.pt[0]=i;
+			    		world->addBlock(currentID++,SmartBlocksSimulator::buildNewBlockCode,position,color);
+			    	}
+			    }
+			}
+			block = block->NextSibling("blocksLine");
+		} // end while (nodeBlock)
+	} else // end if(nodeBlock)
+	{ cerr << "no Block List" << endl;
+	}
+	TiXmlNode *nodeGrid = node->FirstChild("targetGrid");
+ 	if (nodeGrid) {
+ 		TiXmlNode *block = nodeGrid->FirstChild("targetLine");
+ 		int line;
+ 		while (block) {
+ 			TiXmlElement* element = block->ToElement();
+ 			const char *attr = element->Attribute("line");
+ 			if (attr) {
+ 				line = atoi(attr);
+ 			}
+ 			attr = element->Attribute("values");
+ 			if (attr) {
+ 				string str(attr);
+ 				for(int i=0; i<str.length(); i++) {
+ 			    	world->setTargetValue(str[i]=='1',i,line);
+ 			    }
+ 			}
+ 			block = block->NextSibling("targetLine");
+ 		}
+ 	} else {
+ 		cout << "No target grid" << endl;
+ 	}
 
-		}
-	world->linkBlocks();
+ 	world->linkBlocks();
 
 	GlutContext::mainLoop();
 }

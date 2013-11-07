@@ -20,6 +20,8 @@
 
 int GlutContext::screenWidth = 1024;
 int GlutContext::screenHeight = 800;
+int GlutContext::initialScreenWidth = 1024;
+int GlutContext::initialScreenHeight = 800;
 int GlutContext::keyboardModifier = 0;
 int GlutContext::lastMotionTime=0;
 int GlutContext::lastMousePos[2];
@@ -109,6 +111,10 @@ void GlutContext::reshapeFunc(int w,int h) {
 // fonction associée aux interruptions générées par la souris bouton pressé
 // - x,y : coordonnée du curseur dans la fenêtre
 void GlutContext::motionFunc(int x,int y) {
+	if (popup->isShown()) {
+		glutPostRedisplay();
+		popup->show(false);
+	}
 	if (mainWindow->mouseFunc(-1,GLUT_DOWN,x,screenHeight - y)>0) return;
 	if (keyboardModifier!=GLUT_ACTIVE_CTRL) { // rotation du point de vue
 		Camera* camera=getWorld()->getCamera();
@@ -250,7 +256,7 @@ void GlutContext::keyboardFunc(unsigned char c, int x, int y)
           if (fullScreenMode) {
         	  glutFullScreen();
           } else {
-              glutReshapeWindow(1024, 800);
+              glutReshapeWindow(initialScreenWidth,initialScreenHeight);
               glutPositionWindow(0,0);
           }
       break;
@@ -400,13 +406,12 @@ int GlutContext::selectFaceFunc(int x,int y) {
   	return processHits(hits,selectBuf);
  }
 
-
 //////////////////////////////////////////////////////////////////////////////
 // recherche du premier élément dans le tableau d'objet cliqués
 // tableau d'entiers : { [name,zmin,zmax,n],[name,zmin,zmax,n]...}
 int GlutContext::processHits(GLint hits, GLuint *buffer) {
-  if (hits==0)
-  { return 0;
+  if (hits==0) {
+	  return 0;
   }
   GLuint *ptr=buffer;
   GLuint nmini = ptr[3];

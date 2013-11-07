@@ -18,18 +18,20 @@ namespace SmartBlocks {
 
 class SmartBlocksWorld : BaseSimulator::World {
 protected:
-	int gridWidth,gridHeight;
+	unsigned int gridWidth,gridHeight;
 	SmartBlocksBlock **tabPtrBlocks;
 	GLfloat blockSize[3];
-	GLuint idTextureFloor;
 	Camera *camera;
 	ObjLoader::ObjLoader *objBlock,*objRepere;
+	char*targetValues;
 
 	SmartBlocksWorld(int gw,int gh,int argc, char *argv[]);
 	virtual ~SmartBlocksWorld();
 	inline SmartBlocksBlock* getGridPtr(int x,int y) { return tabPtrBlocks[x+y*gridWidth]; };
 	inline void setGridPtr(int x,int y,SmartBlocksBlock *ptr) { tabPtrBlocks[x+y*gridWidth]=ptr; };
 public:
+	GLuint idTextureFloor,idTextureDigits;
+
 	static void createWorld(int gw,int gh,int argc, char *argv[]);
 	static void deleteWorld();
 	static SmartBlocksWorld* getWorld() {
@@ -49,7 +51,9 @@ public:
 	virtual void glDrawId();
 	virtual void updateGlData(SmartBlocksBlock*blc);
 	inline virtual Camera *getCamera() { return camera; };
-
+	inline bool getTargetValue(int ix,int iy) { return targetValues[iy*gridWidth+ix]; };
+	inline void setTargetValue(bool value,int ix,int iy) { targetValues[iy*gridWidth+ix]=char(value); };
+	inline char *getTargetArray(unsigned int &w,unsigned int &h) { w=gridWidth; h=gridHeight; return targetValues; };
 };
 
 inline void createWorld(int gw,int gh,int argc, char *argv[]) {

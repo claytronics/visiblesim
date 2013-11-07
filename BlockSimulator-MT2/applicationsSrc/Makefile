@@ -1,7 +1,7 @@
 #SUBDIRS = flavio01 blinky01 blinky02 smartBlocks1 leader_election coloration\
 #          coloration_v2
 
-SUBDIRS = blinky01 smartBlocks1
+SUBDIRS = blinky01 sbReconf
 
 .PHONY: subdirs $(SUBDIRS)
 

@@ -5,7 +5,6 @@ uniform sampler2DShadow shadowMap;
 uniform bool textureEnable;
 
 void main() { 
-	// if (texel.a<0.2) discard;
 	float shade = clamp(shadow2DProj(shadowMap, gl_TexCoord[1]).r, 0.5, 1.0);
 	
 	vec4 texel;
@@ -27,5 +26,5 @@ void main() {
 		float Ispec = max(pow(max(dot(R,E),0.0),0.3*gl_FrontMaterial.shininess),0.0);
         color += shade*(texel * NdotL + Ispec * specular);
 	}	
-	gl_FragColor = vec4(color.rgb,1.0);	
+	gl_FragColor = vec4(color.rgb,texel.a);	
 }

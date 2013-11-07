@@ -32,9 +32,12 @@ SmartBlocksWorld::SmartBlocksWorld(int gw,int gh,int argc, char *argv[]):World()
 
 	GlutContext::init(argc,argv);
 	idTextureFloor=0;
+	idTextureDigits=0;
 	blockSize[0]=25.0;
 	blockSize[1]=25.0;
 	blockSize[2]=11.0;
+	targetValues=new char[gw*gh];
+	memset(targetValues,0,gw*gh);
 	objBlock = new ObjLoader::ObjLoader("../../simulatorCore/smartBlocksTextures","smartBlockSimple.obj");
 	objRepere = new ObjLoader::ObjLoader("../../simulatorCore/smartBlocksTextures","repere25.obj");
 	camera = new Camera(-M_PI/2.0,M_PI/3.0,750.0);
@@ -50,6 +53,7 @@ SmartBlocksWorld::~SmartBlocksWorld() {
 	delete objBlock;
 	delete objRepere;
 	delete camera;
+	delete [] targetValues;
 }
 
 void SmartBlocksWorld::createWorld(int gw,int gh,int argc, char *argv[]) {
@@ -184,6 +188,9 @@ void SmartBlocksWorld::loadTextures(const string &str) {
 	string path = str+"/circuit.tga";
 	int lx,ly;
 	idTextureFloor = GlutWindow::loadTexture(path.c_str(),lx,ly);
+
+	path=str+"/digits.tga";
+	idTextureDigits = GlutWindow::loadTexture(path.c_str(),lx,ly);
 }
 
 void SmartBlocksWorld::updateGlData(SmartBlocksBlock*blc) {

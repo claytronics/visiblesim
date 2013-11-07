@@ -425,21 +425,21 @@ void ObjData::glDrawId(void) {
 	glBindBuffer(GL_ARRAY_BUFFER, vboId);
 	glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, indexVboId);
 
-	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
-	glEnableClientState(GL_NORMAL_ARRAY);
+//	glEnableClientState(GL_TEXTURE_COORD_ARRAY);
+//	glEnableClientState(GL_NORMAL_ARRAY);
 	glEnableClientState(GL_VERTEX_ARRAY);
 
 	// Resetup our pointers.  This doesn't reinitialise any data, only how we walk through it
-	glTexCoordPointer(2, GL_FLOAT, sizeof(vertexPosNrmTx), BUFFER_OFFSET(24));
-	glNormalPointer(GL_FLOAT, sizeof(vertexPosNrmTx), BUFFER_OFFSET(12));
+//	glTexCoordPointer(2, GL_FLOAT, sizeof(vertexPosNrmTx), BUFFER_OFFSET(24));
+//	glNormalPointer(GL_FLOAT, sizeof(vertexPosNrmTx), BUFFER_OFFSET(12));
 	glVertexPointer(3, GL_FLOAT, sizeof(vertexPosNrmTx), BUFFER_OFFSET(0));
 
 	// Actually do our drawing, parameters are Primative (Triangles, Quads, Triangle Fans etc), Elements to
 	// draw, Type of each element, Start Offset
 	glDrawElements(GL_TRIANGLES, nbreIndices, GL_UNSIGNED_INT, BUFFER_OFFSET(0));
 	// Disable our client state back to normal drawing
-	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
-	glDisableClientState(GL_NORMAL_ARRAY);
+//	glDisableClientState(GL_TEXTURE_COORD_ARRAY);
+//	glDisableClientState(GL_NORMAL_ARRAY);
 	glDisableClientState(GL_VERTEX_ARRAY);
 }
 

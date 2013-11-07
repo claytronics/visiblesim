@@ -59,16 +59,33 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 	node = xmlDoc->FirstChild("world");
 	if (node) {
 		TiXmlElement* worldElement = node->ToElement();
-		string str = worldElement->Attribute("gridsize");
-		int pos1 = str.find_first_of(','),
-		pos2 = str.find_last_of(',');
-		int lx = atoi(str.substr(0,pos1).c_str());
-		int ly = atoi(str.substr(pos1+1,pos2-pos1-1).c_str());
-		int lz = atoi(str.substr(pos2+1,str.length()-pos1-1).c_str());
-		OUTPUT << "grid size : " << lx << " x " << ly << " x " << lz << endl;
+		const char *attr= worldElement->Attribute("gridsize");
+		int lx,ly,lz;
+		if (attr) {
+			string str=attr;
+			int pos1 = str.find_first_of(','),
+				pos2 = str.find_last_of(',');
+			lx = atoi(str.substr(0,pos1).c_str());
+			ly = atoi(str.substr(pos1+1,pos2-pos1-1).c_str());
+			lz = atoi(str.substr(pos2+1,str.length()-pos1-1).c_str());
+			OUTPUT << "grid size : " << lx << " x " << ly << " x " << lz << endl;
+		} else {
+			OUTPUT << "WARNING No grid size in XML file" << endl;
+		}
+		attr=worldElement->Attribute("windowSize");
+		if (attr) {
+			string str=attr;
+	 		int pos = str.find_first_of(',');
+			GlutContext::initialScreenWidth = atoi(str.substr(0,pos).c_str());
+			GlutContext::initialScreenHeight = atoi(str.substr(pos+1,str.length()-pos-1).c_str());
+			GlutContext::screenWidth = GlutContext::initialScreenWidth;
+			GlutContext::screenHeight = GlutContext::initialScreenHeight;
+		}
+
 		createWorld(lx, ly, lz, argc, argv);
 		world = getWorld();
 		world->loadTextures("../../simulatorCore/blinkyBlocksTextures");
+
 	} else {
 		ERRPUT << "ERROR : NO world in XML file" << endl;
 		exit(1);
