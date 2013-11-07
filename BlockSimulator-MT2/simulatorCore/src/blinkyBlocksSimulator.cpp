@@ -18,6 +18,19 @@ namespace BlinkyBlocks {
 
 BlinkyBlocksBlockCode*(* BlinkyBlocksSimulator::buildNewBlockCode)(BlinkyBlocksBlock*)=NULL;
 
+void BlinkyBlocksSimulator::help() {
+   cerr << "VisibleSim:" << endl;
+	cerr << "blinky01 -f <meld program file> [options]" << endl;
+	cerr << "\t -f <name>\tmeld program" << endl;
+   cerr << "\t -c <name>\txml configuration file" << endl;
+   cerr << "\t -r \t\tnon-deterministic and CPU-time mode on startup" << endl;
+   cerr << "\t -R \t\tdeterministic and timing accurate mode on startup" << endl;
+   cerr << "\t -D \t\tdebugging mode" << endl;
+   cerr << "\t -d \t\tdump world (deterministic mode)" << endl;
+   cerr << "\t -h \t\thelp" << endl;
+   exit(EXIT_SUCCESS);
+}
+
 BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) : BaseSimulator::Simulator(argc, argv) {
 	OUTPUT << "\033[1;34m" << "BlinkyBlocksSimulator constructor" << "\033[0m" << endl;
 	
@@ -25,11 +38,56 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 	string vmPath;
 	string programPath;
 	bool debugging = false;
-	
+   bool realtimeMode = false;
+   bool fastestMode = false;
 	int currentID = 1;
 	BlinkyBlocksWorld *world = NULL;
 	buildNewBlockCode = blinkyBlocksBlockCodeBuildingFunction;
-	
+   
+	testMode = false;
+   
+   /* Reading the command line */
+   argv++;
+   argc--;
+   while ( (argc > 0) && (argv[0][0] == '-')) {
+      switch(argv[0][1]) {
+         case 'f':   {
+            if (programPath != "")
+               help();
+
+            programPath = argv[1];
+            argc--;
+            argv++;
+         }
+         break;
+         case 'D': {
+            debugging = true;
+         }
+         case 'r': {
+            realtimeMode = true;
+         }
+         break;
+         case 'R': {
+            fastestMode = true;
+         }
+         break;
+         case 'd': {
+            testMode = true;
+         }
+         break;
+         case 'c': {
+            // Configuration file, already managed in Simulator constructor
+            argc--;
+            argv++;
+         }
+         break;
+         default:
+            help();
+      }
+   argc--;
+   argv++;
+   }
+
 	/* reading the xml file */
 	/* VM part */	
 	TiXmlNode *node = xmlDoc->FirstChild("vm");
@@ -45,16 +103,25 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 		}	
 		attr = vmElement->Attribute("programPath");
 		if (attr) {
-			programPath = string(attr);
+         if (programPath == "") {
+            programPath = string(attr);
+         } else {
+            cerr << "Warning: meld program provided in the command line and in the xml file" << endl;
+            cerr << "Warning: meld program provided in the xml file is ignored" << endl;
+         }
 		}
 		attr = vmElement->Attribute("debugging");
 		if (attr) {
 			if ((strcmp(attr, "True") == 0) ||(strcmp(attr, "true") == 0) ) {
-					debugging = true;
-					//createDebugger();
+					if (!testMode) {
+                  debugging = true;
+               }
 			}
 		}
 	}
+   
+   if (programPath == "")
+      help();
 	
 	node = xmlDoc->FirstChild("world");
 	if (node) {
@@ -319,9 +386,15 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 
 	getScheduler()->sem_schedulerStart->post();
 	getScheduler()->setState(Scheduler::NOTSTARTED);
-
+   if (testMode || fastestMode) {
+      getScheduler()->start(SCHEDULER_MODE_FASTEST);
+   } else if (realtimeMode) {
+      getScheduler()->start(SCHEDULER_MODE_REALTIME);
+   }
 #ifndef TEST_DETER
-	GlutContext::mainLoop();
+   if (!testMode) {
+      GlutContext::mainLoop();
+   }
 #endif
 }
 

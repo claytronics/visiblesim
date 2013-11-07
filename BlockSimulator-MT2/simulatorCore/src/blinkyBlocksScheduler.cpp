@@ -128,11 +128,17 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
             }
             checkForReceivedVMCommands();
          } while (!getWorld()->equilibrium() || !eventsMap.empty());
+         
          if(hasProcessed) {
             hasProcessed = false;
             ostringstream s;
             s << "Equilibrium reached at "<< now() << "us ...";
             BlinkyBlocksDebugger::print(s.str(), false);
+            if (BlinkyBlocks::getSimulator()->testMode) {
+               BlinkyBlocks::getWorld()->dump();
+               stop(0);
+               return 0;
+            }
             if (BlinkyBlocksVM::isInDebuggingMode()) {
                BlinkyBlocks::getDebugger()->handlePauseRequest();
             }

@@ -5,7 +5,7 @@
 <vm serverport="5000" vmPath="/home/ubuntu/Bureau/CMU/meld/meld" programPath="/home/ubuntu/Bureau/CMU/meld/examples/ends.m" debugging="True" />
 <vm serverport="5000" vmPath="VMEmulator" programPath="ends.m" debugging="True" />
 -->
-<vm serverport="5000" vmPath="/home/bpiranda/git-simulateur/meld/vsim-determinism/meld" programPath="/home/bpiranda/git-simulateur/meld/vsim-determinism/examples/rainbow.m" debugging="False" />
+<vm serverport="5000" vmPath="/home/andre/Bureau/meld/meld-bbsim" programPath="/home/andre/Bureau/visiblesim/BlockSimulator-MT2/applicationsBin/blinky01/rainbowRetract.m" debugging="False" />
 
 <world gridsize="10,10,10" windowSize="1800,900">
 	<camera target="200,200,200" directionSpherical="0,70,400" angle="45"/>

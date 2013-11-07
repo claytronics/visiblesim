@@ -87,6 +87,10 @@ public:
 	void killAllVMs();
 	void addScenarioEvent(ScenarioEvent *ev) { tabEvents.push_back(ev); };
    void closeAllSockets();
+   
+   // Prints information about the blocks
+   void dump();
+   
 };
 
 inline void createWorld(int slx,int sly,int slz, int argc, char *argv[]) {

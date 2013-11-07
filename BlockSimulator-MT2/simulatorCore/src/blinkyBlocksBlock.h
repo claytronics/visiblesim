@@ -76,8 +76,9 @@ public:
 	void unlockVM();
 	
 	int sendCommand(VMCommand &c);
-
 };
+
+std::ostream& operator<<(std::ostream &stream, BlinkyBlocksBlock const& bb);
 
 }
 

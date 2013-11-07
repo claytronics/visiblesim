@@ -179,7 +179,7 @@ void vm_thread_function(void *data) {
 		cerr << "Connection to the Simulator failed" << endl;
 	}
 
-	VMMessage_t in, out;
+	VMMessage_t in;
 	int id;	
 	cout << "VMEmulator start" << endl;
 	if (readMessageFromVM(socket, &in, -1) == 1) {

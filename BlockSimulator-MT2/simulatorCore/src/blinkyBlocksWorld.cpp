@@ -61,6 +61,7 @@ BlinkyBlocksWorld::~BlinkyBlocksWorld() {
 	delete objRepere;
 	delete camera;
 	/* free Scenario Events */
+	cerr << "deleting scenario events which has non-virtual destructor.  ERROR. FIX THIS\n";
 	vector<ScenarioEvent*>::const_iterator it=tabEvents.begin();
 	while (it!=tabEvents.end()) {
 		delete (*it);
@@ -596,5 +597,15 @@ void BlinkyBlocksWorld::setSelectedFace(int n) {
 		}
 		return true;
 	}
+   
+   void BlinkyBlocksWorld::dump() {
+      map<int, BaseSimulator::BuildingBlock*>::iterator it;
+      cout << "World:" << endl;
+		for(it = buildingBlocksMap.begin(); 
+				it != buildingBlocksMap.end(); it++) {
+			BlinkyBlocksBlock* bb = (BlinkyBlocksBlock*) it->second;
+         cout << *bb << endl;
+      }
+   }
 
 } // BlinkyBlock namespace

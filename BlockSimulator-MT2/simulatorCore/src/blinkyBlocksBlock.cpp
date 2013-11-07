@@ -190,4 +190,9 @@ void BlinkyBlocksBlock::killVM() {
 	unlockVM();
 }
 
+std::ostream& operator<<(std::ostream &stream, BlinkyBlocksBlock const& bb) {
+  stream << bb.blockId << "\tcolor: " << bb.color;
+  return stream;
+}
+
 }

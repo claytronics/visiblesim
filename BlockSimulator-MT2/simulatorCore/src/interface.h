@@ -131,7 +131,7 @@ public :
 	void addButton(int id,const char *titre);
 	int mouseFunc(int button,int state,int x,int y);
 	void glDraw();
-	void activate(int n,bool value);
+	void activate(unsigned int n,bool value);
 	void addTrace(int id,int time,const string &str);
 };
 

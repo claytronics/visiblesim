@@ -64,6 +64,7 @@ NeighborDirection SmartBlocksBlock::getDirection(P2PNetworkInterface *given_inte
       return NeighborDirection( i);
     }
   }
+  assert(0);			// should never get here
 }
 //FIN MODIF NICO
 
