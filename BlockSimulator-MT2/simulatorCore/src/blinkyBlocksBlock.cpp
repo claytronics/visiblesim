@@ -12,6 +12,7 @@
 #include "blinkyBlocksSimulator.h"
 #include "blinkyBlocksEvents.h"
 #include "trace.h"
+#include "blinkyBlocksNetwork.h"
 
 using namespace std;
 
@@ -77,7 +78,8 @@ switch (Direction(d)) {
 BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) : BaseSimulator::BuildingBlock(bId) {
 	OUTPUT << "BlinkyBlocksBlock constructor" << endl;
 	for (int i=0; i<6; i++) {
-		tabInterfaces[i] = new P2PNetworkInterface(this);
+		//tabInterfaces[i] = new P2PNetworkInterface(this);
+		tabInterfaces[i] = new SerialNetworkInterface(this);
 	}
 	vm = new BlinkyBlocksVM(this);
 	buildNewBlockCode = blinkyBlocksBlockCodeBuildingFunction;

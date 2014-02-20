@@ -5,12 +5,10 @@
 <vm serverport="5000" vmPath="/home/ubuntu/Bureau/CMU/meld/meld" programPath="/home/ubuntu/Bureau/CMU/meld/examples/ends.m" debugging="True" />
 <vm serverport="5000" vmPath="VMEmulator" programPath="ends.m" debugging="True" />
 
-
-<vm serverport="5000" vmPath="/home/anaz/meld/meld-bbsim" programPath="/home/anaz/meld-programs/propagation.m" debugging="False" />
+<vm serverport="5000" vmPath="/home/anaz/meld/meld-bbsim" programPath="./rainbowRetract.m" debugging="False" />
 -->
 
-<vm serverport="5000" vmPath="/home/anaz/meld/meld-bbsim" programPath="./rainbowRetract.m" debugging="False" />
-
+<vm serverport="5000" vmPath="/home/anaz/meld/meld-bbsim" programPath="./none.m" debugging="False" />
 
 <world gridsize="10,10,10" windowSize="1800,900">
 	<camera target="200,200,200" directionSpherical="0,70,400" angle="45"/>

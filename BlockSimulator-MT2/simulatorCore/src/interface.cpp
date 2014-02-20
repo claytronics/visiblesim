@@ -12,6 +12,9 @@
 #define ID_SW_BUTTON_CLOSE	1002
 #define ID_SW_SLD			1003
 
+#define TIME_UNIT_SECOND 1
+#define TIME_UNIT_MSECOND 2
+#define DISPLAY_TIME_UNIT TIME_UNIT_MSECOND
 
 GlutWindow::GlutWindow(GlutWindow *parent,GLuint pid,GLint px,GLint py,GLint pw,GLint ph,const char *titreTexture)
 :id(pid) {
@@ -154,8 +157,14 @@ void GlutSlidingMainWindow::glDraw() {
 		glEnd();
 		char str[256];
 		uint64_t t = BaseSimulator::getScheduler()->now();
+		// time unit:
+#if DISPLAY_TIME_UNIT == TIME_UNIT_SECOND
+		// sec:
 		sprintf(str,"Current time : %d:%d",int(t/1000000),int((t%1000000)/10000));
-
+#elif DISPLAY_TIME_UNIT == TIME_UNIT_MSECOND
+		// ms:
+		sprintf(str,"Current time : %d:%d ms", int(t/1000),int((t%1000)/10));
+#endif
 		glColor3f(1.0,1.0,0.0);
 		drawString(42.0,h-20.0,str);
 		glColor3f(1.0,1.0,1.0);
@@ -174,8 +183,15 @@ void GlutSlidingMainWindow::glDraw() {
 			while (it != traces.end() && posy>0) {
 				if (((*it).second)->blockId==selectedBlock->blockId) {
 					line.str("");
+#if DISPLAY_TIME_UNIT == TIME_UNIT_SECOND
+					// sec:					
 					s = (*it).first/1000000;
 					cs = ((*it).first%1000000)/10000;
+#elif DISPLAY_TIME_UNIT == TIME_UNIT_MSECOND
+					// ms:
+					s = (*it).first/1000;
+					cs = ((*it).first%1000)/10;
+#endif
 					line << "[" << s << ":" << cs << "] " << ((*it).second)->str;
 					posy = drawString(42.0,posy,line.str().c_str());
 				}
@@ -195,8 +211,15 @@ void GlutSlidingMainWindow::glDraw() {
 			int s,cs;
 			while (it != traces.end() && posy>0) {
 				line.str("");
-				s = (*it).first/1000000;
-				cs = ((*it).first%1000000)/10000;
+#if DISPLAY_TIME_UNIT == TIME_UNIT_SECOND
+					// sec:					
+					s = (*it).first/1000000;
+					cs = ((*it).first%1000000)/10000;
+#elif DISPLAY_TIME_UNIT == TIME_UNIT_MSECOND
+					// ms:
+					s = (*it).first/1000;
+					cs = ((*it).first%1000)/10;
+#endif
 				line << "[" << s << ":" << cs << "] #" << ((*it).second)->blockId << ":" << ((*it).second)->str;
 				posy = drawString(42.0,posy,line.str().c_str());
 				++it;		    

@@ -203,7 +203,8 @@ ReceiveMessageVMCommand::ReceiveMessageVMCommand(SendMessageVMCommand &c) : VMCo
 }
 
 unsigned int ReceiveMessageVMCommand::size() { 
-	return getSize();
+	//return getSize();
+	return getContentSize() - 5*sizeof(commandType); // data size only
 }
 
 ReceiveMessageVMCommand::~ReceiveMessageVMCommand() {

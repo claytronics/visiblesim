@@ -41,6 +41,7 @@ protected:
 public:
 	unsigned int id;
 	unsigned int type;
+	
 	P2PNetworkInterface *sourceInterface, *destinationInterface;
 
 	Message();
@@ -63,6 +64,7 @@ protected:
 	static unsigned int nextId;
 	static unsigned int defaultDataRate;
 	unsigned int dataRate;
+	
 public:
 	unsigned int globalId;
 	unsigned int localId;
@@ -81,9 +83,10 @@ public:
 	bool addToOutgoingBuffer(MessagePtr msg);
 	void send();
 	void connect(P2PNetworkInterface *ni);
+	
+	virtual unsigned int computeTransmissionDuration(unsigned int size);
 	/*
 	void disconnect();
-	static void setDefaultDataRate(unsigned int rate) { defaultDataRate = rate; }
 	void setDataRate(unsigned int rate) { dataRate = rate; }
 	*/
 };

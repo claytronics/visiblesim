@@ -29,28 +29,28 @@ string BlinkyBlocksVM::programPath;
 bool BlinkyBlocksVM::debugging = false;
 
 BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
-   int ret;
-   boost::system::error_code error;
-   stringstream vmLogFile;
+	int ret;
+	boost::system::error_code error;
+	stringstream vmLogFile;
 
 	assert(ios != NULL && acceptor != NULL);
 	hostBlock = bb;
-   vmLogFile << "VM" << hostBlock->blockId << ".log";
+    vmLogFile << "VM" << hostBlock->blockId << ".log";
    
 	OUTPUT << "VM "<< hostBlock->blockId << " constructor" << endl;
 	// Start the VM
 	pid = 0;
-   mutex_ios.lock();
+	mutex_ios.lock();
 	ios->notify_fork(boost::asio::io_service::fork_prepare);
 	pid = fork();
 	if(pid < 0) {ERRPUT << "Error when starting the VM" << endl;}
     if(pid == 0) {
 		ios->notify_fork(boost::asio::io_service::fork_child);
-      mutex_ios.unlock();
-      acceptor->close();
-      getWorld()->closeAllSockets();
+		mutex_ios.unlock();
+		acceptor->close();
+		getWorld()->closeAllSockets();
 #ifdef LOGFILE
-      log_file.close();
+		log_file.close();
 #endif
 		int fd = open(vmLogFile.str().c_str(), O_RDWR | O_CREAT | O_TRUNC, S_IRUSR | S_IWUSR);
 		dup2(fd, 1);
@@ -58,62 +58,61 @@ BlinkyBlocksVM::BlinkyBlocksVM(BlinkyBlocksBlock* bb){
 		close(fd);
 		if (debugging) {
 			//./meld -f  /home/ubuntu/Bureau/CMU/meld/examples/ends.m -c sl -D SIM
-		  char* cmd[] = {(char*)vmPath.c_str(), (char*)"-a", (char*)"bbsim", (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", (char*) "-D", (char*) "SIM", NULL };
+			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-a", (char*)"bbsim", (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", (char*) "-D", (char*) "SIM", NULL };
 			ret = execv(vmPath.c_str(), const_cast<char**>(cmd));
 		} else {
 			//./meld -f  /home/ubuntu/Bureau/CMU/meld/examples/ends.m -c sl
-		  char* cmd[] = {(char*)vmPath.c_str(), (char*)"-a", (char*)"bbsim", (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", NULL };
+			char* cmd[] = {(char*)vmPath.c_str(), (char*)"-a", (char*)"bbsim", (char*)"-f", (char*)programPath.c_str(), (char*)"-c", (char*) "sl", NULL };
 			ret = execv(vmPath.c_str(), const_cast<char**>(cmd));
 		}
-      if(ret == -1) {
-         cerr << "Error: VM executable, " << vmPath.c_str()  << ", does not exist or is not executable" << endl;
-         exit(EXIT_FAILURE);
-      }
+		if(ret == -1) {
+			cerr << "Error: VM executable, " << vmPath.c_str()  << ", does not exist or is not executable" << endl;
+			exit(EXIT_FAILURE);
+		}
 	}
 	ios->notify_fork(boost::asio::io_service::fork_parent);
-   mutex_ios.unlock();
+	mutex_ios.unlock();
 	socket = boost::shared_ptr<tcp::socket>(new tcp::socket(*ios));
-   if (hostBlock->blockId == 1) {
-      bool connected = false;
-      
-      acceptor->async_accept(*(socket.get()), boost::bind(&BlinkyBlocksVM::asyncAcceptHandler, this, error , &connected));
-      while(!connected &&  (pid != waitpid(pid, NULL, WNOHANG))) {
+	if (hostBlock->blockId == 1) {
+		bool connected = false;
+		acceptor->async_accept(*(socket.get()), boost::bind(&BlinkyBlocksVM::asyncAcceptHandler, this, error , &connected));
+		while(!connected &&  (pid != waitpid(pid, NULL, WNOHANG))) {
          	if (!BlinkyBlocksVM::isInDebuggingMode()) { // In debugging mode the scheduler thread is looking for connections
                checkForReceivedVMCommands(); // it is actually check for connection
                usleep(10000);
             }
-      }
-      if(!connected) {
-         ifstream file (vmLogFile.str().c_str());
-         string line;
-         cerr << "VisibleSim error: unable to connect to the VM" << endl;
-         cerr << vmLogFile.str() << ":" << endl;
-         if (file.is_open()) {
-            while (!file.eof()) {
-               getline(file,line);
-               cerr << line;
-            }
-         cerr << endl;
-         file.close();
-         }
-         acceptor->close();
-         exit(EXIT_FAILURE);
-      }
-   } else {
-      acceptor->accept(*(socket.get()));
-   }
-   idSent = false;
+		}
+		if(!connected) {
+			ifstream file (vmLogFile.str().c_str());
+			string line;
+			cerr << "VisibleSim error: unable to connect to the VM" << endl;
+			cerr << vmLogFile.str() << ":" << endl;
+			if (file.is_open()) {
+				while (!file.eof()) {
+					getline(file,line);
+					cerr << line;
+				}
+				cerr << endl;
+				file.close();
+			}
+			acceptor->close();
+			exit(EXIT_FAILURE);
+		}
+	} else {
+		acceptor->accept(*(socket.get()));
+	}
+	idSent = false;
 	deterministicSet = false;
 	nbSentCommands = 0;
 	asyncReadCommand();
 }
 
 void BlinkyBlocksVM::asyncAcceptHandler(boost::system::error_code& error, bool* connected) {
- if (error) {
-   *connected = false;
- } else {
-   *connected = true;
- }
+	if (error) {
+		*connected = false;
+	} else {
+		*connected = true;
+	}
 }
 
 BlinkyBlocksVM::~BlinkyBlocksVM() {

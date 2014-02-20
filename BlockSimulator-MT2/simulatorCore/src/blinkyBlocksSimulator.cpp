@@ -20,8 +20,8 @@ BlinkyBlocksBlockCode*(* BlinkyBlocksSimulator::buildNewBlockCode)(BlinkyBlocksB
 
 void BlinkyBlocksSimulator::help() {
    cerr << "VisibleSim:" << endl;
-	cerr << "blinky01 -f <meld program file> [options]" << endl;
-	cerr << "\t -f <name>\tmeld program" << endl;
+   cerr << "blinky01 -f <meld program file> [options]" << endl;
+   cerr << "\t -f <name>\tmeld program" << endl;
    cerr << "\t -c <name>\txml configuration file" << endl;
    cerr << "\t -r \t\tnon-deterministic and CPU-time mode on startup" << endl;
    cerr << "\t -R \t\tdeterministic and timing accurate mode on startup" << endl;
@@ -38,8 +38,8 @@ BlinkyBlocksSimulator::BlinkyBlocksSimulator(int argc, char *argv[], BlinkyBlock
 	string vmPath;
 	string programPath;
 	bool debugging = false;
-   bool realtimeMode = false;
-   bool fastestMode = false;
+    bool realtimeMode = false;
+    bool fastestMode = false;
 	int currentID = 1;
 	BlinkyBlocksWorld *world = NULL;
 	buildNewBlockCode = blinkyBlocksBlockCodeBuildingFunction;

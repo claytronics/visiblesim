@@ -63,7 +63,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 	pausedTime = 0;
 	int seed = 500;
 	srand (seed);
-   bool hasProcessed = false;
+	bool hasProcessed = false;
 	
 	// 1) world ready
 	// 2) user start order
@@ -131,8 +131,8 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
          
          if(hasProcessed) {
             hasProcessed = false;
-            ostringstream s;
-            s << "Equilibrium reached at "<< now() << "us ...";
+            ostringstream s;            
+            s << "Equilibrium reached at "<< now()/1000 << ":" << (now()%1000)/10 << "ms ...";
             BlinkyBlocksDebugger::print(s.str(), false);
             if (BlinkyBlocks::getSimulator()->testMode) {
                BlinkyBlocks::getWorld()->dump();
@@ -153,7 +153,7 @@ void *BlinkyBlocksScheduler::startPaused(/*void *param*/) {
 		break;
 		case SCHEDULER_MODE_REALTIME:
 			OUTPUT << "Realtime mode scheduler\n" << endl;
-         BlinkyBlocksDebugger::print("Simulation starts in real time mode");
+			BlinkyBlocksDebugger::print("Simulation starts in real time mode");
 			while (state != ENDED) {
 				systemCurrentTime = ((uint64_t)glutGet(GLUT_ELAPSED_TIME))*1000 - pausedTime;
 				systemCurrentTimeMax = systemCurrentTime - systemStartTime;

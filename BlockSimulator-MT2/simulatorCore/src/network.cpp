@@ -111,7 +111,7 @@ void P2PNetworkInterface::send() {
 	msg = outgoingQueue.front();
 
 	outgoingQueue.pop_front();
-	transmissionDuration = (msg->size()*8000000ULL)/dataRate;
+	transmissionDuration = computeTransmissionDuration(msg->size());
 
 	messageBeingTransmitted = msg;
 	messageBeingTransmitted->sourceInterface = this;
@@ -144,4 +144,8 @@ void P2PNetworkInterface::connect(P2PNetworkInterface *ni) {
 		connectedInterface->connectedInterface = NULL;
 	}
 	connectedInterface = ni;
+}
+
+unsigned int P2PNetworkInterface::computeTransmissionDuration(unsigned int size) {
+	return (size*8000000ULL)/dataRate;
 }

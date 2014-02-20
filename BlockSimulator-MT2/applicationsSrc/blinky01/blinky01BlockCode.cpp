@@ -208,7 +208,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 #ifdef TEST_DETER
 			cout << bb->blockId << " SET_COLOR_EVENT" << endl;
 #endif
-			info << "set color "<< color << endl;
+			info << "set color "<< color;
 			}
 			break;
 		case EVENT_SEND_MESSAGE:
@@ -259,7 +259,7 @@ void Blinky01BlockCode::processLocalEvent(EventPtr pev) {
 			polling = false;
 			EndPollVMCommand command(outBuffer, bb->blockId);
 			bb->sendCommand(command);
-			info << "Polling time period ended" << endl;
+			info << "Polling time period ended";
 			}
 			break;
 		default:

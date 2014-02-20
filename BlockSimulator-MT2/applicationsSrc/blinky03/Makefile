@@ -1,6 +1,6 @@
-SRCS = blinky01.cpp blinky01BlockCode.cpp
+SRCS = blinky03.cpp blinky03BlockCode.cpp
 
-OUT = blinky01
+OUT = blinky03
 
 OBJS = $(SRCS:.cpp=.o)
 DEPS = $(SRCS:.cpp=.depends)
