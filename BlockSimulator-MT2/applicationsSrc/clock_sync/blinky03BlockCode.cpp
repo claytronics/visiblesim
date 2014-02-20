@@ -9,7 +9,7 @@
 #include <sstream>
 #include <boost/asio.hpp> 
 #include "scheduler.h"
-#include "blinkyBlocksNetwork.h"
+#include "network.h"
 #include "blinky03BlockCode.h"
 #include "blinkyBlocksEvents.h"
 #include "blinkyBlocksDebugger.h"
@@ -57,8 +57,9 @@ void Blinky03BlockCode::startup() {
 	
 	if (hostBlock->blockId == 1) {
 		BlinkyBlocks::getScheduler()->schedule(new VMSetColorEvent(BaseSimulator::getScheduler()->now(), (BlinkyBlocksBlock*) hostBlock, 1.0,0.0,0.0,1.0));
+		bb->launchSynchronizationWave(BlinkyBlocks::getScheduler()->now() + 5*1000);
 	} else {
-		BlinkyBlocks::getScheduler()->schedule(new VMSetColorEvent(BaseSimulator::getScheduler()->now()+250, (BlinkyBlocksBlock*) hostBlock, 0.0,0.0,1.0,1.0));
+		BlinkyBlocks::getScheduler()->schedule(new VMSetColorEvent(BaseSimulator::getScheduler()->now()+35, (BlinkyBlocksBlock*) hostBlock, 0.0,0.0,1.0,1.0));
 	}
 }
 
@@ -104,6 +105,9 @@ void Blinky03BlockCode::processLocalEvent(EventPtr pev) {
 			MessagePtr message = (boost::static_pointer_cast<NetworkInterfaceReceiveEvent>(pev))->message;
 			if (message->type == BB_CLOCK_SYNC_MESSAGE) {
 				bb->localClock.handleSyncMsg(message);
+				// set a change color event at time 3s = 3 000 000 us
+				uint64_t t = bb->localClock.getSchedulerTimeForLocalClockMS(3000);
+				BlinkyBlocks::getScheduler()->schedule(new VMSetColorEvent(t, (BlinkyBlocksBlock*) hostBlock, 0.5,0.0,0.2,1.0));
 				info << "sync ";
 			} else {
 				info << "unknown ";

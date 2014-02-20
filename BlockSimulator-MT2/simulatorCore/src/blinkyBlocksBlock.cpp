@@ -75,7 +75,8 @@ switch (Direction(d)) {
 	}
 }
 
-BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) : BaseSimulator::BuildingBlock(bId) {
+BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*)) : BaseSimulator::BuildingBlock(bId),
+	localClock(this) {
 	OUTPUT << "BlinkyBlocksBlock constructor" << endl;
 	for (int i=0; i<6; i++) {
 		//tabInterfaces[i] = new P2PNetworkInterface(this);
@@ -84,6 +85,7 @@ BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, BlinkyBlocksBlockCode *(*blinkyBlo
 	vm = new BlinkyBlocksVM(this);
 	buildNewBlockCode = blinkyBlocksBlockCodeBuildingFunction;
 	blockCode = (BaseSimulator::BlockCode*)buildNewBlockCode(this);
+	timeLeader = false;
 }
 
 BlinkyBlocksBlock::~BlinkyBlocksBlock() {
@@ -195,6 +197,33 @@ void BlinkyBlocksBlock::killVM() {
 std::ostream& operator<<(std::ostream &stream, BlinkyBlocksBlock const& bb) {
   stream << bb.blockId << "\tcolor: " << bb.color;
   return stream;
+}
+
+void BlinkyBlocksBlock::synchronizeNeighborClocks(uint8_t waveId) {
+	stringstream info;
+	uint64_t rva1 = 0;
+	uint64_t rva2 = 0;
+	info << "Synchronize neighbor clocks";
+	
+	for (int i=0; i<6; i++) {
+		P2PNetworkInterface *bbi = this->getInterface(NeighborDirection::Direction(i));
+		if (bbi->connectedInterface) {
+			rva1 = (rand()/(double)RAND_MAX) * (1500-0) + 0; // random variable between each CLOCK_SYNC message sent
+													// between 0 and 1500 us
+			BlinkyBlocks::getScheduler()->schedule(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now() + rva1 + rva2,
+				new BlinkyBlocksClockSyncMsg(localClock.getClockMS(), waveId), bbi));
+			rva2 += (rand()/(double)RAND_MAX) * (10-0) + 0;
+			cout << blockId << " sync rva1: " << rva1 << endl;
+			cout << blockId << " sync rva2: " << rva2 << endl;	
+		}
+	}
+		
+	BlinkyBlocks::getScheduler()->trace(info.str(), blockId);
+}
+
+void BlinkyBlocksBlock::launchSynchronizationWave(uint64_t t) {
+	localClock.lastWaveId++;
+	BlinkyBlocks::getScheduler()->schedule(new SynchronizeNeighborClocksEvent(t, this, localClock.lastWaveId));
 }
 
 }

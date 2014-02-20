@@ -224,6 +224,23 @@ public:
 	const virtual string getEventName();
 };
 
+//===========================================================================================================
+//
+//          SynchronizeNeighborClocksEvent  (class)
+//
+//===========================================================================================================
+
+class SynchronizeNeighborClocksEvent : public BlockEvent {
+public:
+	uint8_t waveId;
+	
+	SynchronizeNeighborClocksEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint8_t wId);
+	SynchronizeNeighborClocksEvent(SynchronizeNeighborClocksEvent *ev);
+	~SynchronizeNeighborClocksEvent();
+	void consumeBlockEvent();
+	const virtual string getEventName();
+};
+
 } // BlinkyBlocks namespace
 
 

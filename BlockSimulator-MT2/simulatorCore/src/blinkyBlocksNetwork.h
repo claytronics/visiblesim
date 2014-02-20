@@ -10,27 +10,55 @@
 
 #include <network.h>
 
-using namespace std;
+namespace BlinkyBlocks {
 
-class Chunk;
+//using namespace std;
+
+class BlinkyBlocksMessage;
 class SerialNetworkInterface;
 
 
 //===========================================================================================================
 //
-//          Chunk  (class)
+//          BlinkyBlocksMessage  (class)
 //
 //===========================================================================================================
 
-class Chunk: public Message {
+#define BB_MELD_VM_MESSAGE 36000
+#define BB_CLOCK_SYNC_MESSAGE 36001
+
+
+class BlinkyBlocksMessage: public Message {
 protected:
 public:
-	char data[17]; 
+	unsigned int msize;
 
-	Chunk(char *d, unsigned int size);
-	virtual ~Chunk();
+	BlinkyBlocksMessage(unsigned int s);
+	BlinkyBlocksMessage() {};
+	virtual ~BlinkyBlocksMessage() {};
 
-	unsigned int size();
+	virtual unsigned int size();
+	static unsigned int nbChunks(unsigned int s);
+};
+
+//===========================================================================================================
+//
+//          BlinkyBlocksClockSyncMsg  (class)
+//
+//===========================================================================================================
+
+class BlinkyBlocksClockSyncMsg;
+typedef boost::shared_ptr<BlinkyBlocksClockSyncMsg> BlinkyBlocksClockSyncMsg_ptr;
+
+class BlinkyBlocksClockSyncMsg: public BlinkyBlocksMessage {
+	static uint8_t waveIdCnt;
+public:
+	uint32_t clock;
+	uint8_t waveId;
+	
+	BlinkyBlocksClockSyncMsg(uint32_t c);
+	BlinkyBlocksClockSyncMsg(uint32_t c, uint8_t wId);
+	~BlinkyBlocksClockSyncMsg() {};
 };
 
 //===========================================================================================================
@@ -46,5 +74,7 @@ public:
 	~SerialNetworkInterface();
 	unsigned int computeTransmissionDuration(unsigned int size);
 };
+
+}
 
 #endif /* BLINKYBLOCKSNETWORK_H_ */

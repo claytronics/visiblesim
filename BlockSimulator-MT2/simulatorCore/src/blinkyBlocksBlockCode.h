@@ -18,10 +18,13 @@ class BlinkyBlocksBlock;
 
 class BlinkyBlocksBlockCode : public BaseSimulator::BlockCode {
 public:
-	uint64_t currentLocalDate; // fastest mode
+	// Deterministic mode (fastest mode):
+	uint64_t currentLocalDate; 	// Time unit: us 
+								//represents the elapsed CPU time 
+								// (cycles/cpu_frequency)
 	bool hasWork; // fastest mode
 	bool polling; // fastest mode
-	
+		
 	BlinkyBlocksBlockCode(BlinkyBlocksBlock *host);
 	virtual ~BlinkyBlocksBlockCode();
 

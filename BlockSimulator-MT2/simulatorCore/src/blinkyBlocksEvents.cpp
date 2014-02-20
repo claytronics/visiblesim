@@ -379,11 +379,41 @@ VMEndPollEvent::~VMEndPollEvent() {
 void VMEndPollEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
 	concernedBlock->scheduleLocalEvent(EventPtr(new VMEndPollEvent(this)));
-	return;
 }
 
 const string VMEndPollEvent::getEventName() {
 	return("VMEndPoll Event");
+}
+
+//===========================================================================================================
+//
+//          SynchronizeNeighborClocksEvent  (class)
+//
+//===========================================================================================================
+
+SynchronizeNeighborClocksEvent::SynchronizeNeighborClocksEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint8_t wId) : BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	randomNumber = conBlock->getNextRandomNumber();
+	waveId = wId;
+	eventType = EVENT_SYNCHRONIZE_NEIGHBOR_CLOCKS;
+}
+
+SynchronizeNeighborClocksEvent::SynchronizeNeighborClocksEvent(SynchronizeNeighborClocksEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+	waveId = ev->waveId;
+}
+
+SynchronizeNeighborClocksEvent::~SynchronizeNeighborClocksEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void SynchronizeNeighborClocksEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	((BlinkyBlocksBlock*) concernedBlock)->synchronizeNeighborClocks(waveId);
+}
+
+const string SynchronizeNeighborClocksEvent::getEventName() {
+	return("SynchronizeNeighborClocks Event");
 }
 
 } // BlinkyBlocks namespace

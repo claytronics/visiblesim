@@ -12,6 +12,7 @@
 #include "blinkyBlocksVM.h"
 #include "blinkyBlocksBlockCode.h"
 #include "blinkyBlocksGlBlock.h"
+#include "blinkyBlocksClock.h"
 #include <boost/asio.hpp> 
 #include <stdexcept>
 
@@ -38,6 +39,9 @@ public:
 	Vecteur color; // color of the block
 	Vecteur position; // position of the block;
 	BlinkyBlocksVM *vm;
+	
+	BlinkyBlocksClock localClock;
+	bool timeLeader;
 
 	BlinkyBlocksBlockCode *(*buildNewBlockCode)(BlinkyBlocksBlock*);
 	BlinkyBlocksBlock(int bId, BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*));
@@ -76,6 +80,10 @@ public:
 	void unlockVM();
 	
 	int sendCommand(VMCommand &c);
+	
+	inline bool isTimeLeader() { return timeLeader; }
+	void synchronizeNeighborClocks(uint8_t waveId);
+	void launchSynchronizationWave(uint64_t t);
 };
 
 std::ostream& operator<<(std::ostream &stream, BlinkyBlocksBlock const& bb);

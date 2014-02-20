@@ -200,6 +200,7 @@ ReceiveMessageVMCommand::ReceiveMessageVMCommand(SendMessageVMCommand &c) : VMCo
 	data[TYPE] = VM_COMMAND_RECEIVE_MESSAGE;
 	data[PARAM2] = c.getSource();
 	data[NODE] = c.getDestId();
+	type = BB_MELD_VM_MESSAGE;
 }
 
 unsigned int ReceiveMessageVMCommand::size() { 

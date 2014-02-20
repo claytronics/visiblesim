@@ -8,7 +8,7 @@
 #ifndef BLINKYBLOCKSVMCOMMANDS_H_
 #define BLINKYBLOCKSVMCOMMANDS_H_
 
-#include "network.h"
+#include "blinkyBlocksNetwork.h"
 #include "vecteur.h"
 
 #define VM_COMMAND_MAX_LENGHT_BYTES 544 // debugger
@@ -158,7 +158,7 @@ public:
 //
 //===========================================================================================================
 
-class ReceiveMessageVMCommand : public VMCommand, public Message {
+class ReceiveMessageVMCommand : public VMCommand, public BlinkyBlocksMessage {
 public:
 	ReceiveMessageVMCommand(SendMessageVMCommand &c);
 	unsigned int size(); // redefine virtual size function of Message

@@ -13,28 +13,56 @@
 
 using namespace std;
 
+namespace BlinkyBlocks {
 
 //===========================================================================================================
 //
-//          Chunk  (class)
+//          BlinkyBlocksMessage  (class)
 //
 //===========================================================================================================
 
-Chunk::Chunk(char *d, unsigned int size) : Message() {
-	memcpy(data,d,size);	
+BlinkyBlocksMessage::BlinkyBlocksMessage(unsigned int s) : Message() {
+	msize = s;	
 }
 
-Chunk::~Chunk() {
-	nbMessages--;
+unsigned int BlinkyBlocksMessage::size() {
+	return msize;
 }
 
-unsigned int Chunk::size() {
-	// without
+unsigned int BlinkyBlocksMessage::nbChunks(unsigned int s){
+	// Chunk on real Blinky Blocks:
 	// data : 17 bytes
 	// Frame delimiter (FD) : 1 byte
 	// Pointer message handler: 2 bytes
 	// Checkum : 1 byte
-	return (17);
+	unsigned int n = s/17;
+	if ( (s % 17) != 0) {
+		n++;
+	}
+	return n;
+}
+
+//===========================================================================================================
+//
+//          BlinkyBlocksClockSyncMsg  (class)
+//
+//===========================================================================================================
+
+uint8_t BlinkyBlocksClockSyncMsg::waveIdCnt = 1;
+
+BlinkyBlocksClockSyncMsg::BlinkyBlocksClockSyncMsg(uint32_t c) {
+	clock = c;
+	waveId = waveIdCnt;
+	waveIdCnt++;
+	msize = 1 + 1 + 4; // type (CLOCK_SYNC) + Wave Id + clock value
+	type = BB_CLOCK_SYNC_MESSAGE;
+}
+
+BlinkyBlocksClockSyncMsg::BlinkyBlocksClockSyncMsg(uint32_t c, uint8_t wId) {
+	clock = c;
+	waveId = wId;
+	msize = 1 + 1 + 4;
+	type = BB_CLOCK_SYNC_MESSAGE;
 }
 
 //===========================================================================================================
@@ -56,15 +84,14 @@ SerialNetworkInterface::~SerialNetworkInterface() {}
 
 unsigned int SerialNetworkInterface::computeTransmissionDuration(unsigned int size) {
 	float t = 0.0;
-	unsigned int nbChunks = size/17;
-	 
-	if ( (size % 17) != 0) {
-		nbChunks++;
-	}
-	for (int i = 0; i < nbChunks; i++) {
+	unsigned int nbChunks = BlinkyBlocksMessage::nbChunks(size);
+	for (unsigned int i = 0; i < nbChunks; i++) {
 		t += (rand()/(double)RAND_MAX ) * (MAX_TIME-MIN_TIME) + MIN_TIME;
 	}
 	//cout << "size: " << size << endl;
 	//cout << "nbChunks: " << nbChunks << ", time: " << t << " ms" << endl;
+	cout << hostBlock->blockId << " network trans. time: " << t * 1000 << endl;
 	return (t * 1000); // ms to us (simulator unit)
+}
+
 }

@@ -92,6 +92,7 @@ public:
 	
 	/* For Blinky Block determinism version */	
 	int getNextRandomNumber();
+	
 };
 
 } // BaseSimulator namespace
