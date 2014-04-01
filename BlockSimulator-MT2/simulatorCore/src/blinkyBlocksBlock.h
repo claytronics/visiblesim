@@ -15,6 +15,7 @@
 #include "blinkyBlocksClock.h"
 #include <boost/asio.hpp> 
 #include <stdexcept>
+#include <list>
 
 namespace BlinkyBlocks {
 
@@ -41,7 +42,6 @@ public:
 	BlinkyBlocksVM *vm;
 	
 	BlinkyBlocksClock localClock;
-	bool timeLeader;
 
 	BlinkyBlocksBlockCode *(*buildNewBlockCode)(BlinkyBlocksBlock*);
 	BlinkyBlocksBlock(int bId, BlinkyBlocksBlockCode *(*blinkyBlocksBlockCodeBuildingFunction)(BlinkyBlocksBlock*));
@@ -63,6 +63,8 @@ public:
 		}
 		return NULL;
 	}
+	unsigned int getNbNeighbors();
+	
 	NeighborDirection::Direction getDirection(P2PNetworkInterface*);
 
 	void killVM();
@@ -81,9 +83,10 @@ public:
 	
 	int sendCommand(VMCommand &c);
 	
-	inline bool isTimeLeader() { return timeLeader; }
-	void synchronizeNeighborClocks(uint8_t waveId);
-	void launchSynchronizationWave(uint64_t t);
+	// DOES NOT WORK, TO FIX
+	//unsigned int broadcastMessage(Message *msg, P2PNetworkInterface* excluded); 
+	//unsigned int spreadMessage(Message *msg, list<P2PNetworkInterface*> l);
+	
 };
 
 std::ostream& operator<<(std::ostream &stream, BlinkyBlocksBlock const& bb);

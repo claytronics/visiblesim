@@ -25,6 +25,11 @@ BlinkyBlocksMessage::BlinkyBlocksMessage(unsigned int s) : Message() {
 	msize = s;	
 }
 
+BlinkyBlocksMessage::BlinkyBlocksMessage(BlinkyBlocksMessage *msg) : Message() {
+	msize = msg->msize;
+	type = msg->type;
+}
+
 unsigned int BlinkyBlocksMessage::size() {
 	return msize;
 }
@@ -44,25 +49,147 @@ unsigned int BlinkyBlocksMessage::nbChunks(unsigned int s){
 
 //===========================================================================================================
 //
-//          BlinkyBlocksClockSyncMsg  (class)
+//          BlinkyBlocksLeaderElectionMinIdElectionMsg  (class)
 //
 //===========================================================================================================
 
-uint8_t BlinkyBlocksClockSyncMsg::waveIdCnt = 1;
+BlinkyBlocksLeaderElectionMinIdElectionMsg::BlinkyBlocksLeaderElectionMinIdElectionMsg(unsigned int i): BlinkyBlocksMessage() {
+	type = BB_CS_LE_MIN_ID_ELECTION_MESSAGE;
+	id = i;
+	msize = 1 + 1 + 2; // type: CLOCK_SYNC, LEADER ELECTION, MIN ID
+}
 
-BlinkyBlocksClockSyncMsg::BlinkyBlocksClockSyncMsg(uint32_t c) {
+BlinkyBlocksLeaderElectionMinIdElectionMsg::BlinkyBlocksLeaderElectionMinIdElectionMsg(BlinkyBlocksLeaderElectionMinIdElectionMsg *msg): BlinkyBlocksMessage(msg) {
+	id = msg->id;
+}
+
+//===========================================================================================================
+//
+//          BlinkyBlocksLeaderElectionMinIdBackMsg  (class)
+//
+//===========================================================================================================
+
+BlinkyBlocksLeaderElectionMinIdBackMsg::BlinkyBlocksLeaderElectionMinIdBackMsg(unsigned int i, bool a) : BlinkyBlocksMessage(){
+	type = BB_CS_LE_MIN_ID_BACK_MESSAGE;
+	msize = 1 + 1 + 2; // type: CLOCK_SYNC, LEADER ELECTION BACK, MIN ID
+	id = i;
+	answer = a;
+}
+
+BlinkyBlocksLeaderElectionMinIdBackMsg::BlinkyBlocksLeaderElectionMinIdBackMsg(BlinkyBlocksLeaderElectionMinIdBackMsg *msg): BlinkyBlocksMessage(msg) {
+	id = msg->id;
+	answer = msg->answer;
+}
+
+//===========================================================================================================
+//
+//          BlinkyBlocksLEBarBlockDistanceMsg  (class)
+//
+//===========================================================================================================
+
+BlinkyBlocksLEBarBlockDistanceMsg::BlinkyBlocksLEBarBlockDistanceMsg(unsigned int i, unsigned int d) {	
+	type = BB_CS_LE_BAR_BLOCK_DISTANCE_MESSAGE;
+	msize = 2 + 1;
+	id = i;
+	distance = d;
+}
+
+//===========================================================================================================
+//
+//          BlinkyBlocksLEBarSumRequestMsg  (class)
+//
+//===========================================================================================================
+
+BlinkyBlocksLEBarSumRequestMsg::BlinkyBlocksLEBarSumRequestMsg() {
+	type = BB_CS_LE_BAR_SUM_REQUEST_MESSAGE;
+	msize = 2; // ?
+}
+
+//===========================================================================================================
+//
+//          BlinkyBlocksLEBarSumInfoMsg  (class)
+//
+//===========================================================================================================
+	
+BlinkyBlocksLEBarSumInfoMsg::BlinkyBlocksLEBarSumInfoMsg(unsigned int s) {
+	type = BB_CS_LE_BAR_SUM_INFO_MESSAGE;
+	msize = 2; // ?
+	sum = s;
+}
+
+//===========================================================================================================
+//
+//          ST_go_message  (class)
+//
+//===========================================================================================================
+
+ST_go_message::ST_go_message(unsigned int l) {
+	type = BB_CS_ST_GO_MESSAGE;
+	msize = 1;
+	level = l; 
+}
+
+//===========================================================================================================
+//
+//          ST_back_message  (class)
+//
+//===========================================================================================================
+
+ST_back_message::ST_back_message(bool b, unsigned int l) {
+	type = BB_CS_ST_BACK_MESSAGE;
+	msize = 1+1;
+	answer = b;
+	level = l;
+}
+
+//===========================================================================================================
+//
+//          BlinkyBlocksClockSyncClockInfoMsg  (class)
+//
+//===========================================================================================================
+/*
+uint8_t BlinkyBlocksClockSyncInfoMsg::waveIdCnt = 1;
+
+BlinkyBlocksClockSyncInfoMsg::BlinkyBlocksClockSyncInfoMsg(uint32_t c) : BlinkyBlocksMessage() {
 	clock = c;
 	waveId = waveIdCnt;
 	waveIdCnt++;
-	msize = 1 + 1 + 4; // type (CLOCK_SYNC) + Wave Id + clock value
-	type = BB_CLOCK_SYNC_MESSAGE;
+	msize = 1 +  1 + 1 + 4; // type (CLOCK_SYNC) + CLOCK INFO + Wave Id + clock value
+	nbhops = 0;
+	type = BB_CS_CLOCK_INFO_MESSAGE;
 }
 
-BlinkyBlocksClockSyncMsg::BlinkyBlocksClockSyncMsg(uint32_t c, uint8_t wId) {
+BlinkyBlocksClockSyncInfoMsg::BlinkyBlocksClockSyncInfoMsg(uint32_t c, uint8_t wId, uint8_t n) : BlinkyBlocksMessage() {
 	clock = c;
 	waveId = wId;
+	nbhops = n;
 	msize = 1 + 1 + 4;
-	type = BB_CLOCK_SYNC_MESSAGE;
+	type = BB_CS_CLOCK_INFO_MESSAGE;
+}*/
+
+BlinkyBlocksClockSyncInfoMsg::BlinkyBlocksClockSyncInfoMsg(uint32_t c) : BlinkyBlocksMessage() {
+	clock = c;
+	msize = 1 +  1 + 1 + 4; // type (CLOCK_SYNC) + CLOCK INFO + Wave Id + clock value
+	nbhops = 0;
+	type = BB_CS_CLOCK_INFO_MESSAGE;
+}
+
+BlinkyBlocksClockSyncInfoMsg::BlinkyBlocksClockSyncInfoMsg(uint32_t c, uint8_t n) : BlinkyBlocksMessage() {
+	clock = c;
+	nbhops = n;
+	msize = 1 + 1 + 4;
+	type = BB_CS_CLOCK_INFO_MESSAGE;
+}
+
+//===========================================================================================================
+//
+//          BlinkyBlocksClockSyncRequestMsg  (class)
+//
+//===========================================================================================================
+
+BlinkyBlocksClockSyncRequestMsg::BlinkyBlocksClockSyncRequestMsg() : BlinkyBlocksMessage() {
+	type = BB_CS_CLOCK_REQUEST_MESSAGE;
+	msize = 1 + 1; // type: CLOCK_SYNC, CLOCK REQUEST
 }
 
 //===========================================================================================================
@@ -90,7 +217,7 @@ unsigned int SerialNetworkInterface::computeTransmissionDuration(unsigned int si
 	}
 	//cout << "size: " << size << endl;
 	//cout << "nbChunks: " << nbChunks << ", time: " << t << " ms" << endl;
-	cout << hostBlock->blockId << " network trans. time: " << t * 1000 << endl;
+	//cout << hostBlock->blockId << " network trans. time: " << t * 1000 << endl;
 	return (t * 1000); // ms to us (simulator unit)
 }
 

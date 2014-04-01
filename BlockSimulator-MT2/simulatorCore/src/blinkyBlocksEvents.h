@@ -229,14 +229,44 @@ public:
 //          SynchronizeNeighborClocksEvent  (class)
 //
 //===========================================================================================================
-
+/*
 class SynchronizeNeighborClocksEvent : public BlockEvent {
 public:
 	uint8_t waveId;
+	uint8_t nbhops;
 	
-	SynchronizeNeighborClocksEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint8_t wId);
+	SynchronizeNeighborClocksEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint8_t wId, uint8_t n);
 	SynchronizeNeighborClocksEvent(SynchronizeNeighborClocksEvent *ev);
 	~SynchronizeNeighborClocksEvent();
+	void consumeBlockEvent();
+	const virtual string getEventName();
+};*/
+
+class SynchronizeNeighborClocksEvent : public BlockEvent {
+public:
+	uint8_t nbhops;
+	
+	SynchronizeNeighborClocksEvent(uint64_t, BlinkyBlocksBlock *conBlock, uint8_t n);
+	SynchronizeNeighborClocksEvent(SynchronizeNeighborClocksEvent *ev);
+	~SynchronizeNeighborClocksEvent();
+	void consumeBlockEvent();
+	const virtual string getEventName();
+};
+
+//===========================================================================================================
+//
+//          BarycentricLeaderElectionTimeoutEvent  (class)
+//
+//===========================================================================================================
+
+class BarycentricLeaderElectionTimeoutEvent : public BlockEvent {
+public:
+	bool cancelled;
+	
+	BarycentricLeaderElectionTimeoutEvent(uint64_t, BlinkyBlocksBlock *conBlock);
+	BarycentricLeaderElectionTimeoutEvent(BarycentricLeaderElectionTimeoutEvent *ev);
+	~BarycentricLeaderElectionTimeoutEvent();
+	void cancel();
 	void consumeBlockEvent();
 	const virtual string getEventName();
 };

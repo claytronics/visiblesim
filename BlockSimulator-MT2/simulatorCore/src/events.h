@@ -181,6 +181,7 @@ public:
 	P2PNetworkInterface *interface;
 	MessagePtr message;
 	NetworkInterfaceReceiveEvent(uint64_t,P2PNetworkInterface *ni, MessagePtr mes);
+	NetworkInterfaceReceiveEvent(NetworkInterfaceReceiveEvent *ev);
 	~NetworkInterfaceReceiveEvent();
 	void consume();
 	const virtual string getEventName();

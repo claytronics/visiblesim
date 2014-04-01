@@ -15,6 +15,7 @@ protected :
 	float eventTime;
 public :
 	ScenarioEvent(float t):eventTime(t) {};
+	virtual ~ScenarioEvent() {};
 
 	inline float getEventTime() { return eventTime; };
 	virtual void exportEventToScheduler()=0;
@@ -24,6 +25,7 @@ class ScenarioTappEvent:public ScenarioEvent {
 	int blockId;
 public:
 	ScenarioTappEvent(float t,int id):ScenarioEvent(t),blockId(id) {};
+	~ScenarioTappEvent() {};
 	virtual void exportEventToScheduler() { BaseSimulator::getWorld()->tapBlock(eventTime*1000000+BaseSimulator::getScheduler()->now(),blockId); };
 };
 
@@ -31,6 +33,7 @@ class ScenarioDebugEvent:public ScenarioEvent {
 	bool open;
 public:
 	ScenarioDebugEvent(float t,bool op):ScenarioEvent(t),open(op) {};
+	~ScenarioDebugEvent() {};
 	virtual void exportEventToScheduler() {};
 };
 
@@ -38,6 +41,7 @@ class ScenarioSelectBlockEvent:public ScenarioEvent {
 	int blockId;
 public:
 	ScenarioSelectBlockEvent(float t,int id):ScenarioEvent(t),blockId(id) {};
+	~ScenarioSelectBlockEvent() {};
 	virtual void exportEventToScheduler() {};
 };
 
@@ -45,6 +49,7 @@ class ScenarioAddBlockEvent:public ScenarioEvent {
 	Vecteur position;
 public:
 	ScenarioAddBlockEvent(float t,const Vecteur &pos):ScenarioEvent(t),position(pos) {};
+	~ScenarioAddBlockEvent() {};
 	virtual void exportEventToScheduler() {};
 };
 

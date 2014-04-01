@@ -390,17 +390,31 @@ const string VMEndPollEvent::getEventName() {
 //          SynchronizeNeighborClocksEvent  (class)
 //
 //===========================================================================================================
-
-SynchronizeNeighborClocksEvent::SynchronizeNeighborClocksEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint8_t wId) : BlockEvent(t, conBlock) {
+/*
+SynchronizeNeighborClocksEvent::SynchronizeNeighborClocksEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint8_t wId, uint8_t n) : BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	randomNumber = conBlock->getNextRandomNumber();
 	waveId = wId;
+	nbhops = n;
 	eventType = EVENT_SYNCHRONIZE_NEIGHBOR_CLOCKS;
 }
 
 SynchronizeNeighborClocksEvent::SynchronizeNeighborClocksEvent(SynchronizeNeighborClocksEvent *ev) : BlockEvent(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 	waveId = ev->waveId;
+	nbhops = ev->nbhops;
+}*/
+
+SynchronizeNeighborClocksEvent::SynchronizeNeighborClocksEvent(uint64_t t, BlinkyBlocksBlock *conBlock, uint8_t n) : BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	randomNumber = conBlock->getNextRandomNumber();
+	nbhops = n;
+	eventType = EVENT_SYNCHRONIZE_NEIGHBOR_CLOCKS;
+}
+
+SynchronizeNeighborClocksEvent::SynchronizeNeighborClocksEvent(SynchronizeNeighborClocksEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+	nbhops = ev->nbhops;
 }
 
 SynchronizeNeighborClocksEvent::~SynchronizeNeighborClocksEvent() {
@@ -409,11 +423,48 @@ SynchronizeNeighborClocksEvent::~SynchronizeNeighborClocksEvent() {
 
 void SynchronizeNeighborClocksEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
-	((BlinkyBlocksBlock*) concernedBlock)->synchronizeNeighborClocks(waveId);
+	//((BlinkyBlocksBlockCode*) concernedBlock->blockCode)->synchronizeNeighborClocks(waveId, nbhops);
+	((BlinkyBlocksBlockCode*) concernedBlock->blockCode)->synchronizeNeighborClocks(nbhops);
 }
 
 const string SynchronizeNeighborClocksEvent::getEventName() {
 	return("SynchronizeNeighborClocks Event");
+}
+
+//===========================================================================================================
+//
+//          BarycentricLeaderElectionTimeoutEvent  (class)
+//
+//===========================================================================================================
+
+BarycentricLeaderElectionTimeoutEvent::BarycentricLeaderElectionTimeoutEvent(uint64_t t, BlinkyBlocksBlock *conBlock)  : BlockEvent(t, conBlock){
+	EVENT_CONSTRUCTOR_INFO();
+	randomNumber = conBlock->getNextRandomNumber();
+	cancelled = false;
+	eventType = EVENT_BARYCENTRIC_LEADER_ELECTION_TIMEOUT;	
+}
+
+BarycentricLeaderElectionTimeoutEvent::BarycentricLeaderElectionTimeoutEvent(BarycentricLeaderElectionTimeoutEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+BarycentricLeaderElectionTimeoutEvent::~BarycentricLeaderElectionTimeoutEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void BarycentricLeaderElectionTimeoutEvent::cancel() {
+	cancelled = true;
+}
+
+void BarycentricLeaderElectionTimeoutEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	if (!cancelled) {
+		((BlinkyBlocksBlockCode*) concernedBlock->blockCode)->barycentricLeaderElectionTimeout();
+	}
+}
+
+const string BarycentricLeaderElectionTimeoutEvent::getEventName() {
+	return ("BarycentricLeaderElectionTimeout Event");
 }
 
 } // BlinkyBlocks namespace

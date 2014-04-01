@@ -200,9 +200,17 @@ NetworkInterfaceStopTransmittingEvent::~NetworkInterfaceStopTransmittingEvent() 
 void NetworkInterfaceStopTransmittingEvent::consume() {
 	EVENT_CONSUME_INFO();
 
-	interface->connectedInterface->hostBlock->scheduleLocalEvent(EventPtr(new NetworkInterfaceReceiveEvent(BaseSimulator::getScheduler()->now(), interface->connectedInterface, interface->messageBeingTransmitted)));
+	//BaseSimulator::getScheduler()->schedule(new NetworkInterfaceReceiveEvent(BaseSimulator::getScheduler()->now(), interface->connectedInterface, interface->messageBeingTransmitted));
+	
+	EventPtr ev = EventPtr(new NetworkInterfaceReceiveEvent(BaseSimulator::getScheduler()->now(), interface->connectedInterface, interface->messageBeingTransmitted));
+	BaseSimulator::BuildingBlock *block = interface->connectedInterface->hostBlock;
+	
+	if (!block->blockCode->handleSystemMessage(ev)) {
+		interface->connectedInterface->hostBlock->scheduleLocalEvent(ev);
+	}
+	
 	// TODO add a confirmation event to the sender ?
-
+	
 	interface->messageBeingTransmitted.reset();
 	interface->availabilityDate = BaseSimulator::getScheduler()->now();
 	if (interface->outgoingQueue.size() > 0) {
@@ -233,8 +241,21 @@ NetworkInterfaceReceiveEvent::~NetworkInterfaceReceiveEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
+NetworkInterfaceReceiveEvent::NetworkInterfaceReceiveEvent(NetworkInterfaceReceiveEvent *ev) : Event(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+	interface = ev->interface;
+	message = ev->message;
+}
+
+
 void NetworkInterfaceReceiveEvent::consume() {
 	EVENT_CONSUME_INFO();
+	//BaseSimulator::BuildingBlock *block = interface->connectedInterface->hostBlock;
+	
+	//if (!block->blockCode->handleSystemMessage(this)) {
+		//block->scheduleLocalEvent(EventPtr(new NetworkInterfaceReceiveEvent(this)));
+	//}
+	
 }
 
 const string NetworkInterfaceReceiveEvent::getEventName() {

@@ -67,6 +67,8 @@ public:
 	virtual void shakeBlock(uint64_t date, int bId, int f) {};
 	/* Stop the block execution */
 	void stopSimulation();
+	
+	static unsigned int getSize() {return buildingBlocksMap.size(); }
 };
 
 inline void deleteWorld() {
@@ -74,6 +76,7 @@ inline void deleteWorld() {
 }
 
 inline World* getWorld() { return(World::getWorld()); }
+
 
 } // BaseSimulator namespace
 

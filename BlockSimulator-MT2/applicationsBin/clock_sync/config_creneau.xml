@@ -15,27 +15,29 @@
 	<spotlight target="200,20,200" directionSpherical="45,60,500" angle="40"/>
 	
 	<blockList color="0,255,0" size="1,1,1" blocksize="40,40,41" >
-
-		<block position="5,5,5"/>
-		<block position="5,5,6"/>
-		<block position="5,5,7"/>
-		<!--	<block position="5,7,7"/> 
-		<block position="5,4,6"/>-->
-	<!-- Petite croix:  -->
-		<block position="4,5,6"/>
-		<block position="6,5,6"/>
-	<!-- Grande Croix:  -->
-		<block position="5,5,8"/>
-		<block position="5,5,9"/>
-		<block position="3,5,7"/>
-		<block position="4,5,7"/>
-		<block position="6,5,7"/>
-		<block position="7,5,7"/> 
-	<!-- Back -->
-		<block position="5,6,5"/>
-		<block position="5,7,5"/>
-		<block position="5,8,5"/>	
 		
+		<!-- x z y -->
+		<block position="1,6,5"/>
+		<block position="1,4,5"/>
+		<block position="1,5,3"/>
+		<block position="1,5,4"/>
+		<block position="1,5,6"/>
+		<block position="1,5,7"/>
+		<block position="1,5,5"/>
+		<block position="2,5,5"/>
+		
+		<block position="3,5,5"/>
+		<block position="4,5,5"/>
+		<block position="5,5,5"/>
+		
+		<block position="6,5,5"/>
+		<block position="7,5,5"/>	
+		<block position="7,5,6"/>
+		<block position="7,5,7"/>
+		<block position="7,5,4"/>
+		<block position="7,5,3"/>
+		<block position="7,6,5"/>
+		<block position="7,4,5"/>
 	</blockList>
 	<scenario autostart="True">
 		<event type="tap" time="1.0" id="4" />

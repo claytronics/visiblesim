@@ -85,7 +85,6 @@ BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, BlinkyBlocksBlockCode *(*blinkyBlo
 	vm = new BlinkyBlocksVM(this);
 	buildNewBlockCode = blinkyBlocksBlockCodeBuildingFunction;
 	blockCode = (BaseSimulator::BlockCode*)buildNewBlockCode(this);
-	timeLeader = false;
 }
 
 BlinkyBlocksBlock::~BlinkyBlocksBlock() {
@@ -199,31 +198,49 @@ std::ostream& operator<<(std::ostream &stream, BlinkyBlocksBlock const& bb) {
   return stream;
 }
 
-void BlinkyBlocksBlock::synchronizeNeighborClocks(uint8_t waveId) {
-	stringstream info;
-	uint64_t rva1 = 0;
-	uint64_t rva2 = 0;
-	info << "Synchronize neighbor clocks";
-	
+// DOES NOT WORK, TO FIX: DATA AREN'T COPIED
+/*
+unsigned int BlinkyBlocksBlock::broadcastMessage(Message *msg, P2PNetworkInterface* excluded) {
+	list<P2PNetworkInterface *> l;
+	P2PNetworkInterface *bbi;
+		
 	for (int i=0; i<6; i++) {
-		P2PNetworkInterface *bbi = this->getInterface(NeighborDirection::Direction(i));
-		if (bbi->connectedInterface) {
-			rva1 = (rand()/(double)RAND_MAX) * (1500-0) + 0; // random variable between each CLOCK_SYNC message sent
-													// between 0 and 1500 us
-			BlinkyBlocks::getScheduler()->schedule(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now() + rva1 + rva2,
-				new BlinkyBlocksClockSyncMsg(localClock.getClockMS(), waveId), bbi));
-			rva2 += (rand()/(double)RAND_MAX) * (10-0) + 0;
-			cout << blockId << " sync rva1: " << rva1 << endl;
-			cout << blockId << " sync rva2: " << rva2 << endl;	
+		bbi = this->getInterface(NeighborDirection::Direction(i));
+		if (bbi != excluded) {
+			l.push_back(bbi);
 		}
 	}
-		
-	BlinkyBlocks::getScheduler()->trace(info.str(), blockId);
+	return spreadMessage(msg,l);
 }
 
-void BlinkyBlocksBlock::launchSynchronizationWave(uint64_t t) {
-	localClock.lastWaveId++;
-	BlinkyBlocks::getScheduler()->schedule(new SynchronizeNeighborClocksEvent(t, this, localClock.lastWaveId));
+unsigned int BlinkyBlocksBlock::spreadMessage(Message *msg, list<P2PNetworkInterface*> l) {
+	uint64_t rva1 = 0;
+	uint64_t rva2 = 0;
+	unsigned int sent = 0;
+	
+	MessagePtr m = MessagePtr(msg);
+	
+	for (list<P2PNetworkInterface *>::iterator it= l.begin(); it != l.end(); it++) {
+		P2PNetworkInterface *bbi = *it;
+		if (bbi->connectedInterface) {
+			rva1 = (rand()/(double)RAND_MAX) * (1500-0) + 0; // random variable between each CLOCK_SYNC message sent
+												// between 0 and 1500 us
+			BlinkyBlocks::getScheduler()->schedule(new NetworkInterfaceEnqueueOutgoingEvent(BaseSimulator::getScheduler()->now() + rva1 + rva2, m, bbi));
+			rva2 += (rand()/(double)RAND_MAX) * (10-0) + 0;
+			sent++;
+		}
+	}
+	return sent;
+}*/
+
+unsigned int BlinkyBlocksBlock::getNbNeighbors() {
+	unsigned int res = 0;
+	for (int i=0; i<6; i++) {
+		if (tabInterfaces[i]->connectedInterface) {
+			res++;
+		}
+	}
+	return res;
 }
 
 }

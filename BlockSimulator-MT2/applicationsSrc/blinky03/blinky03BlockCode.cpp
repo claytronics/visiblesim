@@ -102,12 +102,12 @@ void Blinky03BlockCode::processLocalEvent(EventPtr pev) {
 		case EVENT_RECEIVE_MESSAGE: /*EVENT_NI_RECEIVE: */
 			{
 			MessagePtr message = (boost::static_pointer_cast<NetworkInterfaceReceiveEvent>(pev))->message;
-			if (message->type == BB_CLOCK_SYNC_MESSAGE) {
+			/*if (message->type == BB_CLOCK_SYNC_MESSAGE) {
 				bb->localClock.handleSyncMsg(message);
 				info << "sync ";
 			} else {
 				info << "unknown ";
-			}
+			}*/
 			info << "message received at face " << NeighborDirection::getString(bb->getDirection(message->sourceInterface->connectedInterface)) << " from " << message->sourceInterface->hostBlock->blockId;
 			}
 			break;

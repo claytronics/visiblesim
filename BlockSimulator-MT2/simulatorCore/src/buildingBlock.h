@@ -18,7 +18,6 @@
 #include "glBlock.h"
 #include "blockCode.h"
 
-
 class Event;
 typedef boost::shared_ptr<Event> EventPtr;
 

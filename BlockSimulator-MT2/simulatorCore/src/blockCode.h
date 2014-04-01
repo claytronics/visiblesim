@@ -27,6 +27,8 @@ public:
 
 	virtual void processLocalEvent(EventPtr pev) = 0;
 	virtual void startup() = 0;
+	
+	virtual bool handleSystemMessage(EventPtr pev) { return false; }
 };
 
 } // BaseSimulator namespace
