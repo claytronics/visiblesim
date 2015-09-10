@@ -43,7 +43,7 @@ public :
 	void draw();
 };
 
-class Camera { 
+class Camera {
   double phi,theta,distance;
   Vecteur position,target,Xcam,Ycam;
   int mouse[2];
@@ -72,7 +72,9 @@ public :
   void glLookAt();
   void setLightParameters(const Vecteur &t,double th,double ph, double d,double angle,double nearplane,double farplane);
   void glProjection();
-protected : 
+
+	friend ostream& operator<<(ostream& f,const Camera &c);
+protected :
   void updatePositionFromAngles();
 };
 

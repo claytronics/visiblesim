@@ -19,12 +19,13 @@ SmartBlocksScheduler::SmartBlocksScheduler() {
 	sem_schedulerStart = new boost::interprocess::interprocess_semaphore(0);
 	//FIN MODIF NICO
 	schedulerMode = SCHEDULER_MODE_FASTEST;
-	cout << "SmartBlocksScheduler constructor" << endl;
+	OUTPUT << "SmartBlocksScheduler constructor" << endl;
+	state = NOTREADY;
 	schedulerThread = new thread(bind(&SmartBlocksScheduler::startPaused, this));
 }
 
 SmartBlocksScheduler::~SmartBlocksScheduler() {
-	cout << "\033[1;31mSmartBlocksScheduler destructor\33[0m" << endl;
+	OUTPUT << "\033[1;31mSmartBlocksScheduler destructor\33[0m" << endl;
 
 	delete sem_schedulerStart;
 	delete schedulerThread;
@@ -40,26 +41,24 @@ void SmartBlocksScheduler::deleteScheduler() {
 
 void *SmartBlocksScheduler::startPaused(/*void *param*/) {
 	//MultiCoresScheduler *scheduler = (MultiCoresScheduler*)param;
-
-
 	bool mustStop;
 	uint64_t systemCurrentTime, systemCurrentTimeMax;
 
 	usleep(1000000);
-	cout << "\033[1;33mScheduler Mode :" << schedulerMode << endl;
+	OUTPUT << "\033[1;33mScheduler Mode :" << schedulerMode << endl;
 
 	sem_schedulerStart->wait();
 
+	state = RUNNING;
 	int systemStartTime, systemStopTime;
 	multimap<uint64_t, EventPtr>::iterator first;
 	EventPtr pev;
 
 	systemStartTime = (glutGet(GLUT_ELAPSED_TIME))*1000;
-	cout << "\033[1;33m" << "Scheduler : start order received " << systemStartTime << "\033[0m" << endl;
+	OUTPUT << "\033[1;33m" << "Scheduler : start order received " << systemStartTime << "\033[0m" << endl;
 
 	switch (schedulerMode) {
 	case SCHEDULER_MODE_FASTEST:
-
 
 		while ( (!eventsMap.empty() ) && currentDate < maximumDate) {
 //JUSTE POUR DEBUG
@@ -79,8 +78,8 @@ void *SmartBlocksScheduler::startPaused(/*void *param*/) {
 			eventsMapSize--;
 	    }
 		break;
-	case SCHEDULER_MODE_REALTIME:
 
+	case SCHEDULER_MODE_REALTIME:
 		cout << "Realtime mode scheduler\n";
 		mustStop = false;
 	    while(!mustStop && !eventsMap.empty()) {
@@ -105,22 +104,16 @@ void *SmartBlocksScheduler::startPaused(/*void *param*/) {
 	    		//listeEvenements.pop_front();
 	    		eventsMap.erase(first);
 	    		eventsMapSize--;
-	    		//	    	  ev = *(listeEvenements.begin());
+	    		//ev = *(listeEvenements.begin());
 	    		//first=eventsMap.begin();
 	    		//pev = (*first).second;
 	      }
-	    	systemCurrentTime = systemCurrentTimeMax;
-	      if (!eventsMap.empty()) {
+	    systemCurrentTime = systemCurrentTimeMax;
+	    if (!eventsMap.empty()) {
 	        //ev = *(listeEvenements.begin());
 	        first=eventsMap.begin();
 	        pev = (*first).second;
 
-	        /*
-	        dureeAttente = ev->heureEvenement - heureActuelle;
-	        dureeAttenteTimeval.tv_sec = floor(dureeAttente / 1000000);
-	        dureeAttenteTimeval.tv_usec = (dureeAttente%1000000);
-	        select(0,NULL,NULL,NULL,&dureeAttenteTimeval);
-	        */
 #ifdef WIN32
 			Sleep(5);
 #else
@@ -142,6 +135,7 @@ void *SmartBlocksScheduler::startPaused(/*void *param*/) {
 
 	cout << "end time : " << currentDate << endl;
 	cout << "real time elapsed : " << ((double)(systemStopTime-systemStartTime))/1000000 << endl;
+
 //	cout << "Nombre d'événements restants en mémoire : " << Evenement::nbEvenements << endl;
 //	cout << "Nombre de messages restants en mémoire : " << Message::nbMessages << endl;
 	cout << "Maximum sized reached by the events list : " << largestEventsMapSize << endl;

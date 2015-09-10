@@ -26,13 +26,10 @@ SmartBlocksBlock::SmartBlocksBlock(int bId, SmartBlocksBlockCode *(*smartBlocksB
   }
 }
 
-
 SmartBlocksBlock::~SmartBlocksBlock() {
-  //MODIF NICO
   for (int i=North; i<=West; i++) {
     delete tabInterfaces[i];
   }
-  //FIN MODIF NICO
   cout << "SmartBlocksBlock destructor :" << blockId << endl;
 }
 
@@ -41,7 +38,7 @@ void SmartBlocksBlock::setPosition(const Vecteur &p) {
   getWorld()->updateGlData(this);
 }
 
-void SmartBlocksBlock::setColor(const Vecteur &c) {
+void SmartBlocksBlock::setColor(const Color &c) {
   color=c;
   getWorld()->updateGlData(this);
 }
@@ -52,20 +49,34 @@ void SmartBlocksBlock::setColor(int num) {
   getWorld()->updateGlData(this);
 }
 
-//MODIF NICO
-NeighborDirection SmartBlocksBlock::getDirection(P2PNetworkInterface *given_interface)
-{
-  if( !given_interface) {
-    return NeighborDirection( 0);
-  }
-  for( int i( North); i <= West; ++i) {
-    P2PNetworkInterface* p2p = tabInterfaces[ i];
-    if( p2p == given_interface) {
-      return NeighborDirection( i);
-    }
-  }
-  assert(0);			// should never get here
+P2PNetworkInterface *SmartBlocksBlock::getP2PNetworkInterfaceByRelPos(const PointCel &pos) {
+    if (pos.x==-1) return tabInterfaces[West];
+    else if (pos.x==1) return tabInterfaces[East];
+    else if (pos.y==-1) return tabInterfaces[South];
+    else if (pos.y==1) return tabInterfaces[North];
+
+    return NULL;
 }
-//FIN MODIF NICO
+
+NeighborDirection SmartBlocksBlock::getDirection(P2PNetworkInterface *given_interface) {
+	/*if( !given_interface) {
+		return NeighborDirection(0);
+	}*/
+	for( int i( North); i <= West; ++i) {
+		P2PNetworkInterface* p2p = tabInterfaces[ i];
+		if( p2p == given_interface) {
+			return NeighborDirection(i);
+		}
+	}
+	assert(0);			// should never get here
+}
+
+P2PNetworkInterface *SmartBlocksBlock::getP2PNetworkInterfaceByDestBlockId(int id) {
+	int i=0;
+	while (i<4 && (tabInterfaces[i]->connectedInterface==NULL || tabInterfaces[i]->connectedInterface->hostBlock->blockId!=id)) {
+		i++;
+	}
+	return (i<4?tabInterfaces[i]:NULL);
+}
 
 }

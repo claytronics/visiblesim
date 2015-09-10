@@ -1,47 +1,91 @@
-visiblesim
-==========
+VisibleSim
+==================
+
+Private version of VisibleSim and its applications. VisibleSim is a general simulator for modular 
+robots.
+
+## Installation
 
 Dependencies:
  - Boost C++ Libraries >= 1.47.0
  - GLUT
  - GLEW
+ - SBCL - to compile Meld programs
 
-On Ubuntu 12.04:
- - libboost-all-dev
- - freeglut3-dev
- - libglew1.6-dev
- 
+**NOTE: video card drivers have to be correctly installed. Otherwise, VisibleSim crashes when moving the mouse on the simulated modules.**
 
-## Mac Installation
+### Mac Installation
 
- 1. Install dependencies:
-
+1\. Install dependencies:
 ```
 brew install boost --with-mpi --without-single
 brew install freeglut
 brew install glew
+brew install sbcl
+```
+2\. make
+
+**NOTE: VisibleSim uses boost::interprocess::interprocess_semaphore. Unfortunately, its implementation in Boost 1.56 is buggy on MacOS 10.9.5. VisibleSim compiles but throws an exception at runtime saying the function is not implemented. Boost 1.56 actually implementes interprocess_semaphore using POSIX unnamed semaphores, which are not implemented in MacOS 10.9.5. To fix that bug, edit `/usr/local/include/boost/interprocess/sync/interprocess_semaphore.hpp` and comment the following lines to make Boost use SPIN semaphore (see the official ticket [boost1.56-ticket] for more details):**
+ ```
+#if !defined(BOOST_INTERPROCESS_FORCE_GENERIC_EMULATION) && \
+   (defined(BOOST_INTERPROCESS_POSIX_PROCESS_SHARED) && defined(BOOST_INTERPROCESS_POSIX_NAMED_SEMAPHORES))
+   #include <boost/interprocess/sync/posix/semaphore.hpp>
+   #define BOOST_INTERPROCESS_USE_POSIX
 ```
 
- 2. Uncomment mac-specific GLOBAL_LIBS in BlockSimulator-MT2/Makefile
- 3. make
+### Ubuntu Installation
 
-## Running the simulator
-
-To execute meld programs on the simulator, 
-set vmPath and programPath in BlockSimulator-MT2/applicationsBin/blinky01/config.xml to point to 
-your vmPath and the program you want to run.
-
-Then `cd` into `BlockSimulator-MT2/applicationsBin/blinky01/` and run 
+1\. Intall dependencies:
 ```
-./blinky01 config.xml
+sudo apt-get install libboost-all-dev
+sudo apt-get install freeglut3-dev
+sudo apt-get install libglew-dev
+sudo apt-get install sbcl
+```
+2\. make
+
+## Applications
+
+### Application examples
+
+Application examples are available in `applicationsSrc/` folder. For instance, in `bbCycle`, blocks
+change their color every two seconds using their own local clock. Since local clocks drift apart,
+the color change are very quickly desynchronized.
+
+### Implementing a new application
+
+To implement a new application, add a folder in `applicationsSrc/`, program the application (see
+Application examples and the documentations available in `doc/`), add the folder name in `SUBDIR` 
+macro in `applicationsSrc/Makefile`.
+
+### Running an application
+
+VisibleSim supports both c++ applications and Meld appplications (currently, only Blinky Block
+environment supports Meld programming). Regardless of the type of application you want to run, you 
+must press '<kbd>r</kbd>' (real-time mode) or '<kbd>R</kbd>' (fastest mode) in the simulator window to launch the 
+simulation.
+
+#### Running a c++ application
+
+To execute an application named `myApp`, compile it with `make` in the root folder, `cd` into
+`applicationsBin/myApp`, create an appropriate xml configuration file (see other configuration
+files in `applicationsBin/` folders, and run `./myApp -c configuration.xml`. By default, `config.xml`
+is loaded, but you can provide another configuration file with `-c` option.
+
+#### Running a Meld application
+
+Meld programs only run on Blinky Blocks for now. To execute a Meld program on VisibleSim, ensure that `blinkyMeld` application is compiled (`blinkyMeld` 
+had belong to `SUBDIR` macro in `applicationsSrc/Makefile` when the last `make` in the repository 
+root folder was performed). Then, `cd` into
+`applicationsBin/blinkyMeld/` and run:
+
+```
+./compile-meld.sh [path to your Meld program] // to compile your Meld program.
+./blinkyMeld -c configuration.xml // to run your Meld program.
 ```
 
-The simulator window should appear and the console should read:
-```
-SIMULATION DEBUGGING MODE -- type help for options
->
-```
+Press '<kbd>r</kbd>' to run the simulation.
 
-**NOTE: you must press '<shift>-r' in the simulator window before you can start running commands from the console.**
+Meld program examples are available in `applicationsBin/blinkyMeld/meld/programs`. All programs were not tested.
 
-After pressing '<shift>-r' in the simulation window, typing `run` in the console should start your program.
+[boost1.56-ticket]:https://svn.boost.org/trac/boost/ticket/11154

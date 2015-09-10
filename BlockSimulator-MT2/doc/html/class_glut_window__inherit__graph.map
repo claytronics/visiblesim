@@ -1,0 +1,8 @@
+<map id="GlutWindow" name="GlutWindow">
+<area shape="rect" id="node2" href="$class_glut_button.html" title="GlutButton" alt="" coords="186,5,270,32"/>
+<area shape="rect" id="node3" href="$class_glut_help_window.html" title="GlutHelpWindow" alt="" coords="168,56,288,83"/>
+<area shape="rect" id="node4" href="$class_glut_popup_menu_window.html" title="GlutPopupMenuWindow" alt="" coords="147,107,309,133"/>
+<area shape="rect" id="node5" href="$class_glut_popup_window.html" title="GlutPopupWindow" alt="" coords="163,157,293,184"/>
+<area shape="rect" id="node6" href="$class_glut_slider.html" title="GlutSlider" alt="" coords="189,208,267,235"/>
+<area shape="rect" id="node7" href="$class_glut_sliding_main_window.html" title="GlutSlidingMainWindow" alt="" coords="148,259,308,285"/>
+</map>

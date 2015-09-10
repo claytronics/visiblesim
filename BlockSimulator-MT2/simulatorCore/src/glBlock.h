@@ -10,6 +10,7 @@
 #include <string>
 #include "shaders.h"
 #include "vecteur.h"
+#include "color.h"
 
 using namespace std;
 
@@ -26,6 +27,7 @@ public :
 	virtual ~GlBlock();
 
 	virtual void setPosition(const Vecteur &p);
+	virtual void setColor(const Color &c);
 	virtual void setColor(const Vecteur &c);
 	virtual void toggleHighlight();
 	virtual string getInfo();

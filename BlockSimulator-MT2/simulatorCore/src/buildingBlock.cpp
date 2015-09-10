@@ -34,10 +34,15 @@ BuildingBlock::BuildingBlock(int bId) {
 	P2PNetworkInterfaceNextLocalId = 0;
 	state = ALIVE;
 	generator = boost::rand48(50*blockId);
+	clock = NULL;
 }
 
 BuildingBlock::~BuildingBlock() {
+      delete blockCode;
 	OUTPUT << "BuildingBlock destructor" << endl;
+	if (clock != NULL) {
+		delete clock;
+	}
 }
 
 unsigned int BuildingBlock::getNextP2PInterfaceLocalId() {
@@ -90,15 +95,25 @@ bool BuildingBlock::addP2PNetworkInterfaceAndConnectTo(int destBlockId) {
 }
 
 P2PNetworkInterface *BuildingBlock::getP2PNetworkInterfaceByBlockRef(BuildingBlock *destBlock) {
-	list <P2PNetworkInterface*>::const_iterator niIt=P2PNetworkInterfaceList.begin();
-	while (niIt!=P2PNetworkInterfaceList.end() && (*niIt)->connectedInterface->hostBlock!=destBlock) niIt++;
-	return (niIt==P2PNetworkInterfaceList.end())?NULL:(*niIt);
+	for(list <P2PNetworkInterface*>::const_iterator it=P2PNetworkInterfaceList.begin(); it != P2PNetworkInterfaceList.end(); it++) {
+		if ((*it)->connectedInterface) {
+				if ((*it)->connectedInterface->hostBlock == destBlock) {
+					return (*it);
+				}
+		}
+	}
+	return NULL;
 }
 
 P2PNetworkInterface*BuildingBlock::getP2PNetworkInterfaceByDestBlockId(int destBlockId) {
-	list <P2PNetworkInterface*>::const_iterator niIt=P2PNetworkInterfaceList.begin();
-	while (niIt!=P2PNetworkInterfaceList.end() && (*niIt)->connectedInterface->hostBlock->blockId != destBlockId) niIt++;
-	return (niIt==P2PNetworkInterfaceList.end())?NULL:(*niIt);
+	for(list <P2PNetworkInterface*>::const_iterator it=P2PNetworkInterfaceList.begin(); it != P2PNetworkInterfaceList.end(); it++) {
+		if ((*it)->connectedInterface) {
+				if ((*it)->connectedInterface->hostBlock->blockId == destBlockId) {
+					return (*it);
+				}
+		}
+	}
+	return NULL;
 }
 
 
@@ -118,12 +133,12 @@ void BuildingBlock::processLocalEvent() {
 	EventPtr pev;
 
 	if (localEventsList.size() == 0) {
+		cerr << "*** ERROR *** The local event list should not be empty !!" << endl;
 		getScheduler()->trace("*** ERROR *** The local event list should not be empty !!");
 		exit(EXIT_FAILURE);
 	}
 	pev = localEventsList.front();
 	localEventsList.pop_front();
-
 	blockCode->processLocalEvent(pev);
 
 	if (blockCode->availabilityDate < getScheduler()->now()) blockCode->availabilityDate = getScheduler()->now();
@@ -139,6 +154,22 @@ int BuildingBlock::getNextRandomNumber() {
 		x = generator();
 	} while (x <= 0);
 	return x;
+}
+
+uint64_t BuildingBlock::getTime() {
+	if (clock == NULL) {
+		cerr << "device has no internal clock" << endl;
+		return 0;
+	}
+	return clock->getTime();
+}
+
+uint64_t BuildingBlock::getSchedulerTimeForLocalTime(uint64_t localTime) {
+	if (clock == NULL) {
+		cerr << "device has no internal clock" << endl;
+		return localTime;
+	}
+	return clock->getSchedulerTimeForLocalTime(localTime);
 }
 
 } // BaseSimulator namespace

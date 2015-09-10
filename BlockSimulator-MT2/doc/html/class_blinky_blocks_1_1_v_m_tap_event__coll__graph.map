@@ -1,0 +1,6 @@
+<map id="BlinkyBlocks::VMTapEvent" name="BlinkyBlocks::VMTapEvent">
+<area shape="rect" id="node2" href="$class_block_event.html" title="BlockEvent" alt="" coords="51,96,140,123"/>
+<area shape="rect" id="node3" href="$class_event.html" title="Event" alt="" coords="61,5,116,32"/>
+<area shape="rect" id="node4" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="164,5,359,32"/>
+<area shape="rect" id="node5" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="219,96,397,123"/>
+</map>

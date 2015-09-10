@@ -1,0 +1,7 @@
+<map id="MultiCores::VMStartComputationEvent" name="MultiCores::VMStartComputationEvent">
+<area shape="rect" id="node2" href="$class_event.html" title="Event" alt="" coords="37,264,92,291"/>
+<area shape="rect" id="node3" href="$class_multi_cores_1_1_multi_cores_block.html" title="MultiCores::MultiCoresBlock" alt="" coords="117,264,307,291"/>
+<area shape="rect" id="node4" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="113,5,308,32"/>
+<area shape="rect" id="node5" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="215,96,393,123"/>
+<area shape="rect" id="node6" href="$class_multi_cores_1_1_multi_cores_block_code.html" title="MultiCores::MultiCoresBlockCode" alt="" coords="202,173,421,200"/>
+</map>

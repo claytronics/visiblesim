@@ -1,0 +1,7 @@
+<map id="BlinkyBlocks::SendMessageVMCommand" name="BlinkyBlocks::SendMessageVMCommand">
+<area shape="rect" id="node2" href="$class_blinky_blocks_1_1_v_m_command.html" title="BlinkyBlocks::VMCommand" alt="" coords="5,200,192,227"/>
+<area shape="rect" id="node3" href="$class_message.html" title="Message" alt="" coords="216,200,289,227"/>
+<area shape="rect" id="node4" href="$class_p2_p_network_interface.html" title="P2PNetworkInterface" alt="" coords="180,96,327,123"/>
+<area shape="rect" id="node5" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="389,5,584,32"/>
+<area shape="rect" id="node6" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="491,96,669,123"/>
+</map>

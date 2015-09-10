@@ -39,6 +39,14 @@ void GlBlock::setColor(const Vecteur &col) {
 	color[3] = 1.0;
 }
 
+void GlBlock::setColor(const Color &col) {
+	color[0] = col[0];
+	color[1] = col[1];
+	color[2] = col[2];
+	color[3] = 1.0;
+}
+
+
 void GlBlock::toggleHighlight() {
 	isHighlighted=!isHighlighted;
 }

@@ -1,5 +1,6 @@
 #include "shaders.h"
 #include "trace.h"
+#include "color.h"
 
 GLuint depth_tex,id_fb,color_rb;
 bool useShaders=true;
@@ -17,24 +18,24 @@ GLcharARB *lectureCodeShader(const char* titre)
   fin.seekg(0, ios_base::end);
   tailleFichier = GLint(fin.tellg());
   fin.close();
-  
-  // Memory allocation 
+
+  // Memory allocation
   GLcharARB *code = new GLcharARB[tailleFichier+1];
-  
+
   // Load shader file
   fin.open(titre);
   fin.read((char*)code, tailleFichier);
   code[tailleFichier] = '\0';
   fin.close();
-  
+
   return code;
 }
 
 GLhandleARB loadShader(const char *titreVP, const char *titreFP) {
 	GLhandleARB VShader,FShader;
 	GLcharARB* code;
-	GLhandleARB prog;          
-  
+	GLhandleARB prog;
+
 // create an Object Shader for the Vertex Program
 	VShader = glCreateShaderObjectARB(GL_VERTEX_SHADER_ARB);
 // create an Object Shader for the Fragment Program
@@ -44,7 +45,7 @@ GLhandleARB loadShader(const char *titreVP, const char *titreFP) {
 	if (!code) {
 		ERRPUT << "error: " << titreVP << " not found."<< endl;
 		exit(-1);
-	} 
+	}
 	glShaderSourceARB(VShader, 1, (const GLcharARB**) &code, NULL);
 // Compile the Vertex program
 	OUTPUT << "Compilation of the Vertex Program" << endl;
@@ -58,7 +59,7 @@ GLhandleARB loadShader(const char *titreVP, const char *titreFP) {
 	if (!code) {
 		ERRPUT << "error: " << titreFP << " not found."<< endl;
 		exit(-1);
-	} 
+	}
 	glShaderSourceARB(FShader, 1, (const GLcharARB**) &code, NULL);
 // Compile the Fragment program
 	OUTPUT << "Compilation of the Fragment Program" << endl;
@@ -67,7 +68,7 @@ GLhandleARB loadShader(const char *titreVP, const char *titreFP) {
 	shaderCompilationStatus(FShader);
 
 	delete [] code;
-  
+
 // Create the object program
 	prog = glCreateProgramObjectARB();
 // links
@@ -76,7 +77,7 @@ GLhandleARB loadShader(const char *titreVP, const char *titreFP) {
 
 // linking
 	glLinkProgramARB(prog);
-  
+
 	return prog;
 }
 
@@ -90,7 +91,7 @@ void initShaders() {
   glEnable (GL_DEPTH_TEST);					// Enable Depth Testing
   glShadeModel (GL_SMOOTH);					// Select Smooth Shading
   glHint (GL_PERSPECTIVE_CORRECTION_HINT, GL_NICEST);			// Set Perspective Calculations To Most Accurate
-	
+
   shadersProgram = loadShader("../../simulatorCore/shaders/pointtex.vert","../../simulatorCore/shaders/pointtex.frag");
   glEnable(GL_CULL_FACE);
   glCullFace(GL_BACK);
@@ -108,11 +109,11 @@ void initShaders() {
 	  ERRPUT << "erreur affectation : textureEnable\n";
   }
 
-  // texture pour le shadow mapping  
+  // texture pour le shadow mapping
   glGenFramebuffersEXT(1, &id_fb);	// identifiant pour la texture
   glGenTextures(1, &depth_tex);													// and a new texture used as a color buffer
   glGenRenderbuffersEXT(1, &color_rb);											// And finaly a new depthbuffer
-	
+
   glBindFramebufferEXT(GL_FRAMEBUFFER_EXT,id_fb);	// switch to the new framebuffer
   // initialize color texture
   glBindTexture(GL_TEXTURE_2D, depth_tex);										// Bind the colorbuffer texture
@@ -160,7 +161,7 @@ void shadowedRenderingStep2(int w,int h) {
 
 	glColorMask(GL_TRUE, GL_TRUE, GL_TRUE, GL_TRUE);
 	glDisable(GL_POLYGON_OFFSET_FILL);
- 
+
 	glBindTexture(GL_TEXTURE_2D, 0);
 	glBindFramebufferEXT(GL_FRAMEBUFFER_EXT, 0); // d�sactive le rendu en texture
 
@@ -189,9 +190,9 @@ void shadowedRenderingStep3(Camera *camera) {
 	mat.inverse(mat_1);
 
 	glMatrixMode(GL_TEXTURE);
-  
+
 	glLoadMatrixf(mBias);			// The bias matrix to convert to a 0 to 1 ratio
-  
+
 	glMultMatrixf(camera->ls.matP);
 	glMultMatrixf(camera->ls.matMV);
 	glMultMatrixd(mat_1.m);
@@ -201,39 +202,41 @@ void shadowedRenderingStep3(Camera *camera) {
 	camera->glLookAt();
 	glColor3f(1,1,1);												// set the color to white
 
-	  // placement de la source de lumière
-	  glLightfv(GL_LIGHT0, GL_POSITION, camera->ls.pos);
-	  glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, camera->ls.dir );
-	  glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, camera->ls.falloffAngle );
+ // placement de la source de lumière
+    glLightfv(GL_LIGHT0, GL_POSITION, camera->ls.pos);
+	glLightfv(GL_LIGHT0, GL_SPOT_DIRECTION, camera->ls.dir );
+	glLightf(GL_LIGHT0, GL_SPOT_CUTOFF, camera->ls.falloffAngle );
 
+    glLightfv(GL_LIGHT0, GL_DIFFUSE, WHITE.rgba);
+    glLightfv(GL_LIGHT0, GL_AMBIENT, DARKGREY.rgba);
 
 // activation du programme de shader
-  if(useShaders && shadersProgram)
+    if(useShaders && shadersProgram)
     glUseProgramObjectARB(shadersProgram);
-  else{
+    else{
     glEnable(GL_LIGHTING);
-  }
+    }
 
-  glUniform1iARB(locTex, 0);
+    glUniform1iARB(locTex, 0);
 
-  glUniform1iARB(locShadowMap , 1);
+    glUniform1iARB(locShadowMap , 1);
 
-  glActiveTextureARB(GL_TEXTURE1_ARB);
-  glEnable(GL_TEXTURE_2D);
-  glBindTexture(GL_TEXTURE_2D,depth_tex);
+    glActiveTextureARB(GL_TEXTURE1_ARB);
+    glEnable(GL_TEXTURE_2D);
+    glBindTexture(GL_TEXTURE_2D,depth_tex);
 
-  // Here is where we set the mode and function for shadow mapping with shadow2DProj().
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
-  glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
+    // Here is where we set the mode and function for shadow mapping with shadow2DProj().
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_MODE_ARB, GL_COMPARE_R_TO_TEXTURE_ARB);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_COMPARE_FUNC_ARB, GL_LEQUAL);
 
-  glActiveTextureARB(GL_TEXTURE0_ARB);
-  glEnable(GL_TEXTURE_2D);
+    glActiveTextureARB(GL_TEXTURE0_ARB);
+    glEnable(GL_TEXTURE_2D);
 }
 
 void shadowedRenderingStep4() {
 	glActiveTextureARB(GL_TEXTURE1);
 	glDisable(GL_TEXTURE_2D);
-	glActiveTextureARB(GL_TEXTURE0); 
+	glActiveTextureARB(GL_TEXTURE0);
 	glDisable(GL_TEXTURE_2D);
 
 	if(useShaders) glUseProgramObjectARB(0);
@@ -249,7 +252,7 @@ GLint shaderCompilationStatus(GLhandleARB shader) {
 	GLsizei logsize = 0;
 	char *log=NULL;
 	glGetObjectParameterivARB(shader, GL_COMPILE_STATUS, &compile_status);
-	if (compile_status != GL_TRUE) { 
+	if (compile_status != GL_TRUE) {
 /* erreur a la compilation recuperation du log d'erreur */
 /* on recupere la taille du message d'erreur */
 		glGetObjectParameterivARB(shader, GL_INFO_LOG_LENGTH, &logsize);

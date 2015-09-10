@@ -31,7 +31,7 @@ void Coloration_BlockCode::startup() {
 	stringstream info;
 
 	info << "  Starting coloration_BlockCode in block " << hostBlock->blockId;
-	scheduler->trace(info.str());
+	scheduler->trace(info.str(),hostBlock->blockId);
 
 	colored = false;
 	smartBlock->setColor(5);
@@ -42,7 +42,7 @@ void Coloration_BlockCode::startup() {
 		color vertical_neighbors_color   = (color)(( my_color + 1 ) % n_different_color);
 		color horizontal_neighbors_color = (color)(( my_color + 2 ) % n_different_color);
 		colored = true;
-cout << "Block #" << hostBlock->blockId << " I am " << color_to_string( my_color ) << endl;
+OUTPUT << "Block #" << hostBlock->blockId << " I am " << color_to_string( my_color ) << endl;
 		smartBlock->setColor(my_color);
 		sleep(1);
 
@@ -51,14 +51,13 @@ cout << "Block #" << hostBlock->blockId << " I am " << color_to_string( my_color
 		for( int i = North ; i <= West ; i++ ) {
 			p2p = smartBlock->getInterface( (NeighborDirection)i );
 			if( p2p->connectedInterface ) {
-				time_offset += 10000 + (rand() % 25) * 10000;
+				time_offset += 10000 + (rand() % 25) * 2000;
 				Color_message * color_msg = new Color_message( my_color, vertical_neighbors_color, horizontal_neighbors_color );
 				scheduler->schedule( new NetworkInterfaceEnqueueOutgoingEvent( scheduler->now() + time_offset, color_msg, p2p ));
 			}
 		}
 	}
 }
-
 
 void Coloration_BlockCode::processLocalEvent( EventPtr pev ) {
 	unsigned int sourceId;
@@ -72,9 +71,9 @@ void Coloration_BlockCode::processLocalEvent( EventPtr pev ) {
 		//Affichage
 		sourceId = recv_message->sourceInterface->hostBlock->blockId;
 		info.str("");
-		info << "Block " << hostBlock->blockId << " received a Color_message ( " << recv_message->get_my_color() << ", " << recv_message->get_horizontal_color() << ", " << recv_message->get_vertical_color() << " ) from " << sourceId << endl;
+		info << "received a Color_message (" << recv_message->get_my_color() << "," << recv_message->get_horizontal_color() << "," << recv_message->get_vertical_color() << ") from " << sourceId;
 		//info << "data : " << msg->data();
-		SmartBlocks::getScheduler()->trace(info.str());
+		SmartBlocks::getScheduler()->trace(info.str(),hostBlock->blockId);
 
 		if( !colored ) {
 			colored = true;
@@ -87,8 +86,8 @@ void Coloration_BlockCode::processLocalEvent( EventPtr pev ) {
 			color horizontal_neighbors_color;
 
 			if( recv_message->destinationInterface == smartBlock->getInterface( North ) || recv_message->destinationInterface == smartBlock->getInterface( South )) {
-				my_color = recv_message->get_vertical_color();
-cout << "Block #" << hostBlock->blockId << " I am " << color_to_string( my_color ) << endl;
+				info.str("");
+				info << "I am " << color_to_string(my_color) << endl;
 				vertical_neighbors_color = recv_message->get_my_color();
 
 				//Searching for the vacant color
@@ -103,7 +102,7 @@ cout << "Block #" << hostBlock->blockId << " I am " << color_to_string( my_color
 				p2p = smartBlock->getInterface( (NeighborDirection)i );
 					if( p2p->connectedInterface ) {
 						if( p2p != recv_message->destinationInterface ) {
-							time_offset += 10000 + (rand() % 25) * 10000;
+							time_offset += 10000 + (rand() % 25) * 2000;
 							Color_message * color_msg = new Color_message( my_color, vertical_neighbors_color, horizontal_neighbors_color );
 							scheduler->schedule( new NetworkInterfaceEnqueueOutgoingEvent( scheduler->now() + time_offset, color_msg, p2p ));
 						}
@@ -112,7 +111,7 @@ cout << "Block #" << hostBlock->blockId << " I am " << color_to_string( my_color
 			}
 			else if( recv_message->destinationInterface == smartBlock->getInterface( East ) || recv_message->destinationInterface == smartBlock->getInterface( West )) {
 				my_color = recv_message->get_horizontal_color();
-cout << "Block #" << hostBlock->blockId << " I am " << color_to_string( my_color ) << endl;
+OUTPUT << "Block #" << hostBlock->blockId << " I am " << color_to_string( my_color );
 				horizontal_neighbors_color = recv_message->get_my_color();
 
 				//Searching for the vacant color
@@ -126,7 +125,7 @@ cout << "Block #" << hostBlock->blockId << " I am " << color_to_string( my_color
 				p2p = smartBlock->getInterface( (NeighborDirection)i );
 					if( p2p->connectedInterface ) {
 						if( p2p != recv_message->destinationInterface ) {
-							time_offset += 10000 + (rand() % 25) * 10000;
+							time_offset += 10000 + (rand() % 25) * 2000;
 							Color_message * color_msg = new Color_message( my_color, vertical_neighbors_color, horizontal_neighbors_color );
 							scheduler->schedule( new NetworkInterfaceEnqueueOutgoingEvent( scheduler->now() + time_offset, color_msg, p2p ));
 						}

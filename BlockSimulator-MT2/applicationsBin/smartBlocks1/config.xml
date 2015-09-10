@@ -1,5 +1,5 @@
 <?xml version="1.0" standalone="no" ?>
-<world gridsize="11,10">
+<world gridSize="11,10">
 	<camera target="125,125,0" directionSpherical="0,70,500" angle="45"/>
 	<spotlight target="200,180,0" directionSpherical="-45,40,500" angle="30"/>
 	

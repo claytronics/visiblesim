@@ -72,7 +72,7 @@ BlockEvent::BlockEvent(uint64_t t, BaseSimulator::BuildingBlock *conBlock) : Eve
 	eventType = BLOCKEVENT_GENERIC;
 }
 
-BlockEvent::BlockEvent(BlockEvent *ev) : Event(ev) {	
+BlockEvent::BlockEvent(BlockEvent *ev) : Event(ev) {
 	EVENT_CONSTRUCTOR_INFO();
 	concernedBlock = ev->concernedBlock;
 }
@@ -101,9 +101,7 @@ CodeStartEvent::~CodeStartEvent() {
 
 void CodeStartEvent::consumeBlockEvent() {
 	EVENT_CONSUME_INFO();
-	//MODIF NICO
 	concernedBlock->blockCode->startup();
-	//FIN MODIF NICO
 }
 
 const string CodeStartEvent::getEventName() {
@@ -199,18 +197,9 @@ NetworkInterfaceStopTransmittingEvent::~NetworkInterfaceStopTransmittingEvent() 
 
 void NetworkInterfaceStopTransmittingEvent::consume() {
 	EVENT_CONSUME_INFO();
-
-	//BaseSimulator::getScheduler()->schedule(new NetworkInterfaceReceiveEvent(BaseSimulator::getScheduler()->now(), interface->connectedInterface, interface->messageBeingTransmitted));
-	
-	EventPtr ev = EventPtr(new NetworkInterfaceReceiveEvent(BaseSimulator::getScheduler()->now(), interface->connectedInterface, interface->messageBeingTransmitted));
-	BaseSimulator::BuildingBlock *block = interface->connectedInterface->hostBlock;
-	
-	if (!block->blockCode->handleSystemMessage(ev)) {
-		interface->connectedInterface->hostBlock->scheduleLocalEvent(ev);
-	}
-	
+	interface->connectedInterface->hostBlock->scheduleLocalEvent(EventPtr(new NetworkInterfaceReceiveEvent(BaseSimulator::getScheduler()->now(), interface->connectedInterface, interface->messageBeingTransmitted)));
 	// TODO add a confirmation event to the sender ?
-	
+
 	interface->messageBeingTransmitted.reset();
 	interface->availabilityDate = BaseSimulator::getScheduler()->now();
 	if (interface->outgoingQueue.size() > 0) {
@@ -241,21 +230,8 @@ NetworkInterfaceReceiveEvent::~NetworkInterfaceReceiveEvent() {
 	EVENT_DESTRUCTOR_INFO();
 }
 
-NetworkInterfaceReceiveEvent::NetworkInterfaceReceiveEvent(NetworkInterfaceReceiveEvent *ev) : Event(ev) {
-	EVENT_CONSTRUCTOR_INFO();
-	interface = ev->interface;
-	message = ev->message;
-}
-
-
 void NetworkInterfaceReceiveEvent::consume() {
 	EVENT_CONSUME_INFO();
-	//BaseSimulator::BuildingBlock *block = interface->connectedInterface->hostBlock;
-	
-	//if (!block->blockCode->handleSystemMessage(this)) {
-		//block->scheduleLocalEvent(EventPtr(new NetworkInterfaceReceiveEvent(this)));
-	//}
-	
 }
 
 const string NetworkInterfaceReceiveEvent::getEventName() {
@@ -294,4 +270,198 @@ void NetworkInterfaceEnqueueOutgoingEvent::consume() {
 
 const string NetworkInterfaceEnqueueOutgoingEvent::getEventName() {
 	return("NetworkInterfaceEnqueueOutgoingEvent Event");
+}
+
+
+//===========================================================================================================
+//
+//          SetColorEvent  (class)
+//
+//===========================================================================================================
+
+SetColorEvent::SetColorEvent(uint64_t t, BuildingBlock *conBlock, float r, float g, float b, float a): BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_SET_COLOR;
+	randomNumber = conBlock->getNextRandomNumber();
+	color = Color(r, g, b, a);
+}
+
+SetColorEvent::SetColorEvent(uint64_t t, BuildingBlock *conBlock, Color &c): BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_SET_COLOR;
+	randomNumber = conBlock->getNextRandomNumber();
+	color = c;
+}
+
+SetColorEvent::SetColorEvent(SetColorEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+	color = ev->color;
+	//randomNumber = ev->randomNumber;
+}
+
+SetColorEvent::~SetColorEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void SetColorEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	concernedBlock->scheduleLocalEvent(EventPtr(new SetColorEvent(this)));
+}
+
+const string SetColorEvent::getEventName() {
+	return("SetColor Event");
+}
+
+//===========================================================================================================
+//
+//          AddNeighborEvent  (class)
+//
+//===========================================================================================================
+
+AddNeighborEvent::AddNeighborEvent(uint64_t t, BuildingBlock *conBlock, uint64_t f, uint64_t ta): BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_ADD_NEIGHBOR;
+	face = f;
+	target = ta;
+}
+
+AddNeighborEvent::AddNeighborEvent(AddNeighborEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+	face = ev->face;
+	target = ev->target;
+}
+
+AddNeighborEvent::~AddNeighborEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void AddNeighborEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	concernedBlock->scheduleLocalEvent(EventPtr(new AddNeighborEvent(this)));
+}
+
+const string AddNeighborEvent::getEventName() {
+	return("AddNeighbor Event");
+}
+
+//===========================================================================================================
+//
+//          RemoveNeighborEvent  (class)
+//
+//===========================================================================================================
+
+RemoveNeighborEvent::RemoveNeighborEvent(uint64_t t, BuildingBlock *conBlock, uint64_t f): BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_REMOVE_NEIGHBOR;
+	face = f;
+}
+
+RemoveNeighborEvent::RemoveNeighborEvent(RemoveNeighborEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+	face = ev->face;
+}
+
+RemoveNeighborEvent::~RemoveNeighborEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void RemoveNeighborEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	concernedBlock->scheduleLocalEvent(EventPtr(new RemoveNeighborEvent(this)));
+}
+
+const string RemoveNeighborEvent::getEventName() {
+	return("RemoveNeighbor Event");
+}
+
+//===========================================================================================================
+//
+//          TapEvent  (class)
+//
+//===========================================================================================================
+
+TapEvent::TapEvent(uint64_t t, BuildingBlock *conBlock): BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_TAP;
+}
+
+TapEvent::TapEvent(TapEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+TapEvent::~TapEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void TapEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	concernedBlock->scheduleLocalEvent(EventPtr(new TapEvent(this)));
+}
+
+const string TapEvent::getEventName() {
+	return("Tap Event");
+}
+
+//===========================================================================================================
+//
+//          AccelEvent  (class)
+//
+//===========================================================================================================
+
+AccelEvent::AccelEvent(uint64_t t, BuildingBlock *conBlock, uint64_t xx, uint64_t yy, uint64_t zz): BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_ACCEL;
+	x = xx;
+	y = yy;
+	z = zz;
+}
+
+AccelEvent::AccelEvent(AccelEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+	x = ev->x;
+	y = ev->y;
+	z = ev->z;
+}
+
+AccelEvent::~AccelEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void AccelEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	concernedBlock->scheduleLocalEvent(EventPtr(new AccelEvent(this)));
+}
+
+const string AccelEvent::getEventName() {
+	return("Accel Event");
+}
+
+//===========================================================================================================
+//
+//          ShakeEvent  (class)
+//
+//===========================================================================================================
+
+ShakeEvent::ShakeEvent(uint64_t t, BuildingBlock *conBlock, uint64_t f): BlockEvent(t, conBlock) {
+	EVENT_CONSTRUCTOR_INFO();
+	eventType = EVENT_SHAKE;
+	force = f;
+}
+
+ShakeEvent::ShakeEvent(ShakeEvent *ev) : BlockEvent(ev) {
+	EVENT_CONSTRUCTOR_INFO();
+	force = ev->force;
+}
+
+ShakeEvent::~ShakeEvent() {
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void ShakeEvent::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	concernedBlock->scheduleLocalEvent(EventPtr(new ShakeEvent(this)));
+}
+
+const string ShakeEvent::getEventName() {
+	return("Shake Event");
 }

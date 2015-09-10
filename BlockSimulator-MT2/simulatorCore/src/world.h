@@ -26,25 +26,33 @@ class World {
 
 protected:
 	static World *world;
-	static map<int, BuildingBlock*>buildingBlocksMap;
 	static vector<GlBlock*>tabGlBlocks;
+	static map<int, BuildingBlock*>buildingBlocksMap;
 	GlBlock *selectedBlock;
 
 	World();
 	virtual ~World();
 	
 public:
+	
 	static World* getWorld() {
 		assert(world != NULL);
 		return(world);
 	}
+	
 	static void deleteWorld() {
 		delete(world);
 		world=NULL;
 	}
+	
+	map<int, BuildingBlock*>& getMap() {
+		return buildingBlocksMap;
+	}
+	
 	void printInfo() {
 		OUTPUT << "I'm a World" << endl;
 	}
+	
 	virtual BuildingBlock* getBlockById(int bId);
 
 	inline GlBlock* getSelectedBlock() { return selectedBlock; };
@@ -67,8 +75,6 @@ public:
 	virtual void shakeBlock(uint64_t date, int bId, int f) {};
 	/* Stop the block execution */
 	void stopSimulation();
-	
-	static unsigned int getSize() {return buildingBlocksMap.size(); }
 };
 
 inline void deleteWorld() {
@@ -76,7 +82,6 @@ inline void deleteWorld() {
 }
 
 inline World* getWorld() { return(World::getWorld()); }
-
 
 } // BaseSimulator namespace
 

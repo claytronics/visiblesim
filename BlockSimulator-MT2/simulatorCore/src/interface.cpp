@@ -7,14 +7,12 @@
 
 #include "interface.h"
 #include "trace.h"
+#include "scheduler.h"
 
 #define ID_SW_BUTTON_OPEN	1001
 #define ID_SW_BUTTON_CLOSE	1002
 #define ID_SW_SLD			1003
 
-#define TIME_UNIT_SECOND 1
-#define TIME_UNIT_MSECOND 2
-#define DISPLAY_TIME_UNIT TIME_UNIT_MSECOND
 
 GlutWindow::GlutWindow(GlutWindow *parent,GLuint pid,GLint px,GLint py,GLint pw,GLint ph,const char *titreTexture)
 :id(pid) {
@@ -111,7 +109,7 @@ GlutWindow(NULL,1,px,py,pw,ph,titreTexture) {
 	openingLevel=0;
 	buttonOpen = new GlutButton(this,ID_SW_BUTTON_OPEN,5,68,32,32,"../../simulatorCore/smartBlocksTextures/boutons_fg.tga");
 	buttonClose = new GlutButton(this,ID_SW_BUTTON_CLOSE,5,26,32,32,"../../simulatorCore/smartBlocksTextures/boutons_fd.tga",false);
-	slider = new GlutSlider(this,ID_SW_SLD,pw+400-20,5,ph-60,"../../simulatorCore/smartBlocksTextures/slider.tga",ph/13);
+	slider = new GlutSlider(this,ID_SW_SLD,pw+400-20,5,ph-60,"../../simulatorCore/smartBlocksTextures/slider.tga",(ph-60)/13);
 	selectedBlock=NULL;
 }
 
@@ -157,14 +155,11 @@ void GlutSlidingMainWindow::glDraw() {
 		glEnd();
 		char str[256];
 		uint64_t t = BaseSimulator::getScheduler()->now();
-		// time unit:
-#if DISPLAY_TIME_UNIT == TIME_UNIT_SECOND
-		// sec:
-		sprintf(str,"Current time : %d:%d",int(t/1000000),int((t%1000000)/10000));
-#elif DISPLAY_TIME_UNIT == TIME_UNIT_MSECOND
-		// ms:
-		sprintf(str,"Current time : %d:%d ms", int(t/1000),int((t%1000)/10));
-#endif
+		if (t < 10*1000*1000) { //10sec
+			sprintf(str,"Current time : %d:%d ms",int(t/1000),int((t%1000))); // ms
+		} else {
+			sprintf(str,"Current time : %d:%d s",int(t/1000000),int((t%1000000)/10000)); // s
+		}
 		glColor3f(1.0,1.0,0.0);
 		drawString(42.0,h-20.0,str);
 		glColor3f(1.0,1.0,1.0);
@@ -175,25 +170,19 @@ void GlutSlidingMainWindow::glDraw() {
 			GLfloat posy = h-65;
 			stringstream line;
 			int pos=slider->getPosition();
-			while (it != traces.end() && pos--) {
-				it++;
-			};
-
 			int s,cs;
 			while (it != traces.end() && posy>0) {
 				if (((*it).second)->blockId==selectedBlock->blockId) {
-					line.str("");
-#if DISPLAY_TIME_UNIT == TIME_UNIT_SECOND
-					// sec:					
-					s = (*it).first/1000000;
-					cs = ((*it).first%1000000)/10000;
-#elif DISPLAY_TIME_UNIT == TIME_UNIT_MSECOND
-					// ms:
-					s = (*it).first/1000;
-					cs = ((*it).first%1000)/10;
-#endif
-					line << "[" << s << ":" << cs << "] " << ((*it).second)->str;
-					posy = drawString(42.0,posy,line.str().c_str());
+					if (pos) {
+						pos--;
+					} else {
+						((*it).second)->color.glColor();
+						line.str("");
+						s = (*it).first/1000;
+						cs = ((*it).first%1000);
+						line << "[" << s << ":" << cs << "] " << ((*it).second)->str;
+						posy = drawString(42.0,posy,line.str().c_str());
+					}
 				}
 				++it;
 			}
@@ -210,19 +199,13 @@ void GlutSlidingMainWindow::glDraw() {
 
 			int s,cs;
 			while (it != traces.end() && posy>0) {
+				((*it).second)->color.glColor();
 				line.str("");
-#if DISPLAY_TIME_UNIT == TIME_UNIT_SECOND
-					// sec:					
-					s = (*it).first/1000000;
-					cs = ((*it).first%1000000)/10000;
-#elif DISPLAY_TIME_UNIT == TIME_UNIT_MSECOND
-					// ms:
-					s = (*it).first/1000;
-					cs = ((*it).first%1000)/10;
-#endif
+				s = (*it).first/1000;
+				cs = ((*it).first%1000);
 				line << "[" << s << ":" << cs << "] #" << ((*it).second)->blockId << ":" << ((*it).second)->str;
 				posy = drawString(42.0,posy,line.str().c_str());
-				++it;		    
+				++it;
 			}
 		}
 	}
@@ -256,8 +239,8 @@ void GlutSlidingMainWindow::reshapeFunc(int mw,int mh)
   setGeometry(mw-sz,50,sz,mh-60);
 }
 
-void GlutSlidingMainWindow::addTrace(int id,const string &str) {
-	BlockDebugData *bdd = new BlockDebugData(id,str);
+void GlutSlidingMainWindow::addTrace(int id,const string &str,const Color &color) {
+	BlockDebugData *bdd = new BlockDebugData(id,str,color);
 	traces.insert(pair<uint64_t,BlockDebugData*>(BaseSimulator::getScheduler()->now(),bdd));
 	if (selectedBlock) {
 		if (selectedBlock->blockId==id) slider->incDataTextLines();
@@ -533,14 +516,6 @@ void GlutPopupMenuWindow::glDraw() {
 int GlutPopupMenuWindow::mouseFunc(int button,int state,int mx,int my) {
 	if (!isVisible) return 0;
 	int n = GlutWindow::mouseFunc(button,state,mx,my);
-	/*switch (n) {
-		case 1 :
-
-		break;
-		case 2 :
-
-		break;
-	}*/
 	return n;
 }
 
@@ -561,11 +536,11 @@ GlutHelpWindow::GlutHelpWindow(GlutWindow *parent,GLint px,GLint py,GLint pw,GLi
 :GlutWindow(parent,-1,px,py,pw,ph,NULL) {
 	isVisible=false;
 	text=NULL;
-	
+
 	//GlutButton *btn = new GlutButton(this, 999,pw-35,ph-35,32,32,"../../simulatorCore/smartBlocksTextures/close.tga");
 
 	ifstream fin(textFile);
-	if(!fin) { 
+	if(!fin) {
 		cerr << "cannot open file " << textFile << endl;
 	} else {
 		stringstream out;
@@ -643,7 +618,8 @@ void GlutSlider::update() {
 }
 
 void GlutSlider::glDraw() {
-	int byhy = buttonY+buttonHeight,byhy_2=buttonY+buttonHeight/2;
+	int byhy = buttonY+buttonHeight,
+	    byhy_2=buttonY+buttonHeight/2;
 	glPushMatrix();
 	glTranslatef(x,y,0);
 	glDisable(GL_TEXTURE_2D);
@@ -686,6 +662,7 @@ void GlutSlider::glDraw() {
 	glTexCoord2f(0,1);
 	glVertex2i(0,h);
 	glEnd();
+
 	glBegin(GL_QUAD_STRIP);
 	glTexCoord2f(0,11.0/35.0);
 	glVertex2i(0,buttonY);
@@ -762,3 +739,4 @@ int GlutSlider::mouseFunc(int button,int state,int mx,int my) {
 	}
 	return 3;
 }
+

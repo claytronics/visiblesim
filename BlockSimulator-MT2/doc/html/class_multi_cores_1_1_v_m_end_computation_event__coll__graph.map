@@ -1,0 +1,7 @@
+<map id="MultiCores::VMEndComputationEvent" name="MultiCores::VMEndComputationEvent">
+<area shape="rect" id="node2" href="$class_event.html" title="Event" alt="" coords="35,264,89,291"/>
+<area shape="rect" id="node3" href="$class_multi_cores_1_1_multi_cores_block.html" title="MultiCores::MultiCoresBlock" alt="" coords="115,264,304,291"/>
+<area shape="rect" id="node4" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="111,5,305,32"/>
+<area shape="rect" id="node5" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="212,96,391,123"/>
+<area shape="rect" id="node6" href="$class_multi_cores_1_1_multi_cores_block_code.html" title="MultiCores::MultiCoresBlockCode" alt="" coords="199,173,419,200"/>
+</map>

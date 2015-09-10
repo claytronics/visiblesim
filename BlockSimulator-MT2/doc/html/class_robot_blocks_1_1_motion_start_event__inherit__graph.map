@@ -1,0 +1,4 @@
+<map id="RobotBlocks::MotionStartEvent" name="RobotBlocks::MotionStartEvent">
+<area shape="rect" id="node2" href="$class_block_event.html" title="BlockEvent" alt="" coords="46,80,135,107"/>
+<area shape="rect" id="node3" href="$class_event.html" title="Event" alt="" coords="63,5,117,32"/>
+</map>

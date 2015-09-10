@@ -1,7 +1,4 @@
-#SUBDIRS = flavio01 blinky01 blinky02 smartBlocks1 leader_election coloration\
-#          coloration_v2
-
-SUBDIRS = blinky01 blinky03 clock_sync
+SUBDIRS =  blinkyMeld bbCycle sbReconf
 
 .PHONY: subdirs $(SUBDIRS)
 

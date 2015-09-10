@@ -5,12 +5,13 @@
  *      Author: dom
  */
 
+#include <stdint.h>
 #include <iostream>
 #include <stdlib.h>
 #include "assert.h"
 #include "scheduler.h"
 #include "trace.h"
-#include "openglViewer.h"
+#include "stdint.h"
 
 using namespace std;
 
@@ -34,8 +35,7 @@ Scheduler::Scheduler() {
 	}
 
 	currentDate = 0;
-	maximumDate = 60000000;
-
+	maximumDate = UINT_MAX; // no time limitation by default
 	eventsMapSize = 0;
 	largestEventsMapSize = 0;
 }
@@ -68,9 +68,9 @@ bool Scheduler::schedule(Event *ev) {
 		OUTPUT << "maximumDate : " << maximumDate << endl;
 	    return(false);
 	}
-	
+
 	lock();
-	
+
 	eventsMap.insert(pair<uint64_t, EventPtr>(pev->date,pev));
 
 	eventsMapSize++;
@@ -108,14 +108,17 @@ uint64_t Scheduler::now() {
 	return(currentDate);
 }
 
-void Scheduler::trace(string message,int id) {
-	mutex_trace.lock();
-	OUTPUT.precision(6);
-	OUTPUT << fixed << (double)(currentDate)/1000000 << " " << message << endl;
-	GlutContext::addTrace(message,id);
-	mutex_trace.unlock();
+bool Scheduler::scheduleLock(Event *ev) {
+	return schedule(ev); //lock done in schedule
 }
 
+void Scheduler::trace(string message,int id,const Color &color) {
+	mutex_trace.lock();
+	OUTPUT.precision(6);
+	OUTPUT << fixed << (double)(currentDate)/1000000 << " #" << id << ": " << message << endl;
+	GlutContext::addTrace(message,id,color);
+	mutex_trace.unlock();
+}
 
 void Scheduler::lock() {
 	mutex_schedule.lock();

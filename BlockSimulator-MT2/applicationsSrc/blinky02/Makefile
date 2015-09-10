@@ -27,7 +27,7 @@ CC = g++
 
 %.depends: %.cpp
 	$(CC) -M $(CCFLAGS) $(INCLUDES) $< > $@
-	
+
 all: $(OUT) 
 
 autoinstall: $(OUT) 
@@ -49,4 +49,4 @@ $(OUT): $(SIMULATORLIB) $(OBJS)
 -include $(DEPS)
 
 clean:
-	rm -f *~ $(OBJS) $(OUT) $(DEPS)
+	rm -f *~ $(OBJS) $(OUT) $(DEPS) blinky02

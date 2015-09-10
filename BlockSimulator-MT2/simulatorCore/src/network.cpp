@@ -18,7 +18,8 @@ unsigned int Message::nextId = 0;
 unsigned int Message::nbMessages = 0;
 
 unsigned int P2PNetworkInterface::nextId = 0;
-unsigned int P2PNetworkInterface::defaultDataRate=1000000;
+double P2PNetworkInterface::defaultDataRate=1000000;
+double P2PNetworkInterface::defaultDataRateVariability=0;
 
 //===========================================================================================================
 //
@@ -61,10 +62,12 @@ P2PNetworkInterface::P2PNetworkInterface(BaseSimulator::BuildingBlock *b) {
 //	localId = block->getNextP2PInterfaceLocalId();
 	connectedInterface = NULL;
 	availabilityDate = 0;
+	generator = boost::rand48(nextId);
 	globalId = nextId;
 	nextId++;
 //	messageBeingTransmitted.reset();
 	dataRate = defaultDataRate;
+	dataRateVariability = defaultDataRateVariability;
 }
 
 P2PNetworkInterface::~P2PNetworkInterface() {
@@ -95,6 +98,7 @@ void P2PNetworkInterface::send() {
 	MessagePtr msg;
 	stringstream info;
 	uint64_t transmissionDuration;
+	double rate;
 
 	if (!connectedInterface) {
 		info << "*** WARNING *** [block " << hostBlock->blockId << ",interface " << globalId <<"] : trying to send a Message but no interface connected";
@@ -109,10 +113,10 @@ void P2PNetworkInterface::send() {
 	}
 
 	msg = outgoingQueue.front();
-
 	outgoingQueue.pop_front();
-	transmissionDuration = computeTransmissionDuration(msg->size());
 
+	rate = dataRate - dataRateVariability + (generator()/(double)RAND_MAX) * 2 * dataRateVariability;
+	transmissionDuration = (msg->size()*8000000ULL)/rate;
 	messageBeingTransmitted = msg;
 	messageBeingTransmitted->sourceInterface = this;
 	messageBeingTransmitted->destinationInterface = connectedInterface;
@@ -144,8 +148,4 @@ void P2PNetworkInterface::connect(P2PNetworkInterface *ni) {
 		connectedInterface->connectedInterface = NULL;
 	}
 	connectedInterface = ni;
-}
-
-unsigned int P2PNetworkInterface::computeTransmissionDuration(unsigned int size) {
-	return (size*8000000ULL)/dataRate;
 }

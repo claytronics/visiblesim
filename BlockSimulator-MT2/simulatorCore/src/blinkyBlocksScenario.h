@@ -9,6 +9,7 @@
 #define BLINKYBLOCKSSCENARIO_H_
 #include "vecteur.h"
 #include "blinkyBlocksWorld.h"
+#include "scheduler.h"
 
 class ScenarioEvent {
 protected :
@@ -16,7 +17,7 @@ protected :
 public :
 	ScenarioEvent(float t):eventTime(t) {};
 	virtual ~ScenarioEvent() {};
-
+	
 	inline float getEventTime() { return eventTime; };
 	virtual void exportEventToScheduler()=0;
 };

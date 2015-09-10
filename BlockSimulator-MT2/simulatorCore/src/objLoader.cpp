@@ -65,14 +65,14 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
 #endif
 	ifstream fin(txt);
 	if (!fin.is_open()) {
-		ERRPUT << "File error : " << txt << endl;
+		cerr << "File error : " << txt << endl;
 		exit(EXIT_FAILURE);
 	}
 #ifdef DEBUG
    OUTPUT << "Open " << txt  << " file..."<< endl;
 #endif
 	mtls=NULL;
- 
+
 	// chargement des points
 	char ligne[255],str_pt1[64],str_pt2[64],str_pt3[64],str_pt4[64];
 	Point2 p2;
@@ -81,7 +81,7 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
 	bool g_trouve = false;
 	char nom[64];
 	int i,numVert[4],numTex[4],numNorm[4];
-	Sommet S1,S2,S3;
+	Sommet S1,S2,S3,S4;
 	do {
 #ifdef DEBUG
 		OUTPUT << "Début de lecture" << endl;
@@ -108,7 +108,7 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
 		  }
       }
     } while (!fin.eof() && !g_trouve);
-  
+
     while (!fin.eof()) { // reading data
     	g_trouve = false;
     	do {
@@ -187,6 +187,9 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
     						numeroPoint(str_pt1,numVert[0],numNorm[0],numTex[0]);
     						numeroPoint(str_pt2,numVert[1],numNorm[1],numTex[1]);
     						numeroPoint(str_pt3,numVert[2],numNorm[2],numTex[2]);
+    						if (str_pt4[0]) {
+                                numeroPoint(str_pt4,numVert[3],numNorm[3],numTex[3]);
+    						}
 /*
 #ifdef DEBUG
     						OUTPUT << "Face : (" << numVert[0] << "," << numNorm[0] << "," << numTex[0] << ")";
@@ -202,6 +205,10 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
     						S2.set(tabVertex[numVert[1]-1].v,tabNormal[numNorm[1]-1].v,tabTexture[numTex[1]-1].v);
     						S3.set(tabVertex[numVert[2]-1].v,tabNormal[numNorm[2]-1].v,tabTexture[numTex[2]-1].v);
     						objCourant->addFace(S1,S2,S3);
+    						if (str_pt4[0]) {
+                                S4.set(tabVertex[numVert[3]-1].v,tabNormal[numNorm[3]-1].v,tabTexture[numTex[3]-1].v);
+                                objCourant->addFace(S1,S3,S4);
+    						}
     					break;
     					case 'u' : // usemtl 09_-_Default
     						if (strncmp(ligne,"usemtl",6)==0) {
@@ -265,9 +272,9 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
     			}
     		} while (!fin.eof() && !g_trouve);
     	}
-	} 
+	}
     fin.close();
-				
+
   // libération des tableaux intermédiaires
     tabVertex.clear();
     tabTexture.clear();
@@ -282,7 +289,7 @@ ObjLoader::ObjLoader(const char *rep,const char *titre) {
 	// find 'lighted' texture
 	ptrMtlLighted = mtls->getMtlByName("lighted");
 	if (!ptrMtlLighted) {
-		ERRPUT << "No 'lighted' texture" << endl;
+		ERRPUT << "No 'lighted' texture in obj file :" << titre << endl;
 		ptrMtlLighted = mtls->getMtlById(1);
 	}
 }
@@ -548,14 +555,14 @@ MtlLib::MtlLib(const char *rep,const char *titre) {
 		perror("MtlLib");
 		exit(EXIT_FAILURE);
 	}
-  
+
 // lecture des lignes
 	char ligne[255],dest[255];
 	while (!fin.eof()) {
 		fin.getline(ligne,255);
 		int i=0;
 		while (ligne[i]==' ' || ligne[i]=='\t') i++;
-      
+
 		if (fin.gcount()>i) {
 			switch (ligne[i]) {
 				case '#' : // commentaire
@@ -638,17 +645,17 @@ MtlLib::MtlLib(const char *rep,const char *titre) {
 						string str(txt);
 						int pos = str.find_last_of('\\');
 						if (pos==-1) {
-							pos = 0;
+                            pos = str.find_last_of('/');
 						}
+						/*currentMtl->Kd[0]=1.;
+						currentMtl->Kd[1]=1.;
+						currentMtl->Kd[2]=1.;*/
+						currentMtl->Kd[3]=1.;
 						currentMtl->mapKd = new char[strlen(rep)+str.length()+2-pos];
 #ifdef WIN32
 						strncpy_s(currentMtl->mapKd,lng,ligne+pos+1,lng);
 #else
-						sprintf(currentMtl->mapKd,"%s/%s",rep,txt+pos);
-						currentMtl->Kd[0]=1.;
-						currentMtl->Kd[1]=1.;
-						currentMtl->Kd[2]=1.;
-						currentMtl->Kd[3]=1.;
+						sprintf(currentMtl->mapKd,"%s/%s",rep,txt+pos+1);
 //						OUTPUT << currentMtl->mapKd << "," << strlen(rep)+str.length()+2-pos << endl;
 						//strncpy(currentMtl->mapKd,ligne+pos+1,lng);
 #endif
@@ -674,7 +681,7 @@ Mtl *MtlLib::getMtlByName(const char *searched) {
 		p++;
 	}
 	return NULL;
-}  
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // mtlLib::getMtlById(nom)
@@ -686,7 +693,7 @@ Mtl *MtlLib::getMtlById(int id) {
 		if ((*p)->id==id) return *p;
 	}
 	return NULL;
-}  
+}
 
 /////////////////////////////////////////////////////////////////////////////
 // mtlLib::getDefaultMtl
@@ -756,7 +763,7 @@ void Mtl::glBind() {
 /////////////////////////////////////////////////////////////////////////////
 // pour DEBUG : affichage d'un vecteur
 istream& operator>>(istream& in, Sommet& p3)
-{ in >> p3.v[0] >> p3.v[1] >> p3.v[2]; 
+{ in >> p3.v[0] >> p3.v[1] >> p3.v[2];
   return in;
 }
 

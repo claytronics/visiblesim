@@ -41,7 +41,6 @@ protected:
 public:
 	unsigned int id;
 	unsigned int type;
-	
 	P2PNetworkInterface *sourceInterface, *destinationInterface;
 
 	Message();
@@ -62,10 +61,13 @@ public:
 class P2PNetworkInterface {
 protected:
 	static unsigned int nextId;
-	static unsigned int defaultDataRate;
-	unsigned int dataRate;
-	
+	static double defaultDataRate;
+	static double defaultDataRateVariability;
+	double dataRate; // bit/s
+	double dataRateVariability;
+	boost::rand48 generator;
 public:
+	
 	unsigned int globalId;
 	unsigned int localId;
 	deque<MessagePtr> outgoingQueue;
@@ -73,7 +75,6 @@ public:
 	P2PNetworkInterface *connectedInterface;
 	BaseSimulator::BuildingBlock *hostBlock;
 	uint64_t availabilityDate;
-
 
 	MessagePtr messageBeingTransmitted;
 
@@ -84,11 +85,13 @@ public:
 	void send();
 	void connect(P2PNetworkInterface *ni);
 	
-	virtual unsigned int computeTransmissionDuration(unsigned int size);
 	/*
 	void disconnect();
-	void setDataRate(unsigned int rate) { dataRate = rate; }
+	static void setDefaultDataRate(unsigned int rate) { defaultDataRate = rate; }
 	*/
+	
+	void setDataRate(unsigned int rate) { dataRate = rate; }
+	void setDataRateVariability(unsigned int variability) { dataRateVariability = variability; }
 };
 
 #endif /* NETWORK_H_ */

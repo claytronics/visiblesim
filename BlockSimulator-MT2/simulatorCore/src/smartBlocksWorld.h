@@ -12,23 +12,27 @@
 #include "world.h"
 #include "vecteur.h"
 #include "smartBlocksBlock.h"
+#include "smartBlocksCapabilities.h"
 #include "objLoader.h"
 
 namespace SmartBlocks {
 
 class SmartBlocksWorld : BaseSimulator::World {
 protected:
-	unsigned int gridWidth,gridHeight;
 	SmartBlocksBlock **tabPtrBlocks;
+	int gridSize[2];
 	GLfloat blockSize[3];
 	Camera *camera;
 	ObjLoader::ObjLoader *objBlock,*objRepere;
-	char*targetValues;
+	presence *targetGrid;
+	SmartBlocksCapabilities *capabilities;
+    int tabStatsData[10];
+    int nbreStats;
 
 	SmartBlocksWorld(int gw,int gh,int argc, char *argv[]);
 	virtual ~SmartBlocksWorld();
-	inline SmartBlocksBlock* getGridPtr(int x,int y) { return tabPtrBlocks[x+y*gridWidth]; };
-	inline void setGridPtr(int x,int y,SmartBlocksBlock *ptr) { tabPtrBlocks[x+y*gridWidth]=ptr; };
+
+	void linkBlock(int ix,int iy);
 public:
 	GLuint idTextureFloor,idTextureDigits;
 
@@ -43,17 +47,38 @@ public:
 		cout << "I'm a SmartBlocksWorld" << endl;
 	}
 
-	virtual void addBlock(int blockId, SmartBlocksBlockCode *(*smartBlockCodeBuildingFunction)(SmartBlocksBlock*),const Vecteur &pos,const Vecteur &col);
+	virtual void addBlock(int blockId, SmartBlocksBlockCode *(*smartBlockCodeBuildingFunction)(SmartBlocksBlock*),const Vecteur &pos,const Color &col);
 	inline void setBlocksSize(float *siz) { blockSize[0]=siz[0];blockSize[1]=siz[1];blockSize[2]=siz[2];};
+
+	inline presence *getTargetGridPtr(int *gs) { memcpy(gs,gridSize,2*sizeof(int)); return targetGrid; };
+	inline presence getTargetGrid(int ix,int iy) { return targetGrid[iy*gridSize[0]+ix]; };
+	inline void setTargetGrid(presence value,int ix,int iy) { targetGrid[iy*gridSize[0]+ix]=value; };
+	void initTargetGrid();
+
+	inline SmartBlocksBlock* getGridPtr(int x,int y) { return tabPtrBlocks[x+y*gridSize[0]]; };
+	inline void setGridPtr(int x,int y,SmartBlocksBlock *ptr) { tabPtrBlocks[x+y*gridSize[0]]=ptr; };
+
+	inline void setCapabilities(SmartBlocksCapabilities *capa) { capabilities=capa; };
+	void getPresenceMatrix0(const PointCel &pos,PresenceMatrix &pm);
+	void getPresenceMatrix(const PointCel &pos,PresenceMatrix &pm);
+	inline SmartBlocksCapabilities* getCapabilities() { return capabilities; };
+
 	void linkBlocks();
 	void loadTextures(const string &str);
 	virtual void glDraw();
 	virtual void glDrawId();
 	virtual void updateGlData(SmartBlocksBlock*blc);
 	inline virtual Camera *getCamera() { return camera; };
-	inline bool getTargetValue(int ix,int iy) { return targetValues[iy*gridWidth+ix]; };
-	inline void setTargetValue(bool value,int ix,int iy) { targetValues[iy*gridWidth+ix]=char(value); };
-	inline char *getTargetArray(unsigned int &w,unsigned int &h) { w=gridWidth; h=gridHeight; return targetValues; };
+
+	virtual void disconnectBlock(SmartBlocksBlock *block);
+	virtual void connectBlock(SmartBlocksBlock *block);
+	inline void getGridSize(int &lx,int &ly) { lx = gridSize[0]; ly = gridSize[1]; }
+
+	bool isBorder(int x,int y);
+	int nbreWellPlacedBlock();
+	void createStats(int);
+	void addStat(int n,int v);
+	void printStats();
 };
 
 inline void createWorld(int gw,int gh,int argc, char *argv[]) {

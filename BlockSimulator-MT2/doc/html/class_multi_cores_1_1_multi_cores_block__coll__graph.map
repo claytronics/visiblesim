@@ -1,0 +1,5 @@
+<map id="MultiCores::MultiCoresBlock" name="MultiCores::MultiCoresBlock">
+<area shape="rect" id="node2" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="5,5,200,32"/>
+<area shape="rect" id="node3" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="107,96,285,123"/>
+<area shape="rect" id="node4" href="$class_multi_cores_1_1_multi_cores_block_code.html" title="MultiCores::MultiCoresBlockCode" alt="" coords="94,173,313,200"/>
+</map>

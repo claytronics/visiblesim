@@ -27,13 +27,14 @@ CC = g++
 
 %.depends: %.cpp
 	$(CC) -M $(CCFLAGS) $(INCLUDES) $< > $@
-	
+
 all: $(OUT)
 
 autoinstall: $(OUT)
 	cp $(OUT) $(APPDIR)
 
 $(APPDIR)/$(OUT): $(OUT)
+
 
 $(OUT): $(SIMULATORLIB) $(OBJS) 
 	$(CC) -o $(OUT) $(OBJS) $(LIBS)

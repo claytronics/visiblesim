@@ -15,8 +15,8 @@
 #include "camera.h"
 #include "glBlock.h"
 #include "interface.h"
-class GlutContext;
 
+class GlutContext;
 //===========================================================================================================
 //
 //          GlutContext  (class)
@@ -35,13 +35,15 @@ class GlutContext {
 	static bool saveScreenMode;
 	static int lastMotionTime;
 	static int lastMousePos[2];
+	static bool mustSaveImage;
 //	bool showLinks;
 
 	static void init(int argc, char **argv);
 	static void deleteContext();
 	static void mainLoop(void);
-	static void addTrace(const string &str,int id);
+	static void addTrace(const string &str,int id,const Color &color);
     static void reshapeFunc(int w,int h);
+    static void setFullScreenMode(bool b);
 private :
     static void passiveMotionFunc(int x,int y);
     static void motionFunc(int x,int y);
@@ -56,6 +58,4 @@ private :
 	static void *lanceScheduler(void *param);
 };
 
-
-
-#endif 
+#endif

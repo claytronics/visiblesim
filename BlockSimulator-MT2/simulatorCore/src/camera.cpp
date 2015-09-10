@@ -113,7 +113,7 @@ void Camera::mouseLightUp(int x, int y) {
 	ls.phi -= (mouse[1]-y)*sensibilityY;
 	if (ls.phi>M_PI/2) ls.phi=M_PI/2;
 	else if (ls.phi<-M_PI/2) ls.phi=-M_PI/2;
-  
+
 	ls.calcMatrices();
 }
 
@@ -170,4 +170,9 @@ void LightSource::draw() {
 	glTranslatef(pos[0],pos[1],pos[2]);
 	glutSolidCone(1.0,1.0,10.0,10.0);
 	glPopMatrix();
+}
+
+ostream& operator<<(ostream& f,const Camera &c)
+{ f << "(" << c.phi*180.0/M_PI << "," << c.theta*180.0/M_PI << "," << c.distance << ")";
+  return f;
 }

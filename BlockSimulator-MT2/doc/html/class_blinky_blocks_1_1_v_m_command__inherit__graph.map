@@ -1,0 +1,16 @@
+<map id="BlinkyBlocks::VMCommand" name="BlinkyBlocks::VMCommand">
+<area shape="rect" id="node2" href="$class_blinky_blocks_1_1_accel_v_m_command.html" title="BlinkyBlocks::AccelVMCommand" alt="" coords="256,5,475,32"/>
+<area shape="rect" id="node3" href="$class_blinky_blocks_1_1_add_neighbor_v_m_command.html" title="BlinkyBlocks::AddNeighbor\lVMCommand" alt="" coords="275,57,456,98"/>
+<area shape="rect" id="node4" href="$class_blinky_blocks_1_1_debbugger_v_m_command.html" title="BlinkyBlocks::DebbuggerVMCommand" alt="" coords="241,123,490,149"/>
+<area shape="rect" id="node5" href="$class_blinky_blocks_1_1_end_poll_v_m_command.html" title="BlinkyBlocks::EndPollVMCommand" alt="" coords="250,173,481,200"/>
+<area shape="rect" id="node6" href="$class_blinky_blocks_1_1_receive_message_v_m_command.html" title="BlinkyBlocks::ReceiveMessage\lVMCommand" alt="" coords="262,225,469,266"/>
+<area shape="rect" id="node7" href="$class_blinky_blocks_1_1_remove_neighbor_v_m_command.html" title="BlinkyBlocks::RemoveNeighbor\lVMCommand" alt="" coords="262,290,469,331"/>
+<area shape="rect" id="node8" href="$class_blinky_blocks_1_1_send_message_v_m_command.html" title="BlinkyBlocks::SendMessage\lVMCommand" alt="" coords="271,355,460,397"/>
+<area shape="rect" id="node9" href="$class_blinky_blocks_1_1_set_color_v_m_command.html" title="BlinkyBlocks::SetColorVMCommand" alt="" coords="247,421,484,448"/>
+<area shape="rect" id="node10" href="$class_blinky_blocks_1_1_set_deterministic_mode_v_m_command.html" title="BlinkyBlocks::SetDeterministic\lModeVMCommand" alt="" coords="264,473,467,514"/>
+<area shape="rect" id="node11" href="$class_blinky_blocks_1_1_set_id_v_m_command.html" title="BlinkyBlocks::SetIdVMCommand" alt="" coords="257,539,474,565"/>
+<area shape="rect" id="node12" href="$class_blinky_blocks_1_1_shake_v_m_command.html" title="BlinkyBlocks::ShakeVMCommand" alt="" coords="254,589,477,616"/>
+<area shape="rect" id="node13" href="$class_blinky_blocks_1_1_stop_v_m_command.html" title="BlinkyBlocks::StopVMCommand" alt="" coords="259,640,472,667"/>
+<area shape="rect" id="node14" href="$class_blinky_blocks_1_1_tap_v_m_command.html" title="BlinkyBlocks::TapVMCommand" alt="" coords="261,691,469,717"/>
+<area shape="rect" id="node15" href="$class_blinky_blocks_1_1_work_end_v_m_command.html" title="BlinkyBlocks::WorkEndVMCommand" alt="" coords="245,741,485,768"/>
+</map>

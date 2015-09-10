@@ -10,7 +10,7 @@
 #include "scheduler.h"
 #include "events.h"
 #include "trace.h"
-#include "blinkyBlocksDebugger.h"
+#include "meldProcessDebugger.h"
 
 //===========================================================================================================
 //
@@ -28,6 +28,7 @@ int GlutContext::lastMousePos[2];
 //bool GlutContext::showLinks=false;
 bool GlutContext::fullScreenMode=false;
 bool GlutContext::saveScreenMode=false;
+bool GlutContext::mustSaveImage=false;
 GlutSlidingMainWindow *GlutContext::mainWindow=NULL;
 GlutPopupWindow *GlutContext::popup=NULL;
 GlutPopupMenuWindow *GlutContext::popupMenu=NULL;
@@ -46,7 +47,10 @@ void GlutContext::init(int argc, char **argv) {
 		exit(EXIT_FAILURE);
 	}
 
-	//glutFullScreen();
+    if(fullScreenMode) {
+		glutFullScreen();
+	}
+    
 	initShaders();
 
 	////// GL parameters /////////////////////////////////////
@@ -197,6 +201,7 @@ void GlutContext::mouseFunc(int button,int state,int x,int y) {
 				camera->mouseZoom(10);
 			break;
 		}
+		//cout << *camera << endl;
 	} else { // selection of the clicked block
 		if (state==GLUT_UP) {
 			if (button==GLUT_LEFT_BUTTON) {
@@ -228,7 +233,7 @@ void GlutContext::keyboardFunc(unsigned char c, int x, int y)
 {
   //  static int modeScheduler;
 	Camera* camera=getWorld()->getCamera();
-	
+
 	switch(c)
     { case 27 : case 'q' : case 'Q' : // quit
 			glutLeaveMainLoop();
@@ -240,9 +245,9 @@ void GlutContext::keyboardFunc(unsigned char c, int x, int y)
 	//  case 'l' : showLinks = !showLinks; break;
       case 'r' : getScheduler()->start(SCHEDULER_MODE_REALTIME); break;
       //case 'p' : getScheduler()->pauseSimulation(getScheduler()->now()); break;
-     case 'p' : BlinkyBlocks::getDebugger()->handlePauseRequest(); break;
+	  case 'p' : MeldProcess::getDebugger()->handlePauseRequest(); break;
 	  case 'R' : getScheduler()->start(SCHEDULER_MODE_FASTEST); break;
-	  case 'u' : BlinkyBlocks::getDebugger()->unPauseSim(); break;
+	  case 'u' : MeldProcess::getDebugger()->unPauseSim(); break;
 	  case 'z' : {
 		  World *world = BaseSimulator::getWorld();
 		  GlBlock *slct=world->getSelectedBlock();
@@ -268,6 +273,8 @@ void GlutContext::keyboardFunc(unsigned char c, int x, int y)
 	  break;
 	  case 's' : saveScreenMode=!saveScreenMode;
 	  break;
+	  case 'S' : saveScreen("capture.ppm");
+	  break;
     }
 
   glutPostRedisplay();
@@ -282,15 +289,16 @@ void GlutContext::idleFunc(void) {
 #else
 	  usleep(20000);
 #endif
-	if (saveScreenMode) {
+	if (saveScreenMode && mustSaveImage) {
 		static int num=0;
 		char title[16];
 		sprintf(title,"save%04d.ppm",num++);
 		saveScreen(title);
+		mustSaveImage=false;
 	}
 	if (lastMotionTime) {
-		int tm = glutGet(GLUT_ELAPSED_TIME);
-		if (tm-lastMotionTime>100) {
+			int tm = glutGet(GLUT_ELAPSED_TIME);
+			if (tm-lastMotionTime>100) {
 			int n=selectFunc(lastMousePos[0],lastMousePos[1]);
 			if (n) {
 				GlBlock *slct=BaseSimulator::getWorld()->getBlockByNum(n-1);
@@ -317,7 +325,7 @@ void GlutContext::drawFunc(void) {
 	glPushMatrix();
 	wrl->glDraw();
 	glPopMatrix();
-	
+
 	shadowedRenderingStep2(screenWidth,screenHeight);
 
 	shadowedRenderingStep3(camera);
@@ -436,8 +444,8 @@ void GlutContext::mainLoop() {
 	deleteContext();
 }
 
-void GlutContext::addTrace(const string &message,int id) {
-	if (mainWindow) mainWindow->addTrace(id,message);
+void GlutContext::addTrace(const string &message,int id,const Color &color) {
+	if (mainWindow) mainWindow->addTrace(id,message,color);
 }
 
 bool GlutContext::saveScreen(char *title) {
@@ -457,13 +465,18 @@ bool GlutContext::saveScreen(char *title) {
 
   pixels = (unsigned char*) malloc(3*w*h);
   glReadPixels(0,0,w,h,GL_RGB,GL_UNSIGNED_BYTE,(GLvoid*) pixels);
-  fprintf(fichier,"P6\n%d %d\n255\n",w,h);
+  uint64_t t = BaseSimulator::getScheduler()->now();
+  fprintf(fichier,"P6\n# time: %d:%d\n%d %d\n255\n",int(t/1000),int(t%1000),w,h);
   unsigned char *ptr = pixels+(h-1)*w*3;
-  while (h--)
-  { fwrite(ptr,w*3,1,fichier);
+  while (h--) {
+    fwrite(ptr,w*3,1,fichier);
     ptr-=w*3;
   }
   fclose(fichier);
   free(pixels);
   return true;
+}
+
+void GlutContext::setFullScreenMode(bool b) {
+	fullScreenMode = true;
 }

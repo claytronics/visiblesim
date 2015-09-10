@@ -1,8 +1,8 @@
-/*
- * Vecteur.cpp
- *
- *  Created on: 29 janv. 2012
- *
+/*!
+ * \file vecteur.cpp
+ * \brief 3D homogeneous vector
+ * \date 29/01/2012
+ * \author Benoît Piranda
  */
 
 #include "vecteur.h"
@@ -93,6 +93,14 @@ double Vecteur::norme2()
 
 void Vecteur::normer_interne()
 { double d=1.0/sqrt(pt[0]*pt[0] + pt[1]*pt[1] + pt[2]*pt[2]);
+  pt[0]*=d;
+  pt[1]*=d;
+  pt[2]*=d;
+  pt[3]=0;
+}
+
+void Vecteur::setLength(double l)
+{ double d=l/sqrt(pt[0]*pt[0] + pt[1]*pt[1] + pt[2]*pt[2]);
   pt[0]*=d;
   pt[1]*=d;
   pt[2]*=d;

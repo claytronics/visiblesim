@@ -15,7 +15,7 @@
 
 #include "glBlock.h"
 #include "world.h"
-#include "scheduler.h"
+#include "color.h"
 
 using namespace std;
 using namespace BaseSimulator;
@@ -62,8 +62,9 @@ class BlockDebugData {
 public :
 	int blockId;
 	string str;
+	Color color;
 
-	BlockDebugData(int id,const string &s):blockId(id),str(s) {};
+	BlockDebugData(int id,const string &s,const Color &c):blockId(id),str(s),color(c) {};
 };
 
 class GlutSlider : public GlutWindow {
@@ -100,7 +101,7 @@ public :
 	int mouseFunc(int button,int state,int mx,int my);
 	void reshapeFunc(int mw,int mh);
 	void glDraw();
-	void addTrace(int id,const string &str);
+	void addTrace(int id,const string &str,const Color &color);
 	void select(GlBlock *sb);
 	inline bool hasSelectedBlock()  { return selectedBlock!=NULL; };
 	inline bool isOpened() { return openingLevel!=0; }
