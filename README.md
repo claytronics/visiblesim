@@ -1,7 +1,7 @@
 VisibleSim
 ==================
 
-Private version of VisibleSim and its applications. VisibleSim is a general simulator for modular 
+VisibleSim and its applications. VisibleSim is a general simulator for modular 
 robots.
 
 ## Installation
