@@ -1,7 +1,0 @@
-<map id="BaseSimulator::Scheduler" name="BaseSimulator::Scheduler">
-<area shape="rect" id="node2" href="$class_blinky_blocks_1_1_blinky_blocks_scheduler.html" title="BlinkyBlocks::BlinkyBlocks\lScheduler" alt="" coords="243,5,426,46"/>
-<area shape="rect" id="node3" href="$class_catoms2_d_1_1_catoms2_d_scheduler.html" title="Catoms2D::Catoms2DScheduler" alt="" coords="227,71,442,97"/>
-<area shape="rect" id="node4" href="$class_multi_cores_1_1_multi_cores_scheduler.html" title="MultiCores::MultiCoresScheduler" alt="" coords="227,121,442,148"/>
-<area shape="rect" id="node5" href="$class_robot_blocks_1_1_robot_blocks_scheduler.html" title="RobotBlocks::RobotBlocks\lScheduler" alt="" coords="245,173,425,214"/>
-<area shape="rect" id="node6" href="$class_smart_blocks_1_1_smart_blocks_scheduler.html" title="SmartBlocks::SmartBlocks\lScheduler" alt="" coords="245,238,425,279"/>
-</map>

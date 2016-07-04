@@ -1,6 +1,0 @@
-<map id="NetworkInterfaceEnqueueOutgoingEvent" name="NetworkInterfaceEnqueueOutgoingEvent">
-<area shape="rect" id="node2" href="$class_event.html" title="Event" alt="" coords="48,96,103,123"/>
-<area shape="rect" id="node3" href="$class_p2_p_network_interface.html" title="P2PNetworkInterface" alt="" coords="128,96,275,123"/>
-<area shape="rect" id="node4" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="337,5,532,32"/>
-<area shape="rect" id="node5" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="439,96,617,123"/>
-</map>

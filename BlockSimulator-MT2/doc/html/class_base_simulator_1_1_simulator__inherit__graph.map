@@ -1,7 +1,0 @@
-<map id="BaseSimulator::Simulator" name="BaseSimulator::Simulator">
-<area shape="rect" id="node2" href="$class_blinky_blocks_1_1_blinky_blocks_simulator.html" title="BlinkyBlocks::BlinkyBlocks\lSimulator" alt="" coords="238,5,421,46"/>
-<area shape="rect" id="node3" href="$class_catoms2_d_1_1_catoms2_d_simulator.html" title="Catoms2D::Catoms2DSimulator" alt="" coords="224,71,435,97"/>
-<area shape="rect" id="node4" href="$class_multi_cores_1_1_multi_cores_simulator.html" title="MultiCores::MultiCoresSimulator" alt="" coords="224,121,435,148"/>
-<area shape="rect" id="node5" href="$class_robot_blocks_1_1_robot_blocks_simulator.html" title="RobotBlocks::RobotBlocks\lSimulator" alt="" coords="239,173,419,214"/>
-<area shape="rect" id="node6" href="$class_smart_blocks_1_1_smart_blocks_simulator.html" title="SmartBlocks::SmartBlocks\lSimulator" alt="" coords="239,238,419,279"/>
-</map>

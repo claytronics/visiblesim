@@ -1,8 +1,0 @@
-<map id="BlinkyBlocks::VMHandleDebugCommandEvent" name="BlinkyBlocks::VMHandleDebugCommandEvent">
-<area shape="rect" id="node2" href="$class_block_event.html" title="BlockEvent" alt="" coords="17,96,105,123"/>
-<area shape="rect" id="node3" href="$class_event.html" title="Event" alt="" coords="5,5,60,32"/>
-<area shape="rect" id="node4" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="108,5,303,32"/>
-<area shape="rect" id="node5" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="131,96,309,123"/>
-<area shape="rect" id="node6" href="$class_blinky_blocks_1_1_debbugger_v_m_command.html" title="BlinkyBlocks::DebbuggerVMCommand" alt="" coords="334,96,583,123"/>
-<area shape="rect" id="node7" href="$class_blinky_blocks_1_1_v_m_command.html" title="BlinkyBlocks::VMCommand" alt="" coords="365,5,552,32"/>
-</map>

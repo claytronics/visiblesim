@@ -1,7 +1,0 @@
-<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$class_scenario_event.html" title="ScenarioEvent" alt="" coords="5,81,112,108"/>
-<area shape="rect" id="node2" href="$class_scenario_add_block_event.html" title="ScenarioAddBlockEvent" alt="" coords="168,5,331,32"/>
-<area shape="rect" id="node3" href="$class_scenario_debug_event.html" title="ScenarioDebugEvent" alt="" coords="177,56,322,83"/>
-<area shape="rect" id="node4" href="$class_scenario_select_block_event.html" title="ScenarioSelectBlockEvent" alt="" coords="161,107,338,133"/>
-<area shape="rect" id="node5" href="$class_scenario_tapp_event.html" title="ScenarioTappEvent" alt="" coords="181,157,317,184"/>
-</map>

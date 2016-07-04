@@ -1,6 +1,0 @@
-<map id="SmartBlocks::MotionEndEvent" name="SmartBlocks::MotionEndEvent">
-<area shape="rect" id="node2" href="$class_block_event.html" title="BlockEvent" alt="" coords="61,96,149,123"/>
-<area shape="rect" id="node3" href="$class_event.html" title="Event" alt="" coords="71,5,125,32"/>
-<area shape="rect" id="node4" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="173,5,368,32"/>
-<area shape="rect" id="node5" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="228,96,407,123"/>
-</map>

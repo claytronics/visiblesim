@@ -1,6 +1,0 @@
-<map id="MultiCores::VMDataMessage" name="MultiCores::VMDataMessage">
-<area shape="rect" id="node2" href="$class_message.html" title="Message" alt="" coords="65,200,139,227"/>
-<area shape="rect" id="node3" href="$class_p2_p_network_interface.html" title="P2PNetworkInterface" alt="" coords="29,96,176,123"/>
-<area shape="rect" id="node4" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="239,5,433,32"/>
-<area shape="rect" id="node5" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="340,96,519,123"/>
-</map>

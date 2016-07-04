@@ -1,6 +1,0 @@
-<map id="BlinkyBlocks::VMShakeEvent" name="BlinkyBlocks::VMShakeEvent">
-<area shape="rect" id="node2" href="$class_block_event.html" title="BlockEvent" alt="" coords="59,96,148,123"/>
-<area shape="rect" id="node3" href="$class_event.html" title="Event" alt="" coords="69,5,124,32"/>
-<area shape="rect" id="node4" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="172,5,367,32"/>
-<area shape="rect" id="node5" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="227,96,405,123"/>
-</map>

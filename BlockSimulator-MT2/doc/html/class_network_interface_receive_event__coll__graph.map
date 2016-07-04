@@ -1,6 +1,0 @@
-<map id="NetworkInterfaceReceiveEvent" name="NetworkInterfaceReceiveEvent">
-<area shape="rect" id="node2" href="$class_event.html" title="Event" alt="" coords="37,96,92,123"/>
-<area shape="rect" id="node3" href="$class_p2_p_network_interface.html" title="P2PNetworkInterface" alt="" coords="117,96,264,123"/>
-<area shape="rect" id="node4" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="327,5,521,32"/>
-<area shape="rect" id="node5" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="428,96,607,123"/>
-</map>

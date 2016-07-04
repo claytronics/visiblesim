@@ -1,6 +1,0 @@
-<map id="GlBlock" name="GlBlock">
-<area shape="rect" id="node2" href="$class_blinky_blocks_1_1_blinky_blocks_gl_block.html" title="BlinkyBlocks::BlinkyBlocks\lGlBlock" alt="" coords="133,5,315,46"/>
-<area shape="rect" id="node3" href="$class_catoms2_d_1_1_catoms2_d_gl_block.html" title="Catoms2D::Catoms2DGlBlock" alt="" coords="123,71,325,97"/>
-<area shape="rect" id="node4" href="$class_robot_blocks_1_1_robot_blocks_gl_block.html" title="RobotBlocks::RobotBlocks\lGlBlock" alt="" coords="134,122,314,163"/>
-<area shape="rect" id="node5" href="$class_smart_blocks_1_1_smart_blocks_gl_block.html" title="SmartBlocks::SmartBlocks\lGlBlock" alt="" coords="134,187,314,229"/>
-</map>

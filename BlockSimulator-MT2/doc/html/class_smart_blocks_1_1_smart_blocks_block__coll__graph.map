@@ -1,7 +1,0 @@
-<map id="SmartBlocks::SmartBlocksBlock" name="SmartBlocks::SmartBlocksBlock">
-<area shape="rect" id="node2" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="5,5,200,32"/>
-<area shape="rect" id="node3" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="97,96,276,123"/>
-<area shape="rect" id="node5" href="$class_smart_blocks_1_1_smart_blocks_block_code.html" title="SmartBlocks::SmartBlocks\lBlockCode" alt="" coords="97,174,276,215"/>
-<area shape="rect" id="node4" href="$class_vecteur.html" title="Vecteur" alt="" coords="304,181,371,208"/>
-<area shape="rect" id="node6" href="$class_color.html" title="Color" alt="" coords="395,181,448,208"/>
-</map>

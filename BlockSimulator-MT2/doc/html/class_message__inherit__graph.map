@@ -1,5 +1,0 @@
-<map id="Message" name="Message">
-<area shape="rect" id="node2" href="$class_blinky_blocks_1_1_receive_message_v_m_command.html" title="BlinkyBlocks::ReceiveMessage\lVMCommand" alt="" coords="129,5,335,46"/>
-<area shape="rect" id="node3" href="$class_blinky_blocks_1_1_send_message_v_m_command.html" title="BlinkyBlocks::SendMessage\lVMCommand" alt="" coords="137,70,327,111"/>
-<area shape="rect" id="node4" href="$class_multi_cores_1_1_v_m_data_message.html" title="MultiCores::VMDataMessage" alt="" coords="135,136,329,163"/>
-</map>

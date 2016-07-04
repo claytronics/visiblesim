@@ -1,9 +1,0 @@
-<map id="Catoms2D::Catoms2DBlock" name="Catoms2D::Catoms2DBlock">
-<area shape="rect" id="node2" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="5,10,200,37"/>
-<area shape="rect" id="node3" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="315,26,493,53"/>
-<area shape="rect" id="node5" href="$class_catoms2_d_1_1_catoms2_d_block_code.html" title="Catoms2D::Catoms2DBlockCode" alt="" coords="545,26,765,53"/>
-<area shape="rect" id="node4" href="$class_vecteur.html" title="Vecteur" alt="" coords="621,77,688,103"/>
-<area shape="rect" id="node6" href="$class_catoms2_d_1_1_catoms2_d_gl_block.html" title="Catoms2D::Catoms2DGlBlock" alt="" coords="553,127,756,154"/>
-<area shape="rect" id="node7" href="$class_gl_block.html" title="GlBlock" alt="" coords="370,127,438,154"/>
-<area shape="rect" id="node8" href="$class_color.html" title="Color" alt="" coords="628,178,681,205"/>
-</map>

@@ -1,0 +1,18 @@
+<?xml version="1.0" encoding="UTF-8" standalone="no"?>
+<world gridSize="5,5,6">
+	<camera target="25,20,10" directionSpherical="10,20,100" angle="45" near="0.01" far="1000.0"/>
+	<spotlight target="25,25,0" directionSpherical="-35,40,150" angle="30"/>
+
+	<blockList color="128,128,128" blockSize="10,10,10">
+		<block position="1,1,1" color="255,255,64"/>
+		<block position="2,1,1" color="255,64,255"/>
+		<block position="1,0,1" color="64,255,255"/>
+		<block position="0,0,1"/>
+		<block position="1,2,1" color="255,153,10"/>
+		<block position="0,1,1"/>
+		<block position="0,2,1"/>
+	   	<block position="0,1,2"/>
+
+	</blockList>
+
+</world>

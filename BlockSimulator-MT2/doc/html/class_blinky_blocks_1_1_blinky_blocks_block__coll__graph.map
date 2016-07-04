@@ -1,9 +1,0 @@
-<map id="BlinkyBlocks::BlinkyBlocksBlock" name="BlinkyBlocks::BlinkyBlocksBlock">
-<area shape="rect" id="node8" href="$class_blinky_blocks_1_1_blinky_blocks_v_m.html" title="BlinkyBlocks::BlinkyBlocksVM" alt="" coords="1195,67,1397,94"/>
-<area shape="rect" id="node2" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="5,14,200,41"/>
-<area shape="rect" id="node3" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="315,38,493,65"/>
-<area shape="rect" id="node6" href="$class_blinky_blocks_1_1_blinky_blocks_block_code.html" title="BlinkyBlocks::BlinkyBlocks\lBlockCode" alt="" coords="545,31,727,72"/>
-<area shape="rect" id="node4" href="$class_blinky_blocks_1_1_blinky_blocks_gl_block.html" title="BlinkyBlocks::BlinkyBlocks\lGlBlock" alt="" coords="545,96,727,137"/>
-<area shape="rect" id="node5" href="$class_gl_block.html" title="GlBlock" alt="" coords="370,103,438,130"/>
-<area shape="rect" id="node7" href="$class_vecteur.html" title="Vecteur" alt="" coords="603,162,669,189"/>
-</map>

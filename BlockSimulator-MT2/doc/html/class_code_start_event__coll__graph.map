@@ -1,6 +1,0 @@
-<map id="CodeStartEvent" name="CodeStartEvent">
-<area shape="rect" id="node2" href="$class_block_event.html" title="BlockEvent" alt="" coords="18,96,107,123"/>
-<area shape="rect" id="node3" href="$class_event.html" title="Event" alt="" coords="28,5,83,32"/>
-<area shape="rect" id="node4" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="131,5,325,32"/>
-<area shape="rect" id="node5" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="185,96,364,123"/>
-</map>

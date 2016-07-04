@@ -1,6 +1,0 @@
-<map id="ScenarioEvent" name="ScenarioEvent">
-<area shape="rect" id="node2" href="$class_scenario_add_block_event.html" title="ScenarioAddBlockEvent" alt="" coords="5,80,168,107"/>
-<area shape="rect" id="node3" href="$class_scenario_debug_event.html" title="ScenarioDebugEvent" alt="" coords="193,80,337,107"/>
-<area shape="rect" id="node4" href="$class_scenario_select_block_event.html" title="ScenarioSelectBlockEvent" alt="" coords="362,80,539,107"/>
-<area shape="rect" id="node5" href="$class_scenario_tapp_event.html" title="ScenarioTappEvent" alt="" coords="564,80,699,107"/>
-</map>

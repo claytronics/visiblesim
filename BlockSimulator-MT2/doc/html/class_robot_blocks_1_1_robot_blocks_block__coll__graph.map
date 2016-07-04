@@ -1,9 +1,0 @@
-<map id="RobotBlocks::RobotBlocksBlock" name="RobotBlocks::RobotBlocksBlock">
-<area shape="rect" id="node2" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="5,11,200,37"/>
-<area shape="rect" id="node3" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="315,35,493,61"/>
-<area shape="rect" id="node5" href="$class_robot_blocks_1_1_robot_blocks_block_code.html" title="RobotBlocks::RobotBlocks\lBlockCode" alt="" coords="545,27,725,69"/>
-<area shape="rect" id="node4" href="$class_vecteur.html" title="Vecteur" alt="" coords="601,93,668,120"/>
-<area shape="rect" id="node6" href="$class_robot_blocks_1_1_robot_blocks_gl_block.html" title="RobotBlocks::RobotBlocks\lGlBlock" alt="" coords="545,145,725,186"/>
-<area shape="rect" id="node7" href="$class_gl_block.html" title="GlBlock" alt="" coords="370,152,438,179"/>
-<area shape="rect" id="node8" href="$class_color.html" title="Color" alt="" coords="608,211,661,237"/>
-</map>

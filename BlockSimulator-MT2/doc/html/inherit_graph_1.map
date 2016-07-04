@@ -1,8 +1,0 @@
-<map id="Graphical Class Hierarchy" name="Graphical Class Hierarchy">
-<area shape="rect" id="node1" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="5,121,200,148"/>
-<area shape="rect" id="node2" href="$class_blinky_blocks_1_1_blinky_blocks_block.html" title="BlinkyBlocks::BlinkyBlocks\lBlock" alt="" coords="251,5,434,46"/>
-<area shape="rect" id="node3" href="$class_catoms2_d_1_1_catoms2_d_block.html" title="Catoms2D::Catoms2DBlock" alt="" coords="248,71,437,97"/>
-<area shape="rect" id="node4" href="$class_multi_cores_1_1_multi_cores_block.html" title="MultiCores::MultiCoresBlock" alt="" coords="248,121,437,148"/>
-<area shape="rect" id="node5" href="$class_robot_blocks_1_1_robot_blocks_block.html" title="RobotBlocks::RobotBlocks\lBlock" alt="" coords="253,173,433,214"/>
-<area shape="rect" id="node6" href="$class_smart_blocks_1_1_smart_blocks_block.html" title="SmartBlocks::SmartBlocks\lBlock" alt="" coords="253,238,433,279"/>
-</map>

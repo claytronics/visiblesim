@@ -1,7 +1,0 @@
-<map id="MultiCores::VMStartTransmissionEvent" name="MultiCores::VMStartTransmissionEvent">
-<area shape="rect" id="node2" href="$class_event.html" title="Event" alt="" coords="40,264,95,291"/>
-<area shape="rect" id="node3" href="$class_multi_cores_1_1_multi_cores_block.html" title="MultiCores::MultiCoresBlock" alt="" coords="120,264,309,291"/>
-<area shape="rect" id="node4" href="$class_base_simulator_1_1_building_block.html" title="BaseSimulator::BuildingBlock" alt="" coords="116,5,311,32"/>
-<area shape="rect" id="node5" href="$class_base_simulator_1_1_block_code.html" title="BaseSimulator::BlockCode" alt="" coords="217,96,396,123"/>
-<area shape="rect" id="node6" href="$class_multi_cores_1_1_multi_cores_block_code.html" title="MultiCores::MultiCoresBlockCode" alt="" coords="205,173,424,200"/>
-</map>
