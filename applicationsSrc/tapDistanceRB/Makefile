@@ -1,6 +1,7 @@
-SRCS = distanceRB.cpp  distanceRBCode.cpp
+SRCS = tapDistanceRB.cpp  tapDistanceRBCode.cpp
 
-OUT = $(APPDIR)/distanceRB
+
+OUT = $(APPDIR)/tapDistanceRB
 
 OBJS = $(SRCS:.cpp=.o)
 DEPS = $(SRCS:.cpp=.depends)

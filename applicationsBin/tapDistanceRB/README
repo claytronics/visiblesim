@@ -1,0 +1,2 @@
+In order to use tap capabilities, you have to run the program with infinite running.
+./tabDistanceRB -s inf
