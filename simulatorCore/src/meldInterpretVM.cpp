@@ -2,16 +2,20 @@
 #include "meldInterpretVM.h"
 
 #include <iostream>
+#include <cassert>
 
 #include "meldInterpretEvents.h"
 #include "meldInterpretMessages.h"
 #include "meldInterpretScheduler.h"
 #include "events.h"
+#include "translationEvents.h"
+#include "world.h"
 
 //#define DEBUG_INSTRS
 //#define LOG_DEBUG
-#define myassert(e)	((e) ? (void)0 : __myassert(__FILE__, __LINE__,#e))
+// #define assert(e)	((e) ? (void)0 : __assert(__FILE__, __LINE__,#e))
 
+using namespace BaseSimulator;
 
 namespace MeldInterpret{
 
@@ -26,10 +30,10 @@ bool MeldInterpretVM::debugging = false;
 unsigned char * MeldInterpretVM::arguments = NULL;
 
 
-MeldInterpretVM::MeldInterpretVM(BlinkyBlocks::BlinkyBlocksBlock *b){
-    /* Init will always be predicate 0 */
+MeldInterpretVM::MeldInterpretVM(BaseSimulator::BuildingBlock *b){
+    /** Init will always be predicate 0 */
     TYPE_INIT = 0;
-    /* Initialize unknown type IDs */
+    /** Initialize unknown type IDs */
     TYPE_EDGE = -1;
     TYPE_TERMINATE = -1;
     TYPE_NEIGHBORCOUNT = -1;
@@ -38,30 +42,35 @@ MeldInterpretVM::MeldInterpretVM(BlinkyBlocks::BlinkyBlocksBlock *b){
     TYPE_TAP = -1;
     TYPE_SETCOLOR = -1;
     TYPE_SETCOLOR2 = -1;
+    TYPE_AT = -1;
+    TYPE_MOVETO = -1;
 
     OUTPUT << "MeldInterpretVM constructor" << endl;
-    vm_alloc();
-    vm_init();
     host = b;
     blockId = (NodeID)b->blockId;
+    
+    vm_alloc();
+    vm_init();
+
     hasWork = true;
     polling = false;
     deterministicSet = false;
     firstStart = true;
     currentLocalDate = 0;
 
-    /* Enqueue init to derive the program's axioms */
+    /** Enqueue init to derive the program's axioms */
     enqueue_init();
 
     // introduce initial set of axioms
     numNeighbors = getNeighborCount();
     enqueue_count(numNeighbors, 1);
-
+    neighbors = (NodeID*)malloc(b->getNbInterfaces() * sizeof(NodeID));
+    
     vmMap.insert(std::pair<int, MeldInterpretVM*>(blockId,this));
 }
 
 MeldInterpretVM::~MeldInterpretVM(){
-    /*for (int i = 0; i < NUM_TYPES; i++) {
+    /**for (int i = 0; i < NUM_TYPES; i++) {
       if (TUPLES[i].head == NULL)
       continue;
 
@@ -77,16 +86,17 @@ MeldInterpretVM::~MeldInterpretVM(){
     free(tuples);
     free(newStratTuples);
     free(newTuples);
-    //free(receivedTuples);
+    free(neighbors);
+    free(receivedTuples);
     //free(arguments);
 }
 
 Time MeldInterpretVM::myGetTime(){
     // simulator time is in us while the unit in the vm is ms.
-    return (Time)(host->getTime()/1000);
+    return (Time)(host->getLocalTime()/1000);
 }
 
-/* Print the content of the newTuples queue */
+/** Print the content of the newTuples queue */
 void MeldInterpretVM::print_newTuples(void)
 {
     fprintf(stderr, "\x1b[34m--%d--\tContent of queue newTuples: \n", blockId);
@@ -98,7 +108,7 @@ void MeldInterpretVM::print_newTuples(void)
     fprintf(stderr, "\x1b[0m");
 }
 
-/* Prints the content of the newStartTuples queue */
+/** Prints the content of the newStartTuples queue */
 void MeldInterpretVM::print_newStratTuples(void)
 {
     fprintf(stderr, "\x1b[34m--%d--\tContent of queue newStratTuples: \n",
@@ -114,29 +124,14 @@ void MeldInterpretVM::print_newStratTuples(void)
 }
 
 
-/* Gets ID of neighbor on face 'face' */
-inline NodeID MeldInterpretVM::get_neighbor_ID(int face){
-    if (face == UP)
-	    return up();
-    else if (face == DOWN)
-	    return down();
-    else if (face == WEST)
-	    return west();
-    else if (face == EAST)
-	    return east();
-    else if (face == NORTH)
-	    return north();
-    else if (face == SOUTH)
-	    return south();
-    else {
-	    myassert(0);
-	    return -1;
-    }
+/** Gets ID of neighbor on face 'face' */
+NodeID MeldInterpretVM::get_neighbor_ID(int face){    
+    return host->getNeighborIDForFace(face);
 }
 
-/* Enqueue a tuple for execution */
+/** Enqueue a tuple for execution */
 void MeldInterpretVM::enqueueNewTuple(tuple_t tuple, record_type isNew){
-    myassert (TUPLE_TYPE(tuple) < NUM_TYPES);
+    assert (TUPLE_TYPE(tuple) < NUM_TYPES);
 
     if (TYPE_IS_STRATIFIED(TUPLE_TYPE(tuple))) {
         p_enqueue(newStratTuples, TYPE_STRATIFICATION_ROUND(TUPLE_TYPE(tuple)), tuple, 0, isNew);
@@ -146,18 +141,18 @@ void MeldInterpretVM::enqueueNewTuple(tuple_t tuple, record_type isNew){
     }
 }
 
-/* Enqueue a neighbor or vacant tuple */
+/** Enqueue a neighbor or vacant tuple */
 void MeldInterpretVM::enqueue_face(NodeID neighbor, meld_int face, int isNew){
     tuple_t tuple = NULL;
 
-    if (neighbor <= 0) {
-        if(TYPE_VACANT == -1) /* no such predicate in the program */
+    if (neighbor == VACANT) {
+        if(TYPE_VACANT == -1) /** no such predicate in the program */
             return;
         tuple = tuple_alloc(TYPE_VACANT);
         SET_TUPLE_FIELD(tuple, 0, &face);
     }
     else {
-        if(TYPE_NEIGHBOR == -1) /* no such predicate in the program */
+        if(TYPE_NEIGHBOR == -1) /** no such predicate in the program */
             return;
 
         tuple = tuple_alloc(TYPE_NEIGHBOR);
@@ -168,9 +163,39 @@ void MeldInterpretVM::enqueue_face(NodeID neighbor, meld_int face, int isNew){
     enqueueNewTuple(tuple, (record_type) isNew);
 }
 
-/* Enqueue a neighborCount tuple */
+/** Enqueue a position tuple */
+void MeldInterpretVM::enqueue_at(meld_int x, meld_int y, meld_int z, int isNew){
+    tuple_t tuple = NULL;
+
+    if(TYPE_AT == -1) { /** no such predicate in the program */
+        cerr << "error: Undefined predicate at!" << endl;
+        return;
+    }
+    
+    tuple = tuple_alloc(TYPE_AT);
+    SET_TUPLE_FIELD(tuple, 0, &x);
+    SET_TUPLE_FIELD(tuple, 1, &y);
+    SET_TUPLE_FIELD(tuple, 2, &z);
+
+    enqueueNewTuple(tuple, (record_type) isNew);
+}
+
+/** Enqueue a edge tuple */
+void MeldInterpretVM::enqueue_edge(NodeID neighbor, int isNew){
+    if(TYPE_EDGE == -1) {
+        cerr << "error: Undefined predicate edge!" << endl;
+        return;
+    }
+
+    tuple_t tuple = tuple_alloc(TYPE_EDGE);
+    SET_TUPLE_FIELD(tuple, 0, &neighbor);
+
+    enqueueNewTuple(tuple, isNew);
+}
+
+/** Enqueue a neighborCount tuple */
 void MeldInterpretVM::enqueue_count(meld_int count, int isNew){
-    if(TYPE_NEIGHBORCOUNT == -1) /* no such predicate in the program */
+    if(TYPE_NEIGHBORCOUNT == -1) /** no such predicate in the program */
         return;
 
     tuple_t tuple = tuple_alloc(TYPE_NEIGHBORCOUNT);
@@ -180,9 +205,9 @@ void MeldInterpretVM::enqueue_count(meld_int count, int isNew){
     enqueueNewTuple(tuple, (record_type) isNew);
 }
 
-/* Enqueue a tap tuple */
+/** Enqueue a tap tuple */
 void MeldInterpretVM::enqueue_tap(void) {
-    if(TYPE_TAP == -1) /* no such predicate in the program */
+    if(TYPE_TAP == -1) /** no such predicate in the program */
         return;
 
     tuple_t tuple = tuple_alloc(TYPE_TAP);
@@ -190,7 +215,7 @@ void MeldInterpretVM::enqueue_tap(void) {
     enqueueNewTuple(tuple, (record_type) 1);
 }
 
-/* Enqueue init tuple, triggers derivation of RULE 0, which derives axioms */
+/** Enqueue init tuple, triggers derivation of RULE 0, which derives axioms */
 void MeldInterpretVM::enqueue_init(void) {
     if(TYPE_INIT == -1)
         return;
@@ -199,7 +224,7 @@ void MeldInterpretVM::enqueue_init(void) {
     enqueueNewTuple(tuple, (record_type) 1);
 }
 
-/* Saves the ID of useful types */
+/** Saves the ID of useful types */
 void MeldInterpretVM::init_all_consts(void) {
     init_consts();
     tuple_type i;
@@ -217,11 +242,15 @@ void MeldInterpretVM::init_all_consts(void) {
             TYPE_SETCOLOR = i;
         else if (strcmp(TYPE_NAME(i), "setcolor2") == 0 )
             TYPE_SETCOLOR2 = i;
+        else if (strcmp(TYPE_NAME(i), "at") == 0)
+            TYPE_AT = i;
+        else if (strcmp(TYPE_NAME(i), "moveto") == 0)
+            TYPE_MOVETO = i;
     }
 }
 
 
-/* The VM's main function */
+/** The VM's main function */
 void MeldInterpretVM::processOneRule(void) {
     // processing new facts and updating axioms
     waiting = 0;
@@ -253,26 +282,26 @@ void MeldInterpretVM::processOneRule(void) {
         if (!p_empty(delayedTuples)) {
             waiting = 1;
         }
-        /* If all tuples have been processed
+        /** If all tuples have been processed
          * update rule state and process them if they are ready */
         for (int i = 0; i < NUM_RULES; ++i) {
             //If a rule has all its predicate (considered ACTIVE)
             if (updateRuleState(i)) {
                 waiting = 1;
-                /* Set state byte used by DEBUG */
+                /** Set state byte used by DEBUG */
                 byte processState = PROCESS_RULE | (i << 4);
-                /* Don't process persistent rules (which is useless)
+                /** Don't process persistent rules (which is useless)
                  * as they all have only a RETURN instruction.
                  */
                 if (!RULE_ISPERSISTENT(i)) {
-                    /* Trigger execution */
+                    /** Trigger execution */
                     process_bytecode (NULL, RULE_START(i), 1, NOT_LINEAR, reg, processState);
 
-                    /* After one rule is executed we set the VM on waiting until next call of scheduler*/
+                    /** After one rule is executed we set the VM on waiting until next call of scheduler*/
                     i = NUM_RULES;
                 }
             }
-            /* else: Rule not ready yet, set status to not waiting until new fact appear */
+            /** else: Rule not ready yet, set status to not waiting until new fact appear */
         }
     }
 
@@ -287,7 +316,7 @@ void MeldInterpretVM::processOneRule(void) {
         enqueue_count(numNeighbors, 1);
     }
 
-    for (int i = 0; i < NUM_PORTS; i++) {
+    for (int i = 0; i < host->getNbInterfaces(); i++) {
         NodeID neighbor = get_neighbor_ID(i);
 
         if (neighbor == neighbors[i])
@@ -296,7 +325,7 @@ void MeldInterpretVM::processOneRule(void) {
         waiting = 1;
         enqueue_face(neighbors[i], i, -1);
 
-        /* Delete received tuples from database
+        /** Delete received tuples from database
          * This may need to be reviewed,
          * I am not sure what LM is supposed to do with received tuples
          */
@@ -318,18 +347,17 @@ bool MeldInterpretVM::isWaiting(){
 }
 
 
-/*void MeldInterpretVM::userRegistration(void) {
+/**void MeldInterpretVM::userRegistration(void) {
   registerHandler(SYSTEM_MAIN, (GenericHandler)&meldMain);
   registerHandler(EVENT_ACCEL_TAP, (GenericHandler)&enqueue_tap);
   }*/
 
-/* Receive a tuple and enqueue it to both receivedTuples and newTuples */
+/** Receive a tuple and enqueue it to both receivedTuples and newTuples */
 void MeldInterpretVM::receive_tuple(int isNew, tuple_t tpl, byte face) {
     tuple_t rcvdTuple = (tuple_t)tpl;
     tuple_t tuple;
     tuple_type type = TUPLE_TYPE(rcvdTuple);
     size_t tuple_size = TYPE_SIZE(type);
-    tuple_print(rcvdTuple, stderr);
 
     if(!TYPE_IS_LINEAR(type) && !TYPE_IS_ACTION(type)) {
         //tuple_queue *queue = receivedTuples + face;
@@ -355,9 +383,9 @@ void MeldInterpretVM::receive_tuple(int isNew, tuple_t tpl, byte face) {
     enqueueNewTuple(tuple, (record_type)isNew);
 }
 
-/* Sends a tuple to Block of ID rt, with or without delay */
+/** Sends a tuple to Block of ID rt, with or without delay */
 void MeldInterpretVM::tuple_send(tuple_t tuple, NodeID rt, meld_int delay, int isNew) {
-    myassert (TUPLE_TYPE(tuple) < NUM_TYPES);
+    assert (TUPLE_TYPE(tuple) < NUM_TYPES);
     if (delay > 0) {
 	    p_enqueue(delayedTuples, myGetTime() + delay, tuple, rt, (record_type) isNew);
 	    return;
@@ -369,75 +397,89 @@ void MeldInterpretVM::tuple_send(tuple_t tuple, NodeID rt, meld_int delay, int i
 	    enqueueNewTuple(tuple, (record_type) isNew);
     }
     else {
-	    int face = -1;
-
-	    if (target == up())
-            face = UP;
-	    else if (target == down())
-            face = DOWN;
-	    else if (target == west())
-            face = WEST;
-	    else if (target == east())
-            face = EAST;
-	    else if (target == north())
-            face = NORTH;
-	    else if (target == south())
-            face = SOUTH;
-
+	    int face = host->getFaceForNeighborID(target);
 
 	    if (face != -1) {
-
-            myassert(TYPE_SIZE(TUPLE_TYPE(tuple)) <= 17);
+            assert(TYPE_SIZE(TUPLE_TYPE(tuple)) <= MELD_MESSAGE_DEFAULT_SIZE);
             MessagePtr ptr;
             if (isNew > 0) {
-                ptr = (MessagePtr)(new AddTupleMessage(tuple, TYPE_SIZE(TUPLE_TYPE(tuple))));
+	       ptr = (MessagePtr)(new AddTupleMessage(tuple, MELD_MESSAGE_DEFAULT_SIZE));
             }
             else {
-                ptr = (MessagePtr)(new RemoveTupleMessage(tuple, TYPE_SIZE(TUPLE_TYPE(tuple))));
+                ptr = (MessagePtr)(new RemoveTupleMessage(tuple, MELD_MESSAGE_DEFAULT_SIZE));
             }
             P2PNetworkInterface *p2p = host->getP2PNetworkInterfaceByDestBlockId(get_neighbor_ID(face));
-            /*Prepare message*/
+            /**Prepare message*/
             ptr->sourceInterface = p2p;
             if(p2p->connectedInterface != NULL)
                 ptr->destinationInterface  = p2p->connectedInterface;
-            MeldInterpret::getScheduler()->schedule(new VMSendMessageEvent(MeldInterpret::getScheduler()->now(), host, ptr, p2p));
+            MeldInterpret::getScheduler()->schedule(
+                new VMSendMessageEvent(MeldInterpret::getScheduler()->now(), host, ptr, p2p));
 	    }
 	    else {
-            /* This may happen when you delete a block in the simulator */
-            fprintf(stderr, "--%d--\tUNABLE TO ROUTE MESSAGE! To %d\n", (int)blockId, (int)target);
-            //exit(EXIT_FAILURE);
+            // PTHY: TEMPORARY WORKAROUND, until broadcast communication is natively supported in VS
+            if (host->getNbInterfaces() == 1) { // This is a broadcast message
+                assert(TUPLE_TYPE(tuple) < NUM_TYPES);
+                MessagePtr ptr;
+                if (isNew > 0) {
+                    ptr = (MessagePtr)(new AddTupleMessage(tuple, MELD_MESSAGE_DEFAULT_SIZE));
+                }
+                else {
+                    ptr = (MessagePtr)(new RemoveTupleMessage(tuple, MELD_MESSAGE_DEFAULT_SIZE));
+                }
+
+                BuildingBlock* toblock = NULL;
+                for (BuildingBlock *bb : static_cast<BCLattice*>(getWorld()->lattice)->connected) {
+                    if(bb->blockId == target) {
+                        toblock = bb;
+                        break;
+                    }
+                }
+                
+                if (toblock != NULL) {                    
+                    MeldInterpret::getScheduler()->schedule(
+                        new VMSendMessageEvent2(MeldInterpret::getScheduler()->now(), host, ptr, toblock));
+                } else {
+                    cerr << "error: Unable to send message, recipient does not exist\n";
+                }
+
+            } else {            
+                /** This may happen when you delete a block in the simulator */
+                fprintf(stderr, "--%d--\tUNABLE TO ROUTE MESSAGE! To %d\n", (int)blockId, (int)target);
+                //exit(EXIT_FAILURE);
+            }
 	    }
     }
 }
 
-/* Check if rule of ID rid is ready to be derived */
-/* Returns 1 if true, 0 otherwise */
+/** Check if rule of ID rid is ready to be derived */
+/** Returns 1 if true, 0 otherwise */
 byte MeldInterpretVM::updateRuleState(byte rid) {
     int i;
-    /* A rule is ready if all included predicates are present in the database */
+    /** A rule is ready if all included predicates are present in the database */
     for (i = 0; i < RULE_NUM_INCLPREDS(rid); ++i) {
 	    if (TUPLES[RULE_INCLPRED_ID(rid, i)].length == 0)
             return INACTIVE_RULE;
     }
 
-    /* Rule is ready, enqueue it or process it rightaway */
+    /** Rule is ready, enqueue it or process it rightaway */
     return ACTIVE_RULE;
 }
 
-/* Simply calls tuple_do_handle located in core.c to handle tuple  */
+/** Simply calls tuple_do_handle located in core.c to handle tuple  */
 void MeldInterpretVM::tuple_handle(tuple_t tuple, int isNew, Register *registers) {
     tuple_type type = TUPLE_TYPE(tuple);
-    myassert (type < NUM_TYPES);
+    assert (type < NUM_TYPES);
     tuple_do_handle(type, tuple, isNew, registers);
 }
 
-/* VM initialization routine */
+/** VM initialization routine */
 void MeldInterpretVM::vm_init(void) {
     init_all_consts();
     init_fields();
 }
 
-/* Called upon block init (block.bb)
+/** Called upon block init (block.bb)
  * to ensure that data structures are allocated before
  * VM start in case other blocks send us tuples - Would seg fault otherwise */
 void MeldInterpretVM::vm_alloc(void) {
@@ -447,26 +489,23 @@ void MeldInterpretVM::vm_alloc(void) {
     newTuples = (tuple_queue*)calloc(1, sizeof(tuple_queue));
     newStratTuples = (tuple_pqueue*)calloc(1, sizeof(tuple_pqueue));
     delayedTuples = (tuple_pqueue*)calloc(1, sizeof(tuple_pqueue));
-
-    myassert(tuples!=NULL);
-    myassert(newTuples!=NULL);
-    myassert(newStratTuples!=NULL);
-    myassert(delayedTuples!=NULL);
-
-    /* Reset received tuples queue */
-    memset(receivedTuples, 0, sizeof(tuple_queue) * NUM_PORTS);
-
+    receivedTuples = (tuple_queue*)calloc(host->getNbInterfaces(), sizeof(tuple_queue));
+    
+    assert(tuples!=NULL);
+    assert(newTuples!=NULL);
+    assert(newStratTuples!=NULL);
+    assert(delayedTuples!=NULL);
 }
 
 void MeldInterpretVM::__myassert(string file, int line, string exp) {
 #ifdef LOG_DEBUG
     //{
     char str[50];
-    sprintf(str, "myassert %s:%d %s", file, line, exp);
+    sprintf(str, "assert %s:%d %s", file, line, exp);
     printDebug(str);
     //}
 #endif
-/*
+/**
   while (1) {
   setColor(RED);
   setColor(BLUE);
@@ -478,44 +517,12 @@ void MeldInterpretVM::__myassert(string file, int line, string exp) {
 byte MeldInterpretVM::getNeighborCount() {
     uint8_t count, i;
 
-    for(count = 0, i = 0; i < NUM_PORTS; ++i) {
+    for(count = 0, i = 0; i < host->getNbInterfaces(); ++i) {
         if(get_neighbor_ID(i) != VACANT) {
             count++;
         }
     }
     return count;
-}
-
-// simple functions to access geographic neighbors
-Uid MeldInterpretVM::down(void) {
-    P2PNetworkInterface* temp = host->getInterface(SCLattice::Direction((int)DOWN))->connectedInterface;
-    if(temp != NULL) return (temp->hostBlock->blockId);
-    else return 0;
-}
-Uid MeldInterpretVM::up(void) {
-    P2PNetworkInterface* temp = host->getInterface(SCLattice::Direction((int)UP))->connectedInterface;
-    if(temp != NULL) return (temp->hostBlock->blockId);
-    else return 0;
-}
-Uid MeldInterpretVM::north(void) {
-    P2PNetworkInterface* temp = host->getInterface(SCLattice::Direction((int)NORTH))->connectedInterface;
-    if(temp != NULL) return (temp->hostBlock->blockId);
-    else return 0;
-}
-Uid MeldInterpretVM::south(void) {
-    P2PNetworkInterface* temp = host->getInterface(SCLattice::Direction((int)SOUTH))->connectedInterface;
-    if(temp != NULL) return (temp->hostBlock->blockId);
-    else return 0;
-}
-Uid MeldInterpretVM::east(void) {
-    P2PNetworkInterface* temp = host->getInterface(SCLattice::Direction((int)EAST))->connectedInterface;
-    if(temp != NULL) return (temp->hostBlock->blockId);
-    else return 0;
-}
-Uid MeldInterpretVM::west(void) {
-    P2PNetworkInterface* temp = host->getInterface(SCLattice::Direction((int)WEST))->connectedInterface;
-    if(temp != NULL) return (temp->hostBlock->blockId);
-    else return 0;
 }
 
 NodeID MeldInterpretVM::getGUID(){
@@ -525,20 +532,28 @@ NodeID MeldInterpretVM::getGUID(){
 void MeldInterpretVM::setColor(Color color){
     setLED(color[0]*255, color[1]*255, color[2]*255, color[3]*255);
 }
+
 void MeldInterpretVM::setColor(byte color){
     setLED(Colors[color][0]*255, Colors[color][1]*255, Colors[color][2]*255, Colors[color][3]*255);
 }
+
 void MeldInterpretVM::setLED(byte r, byte g, byte b, byte intensity){
     BaseSimulator::getScheduler()->schedule(new SetColorEvent(BaseSimulator::getScheduler()->now(), host , (float)r/255, (float)g/255, (float)b/255, (float)intensity/255));
 }
 
+void MeldInterpretVM::moveTo(meld_int x, meld_int y, meld_int z) {
+    enqueue_at((meld_int)host->position.pt[0], (meld_int)host->position.pt[1],
+               (meld_int)host->position.pt[2], -1);
+    BaseSimulator::getScheduler()->schedule(new TranslationStartEvent(BaseSimulator::getScheduler()->now(),
+                                                                      host, Vector3D(x, y, z)));
+}
 
 bool MeldInterpretVM::equilibrium() {
     map<int, MeldInterpretVM*>::iterator it;
     for(it = vmMap.begin(); it != vmMap.end(); it++) {
         MeldInterpretVM *vm = it->second;
-        BuildingBlock *buildb = vm->host;
-        if (buildb->getState() < BuildingBlock::ALIVE) {
+        BaseSimulator::BuildingBlock *buildb = vm->host;
+        if (buildb->getState() < BaseSimulator::BuildingBlock::ALIVE) {
             continue;
         }
         if (vm->hasWork) {
@@ -640,7 +655,7 @@ int MeldInterpretVM::characterCount(string in, char character){
 }
 
 
-/********************************************
+/*********************************************
  *******Below this line is the core of the VM
  *******It contains the basic function of the
  *******meld interpreter**********************
@@ -658,9 +673,9 @@ inline byte MeldInterpretVM::val_is_field(const byte x) {
     return x == 0x02;
 }
 
-/* ************* EVAL FUNCTIONS ************* */
+/** ************* EVAL FUNCTIONS ************* */
 
-/* Returns the address of field number 'field_num' (extracted from byte code)
+/** Returns the address of field number 'field_num' (extracted from byte code)
  * of the tuple given as argument.
  * Also increment pc past the field.
  */
@@ -670,7 +685,7 @@ inline void* MeldInterpretVM::eval_field (tuple_t tuple, const unsigned char **p
 
     return GET_TUPLE_FIELD(tuple, field_num);
 }
-/* Returns the address of register number 'value'
+/** Returns the address of register number 'value'
  * and increment pc past the reg byte.
  */
 inline void* MeldInterpretVM::eval_reg(const unsigned char value, const unsigned char **pc, Register *reg) {
@@ -678,7 +693,7 @@ inline void* MeldInterpretVM::eval_reg(const unsigned char value, const unsigned
     return &(reg)[VAL_REG(value)];
 }
 
-/* Returns a pointer to the meld_int at address pointed at by pc
+/** Returns a pointer to the meld_int at address pointed at by pc
  * and increment it past the int.
  */
 inline void* MeldInterpretVM::eval_int (const unsigned char **pc) {
@@ -688,7 +703,7 @@ inline void* MeldInterpretVM::eval_int (const unsigned char **pc) {
     return ret;
 }
 
-/* Returns a pointer to the meld_float (double) at address pointed at by pc
+/** Returns a pointer to the meld_float (double) at address pointed at by pc
  * and increment it past the float.
  */
 inline void* MeldInterpretVM::eval_float (const unsigned char **pc) {
@@ -698,7 +713,7 @@ inline void* MeldInterpretVM::eval_float (const unsigned char **pc) {
     return ret;
 }
 
-/* Set value of register number 'reg_index' as a pointer to tuple 'tuple' */
+/** Set value of register number 'reg_index' as a pointer to tuple 'tuple' */
 inline void MeldInterpretVM::moveTupleToReg (const unsigned char reg_index, tuple_t tuple, Register *reg) {
     Register *dst = &(reg)[VAL_REG(reg_index)];
     *dst = (Register)tuple;
@@ -709,9 +724,9 @@ inline void MeldInterpretVM::moveTupleToReg (const unsigned char reg_index, tupl
 #endif
 }
 
-/* ************* INSTRUCTION EXECUTION FUNCTIONS ************* */
+/** ************* INSTRUCTION EXECUTION FUNCTIONS ************* */
 
-/* Allocates a new tuple of type 'type' and set its type byte */
+/** Allocates a new tuple of type 'type' and set its type byte */
 inline void MeldInterpretVM::execute_alloc (const unsigned char *pc, Register *reg) {
     ++pc;
     tuple_type type = FETCH(pc++);
@@ -728,7 +743,7 @@ inline void MeldInterpretVM::execute_alloc (const unsigned char *pc, Register *r
     TUPLE_TYPE(*dst) = type;
 }
 
-/* Either enqueue a tuple for derivation
+/** Either enqueue a tuple for derivation
  * or enqueue it for retraction
  */
 inline void MeldInterpretVM::execute_addtuple (const unsigned char *pc, Register *reg, int isNew) {
@@ -748,7 +763,7 @@ inline void MeldInterpretVM::execute_addtuple (const unsigned char *pc, Register
     enqueueNewTuple((tuple_t)MELD_CONVERT_REG_TO_PTR(tuple_reg), (record_type) isNew);
 }
 
-/* Only used to notify user that a linear tuple has been updated
+/** Only used to notify user that a linear tuple has been updated
  * instead of removed during rule derivation.
  */
 inline void MeldInterpretVM::execute_update (const unsigned char *pc, Register *reg) {
@@ -766,7 +781,7 @@ inline void MeldInterpretVM::execute_update (const unsigned char *pc, Register *
 #endif
 }
 
-/* Send tuple pointed at by 'send_reg' to blockID designated by send_rt
+/** Send tuple pointed at by 'send_reg' to blockID designated by send_rt
  * NO DELAY!
  */
 inline void MeldInterpretVM::execute_send (const unsigned char *pc, Register *reg, int isNew) {
@@ -782,7 +797,7 @@ inline void MeldInterpretVM::execute_send (const unsigned char *pc, Register *re
     tuple_send((tuple_t)MELD_CONVERT_REG_TO_PTR(send_reg), send_rt, 0, isNew);
 }
 
-/* Call an external function with one argument.
+/** Call an external function with one argument.
  * Not implemented yet, only used to support the node2int function
  * which is useless when using BB as nodeID's are not pointers.
  */
@@ -801,7 +816,7 @@ inline void MeldInterpretVM::execute_call1 (const unsigned char *pc, Register *r
   
 #ifdef DEBUG_INSTRS
     if (functionID == NODE2INT_FUNC)
-        /* No need to do anything for this function since VM is already *
+        /** No need to do anything for this function since VM is already *
          * considering node args as NodeID's, which are int's           */
         printf("--%d--\t CALL1 node2int/%d TO reg %d = (reg %d)\n",
                getBlockId(), arg1_index, dst_index, arg1_index);
@@ -816,14 +831,14 @@ inline void MeldInterpretVM::execute_call1 (const unsigned char *pc, Register *r
                 getBlockId());
 	}
 	
-	/* Do nothing for now since no function are currently implemented */
+	/** Do nothing for now since no function are currently implemented */
 	(void)arg1;
 	(void)dst;
 	(void)return_type;
 	(void)garbage_collected;
 }
   
-/* Similar to send, but with a delay */
+/** Similar to send, but with a delay */
 inline void MeldInterpretVM::execute_send_delay (const unsigned char *pc, Register *reg, int isNew) {
     ++pc;
 
@@ -846,7 +861,7 @@ inline void MeldInterpretVM::execute_send_delay (const unsigned char *pc, Regist
     }
 }
 
-/* Iterate through the database to find a match with tuple read from byte code
+/** Iterate through the database to find a match with tuple read from byte code
  * If there are matches, process the inside of the ITER with all matches sequentially.
  */
 int MeldInterpretVM::execute_iter (const unsigned char *pc, Register *reg, int isNew, int isLinear) {
@@ -855,17 +870,17 @@ int MeldInterpretVM::execute_iter (const unsigned char *pc, Register *reg, int i
     int i, k, length;
     void **list;
 
-    /* Reg in which match will be stored during execution*/
+    /** Reg in which match will be stored during execution*/
     byte reg_store_index = FETCH(pc+10);
 
-    /* produce a random ordering for all tuples of the appropriate type */
+    /** produce a random ordering for all tuples of the appropriate type */
     tuple_entry *entry = TUPLES[type].head;
 
     length = queue_length(&TUPLES[ITER_TYPE(pc)]);
     list = (void**)malloc(sizeof(tuple_t) * length);
 
     for (i = 0; i < length; i++) {
-        int j = host->getNextRandomNumber() % (i+1);
+        unsigned int j = host->getRandomUint() % (i+1);
 
         list[i] = list[j];
         list[j] = entry->tuple;
@@ -880,11 +895,11 @@ int MeldInterpretVM::execute_iter (const unsigned char *pc, Register *reg, int i
 
     if(length == 0) {
         free(list);
-        /* no need to execute any further code, just jump! */
+        /** no need to execute any further code, just jump! */
         return RET_NO_RET;
     }
 
-    /* iterate over all tuples of the appropriate type */
+    /** iterate over all tuples of the appropriate type */
     void *next_tuple;
 
     for (i = 0; i < length; i++) {
@@ -894,7 +909,7 @@ int MeldInterpretVM::execute_iter (const unsigned char *pc, Register *reg, int i
         unsigned char num_args = ITER_NUM_ARGS(pc);
         const unsigned char *tmppc = pc + PERS_ITER_BASE;
 
-        /* check to see if it matches */
+        /** check to see if it matches */
         for (k = 0; k < num_args; ++k) {
             const unsigned char fieldnum = ITER_MATCH_FIELD(tmppc);
             const unsigned char fieldtype = TYPE_ARG_TYPE(type, fieldnum);
@@ -916,9 +931,9 @@ int MeldInterpretVM::execute_iter (const unsigned char *pc, Register *reg, int i
                 tuple_t tpl = (tuple_t)reg[reg_index];
                 val = (Register *)eval_field(tpl, &tmppc);
             }  else {
-                /* Don't know what to do */
+                /** Don't know what to do */
                 fprintf (stderr, "Type %d not supported yet - don't know what to do.\n", fieldtype);
-                myassert (0);
+                assert (0);
                 exit (2);
             }
 
@@ -931,9 +946,9 @@ int MeldInterpretVM::execute_iter (const unsigned char *pc, Register *reg, int i
 #endif
 
         if (matched) {
-            /* We've got a match! */
+            /** We've got a match! */
             moveTupleToReg (reg_store_index, next_tuple, reg);
-            /* Process it - And if we encounter a return instruction, return
+            /** Process it - And if we encounter a return instruction, return
              * Otherwise, look for another match.
              */
             int ret = process_bytecode(next_tuple, inner_jump,
@@ -955,7 +970,7 @@ int MeldInterpretVM::execute_iter (const unsigned char *pc, Register *reg, int i
 
     free(list);
 
-    /* process next instructions */
+    /** process next instructions */
     return RET_NO_RET;
 }
 
@@ -971,7 +986,7 @@ inline void MeldInterpretVM::execute_run_action0 (tuple_t action_tuple, tuple_ty
                     MELD_INT(GET_TUPLE_FIELD(action_tuple, 3)));
 #endif
 
-            /* Don't call it directly to avoid having to import led.bbh */
+            /** Don't call it directly to avoid having to import led.bbh */
             setLEDWrapper(*(byte *)GET_TUPLE_FIELD(action_tuple, 0),
                           *(byte *)GET_TUPLE_FIELD(action_tuple, 1),
                           *(byte *)GET_TUPLE_FIELD(action_tuple, 2),
@@ -986,14 +1001,25 @@ inline void MeldInterpretVM::execute_run_action0 (tuple_t action_tuple, tuple_ty
                     MELD_INT(GET_TUPLE_FIELD(action_tuple, 0)));
 #endif
 
-            /* Don't call it directly to avoid having to import led.bbh */
+            /** Don't call it directly to avoid having to import led.bbh */
             setColorWrapper(MELD_INT(GET_TUPLE_FIELD(action_tuple, 0)));
         }
         FREE_TUPLE(action_tuple);
+    } else if (type == TYPE_MOVETO) {
+        if (isNew > 0) {
+            cerr << "moveTo: (" << MELD_INT(GET_TUPLE_FIELD(action_tuple, 0)) << ","
+                 << MELD_INT(GET_TUPLE_FIELD(action_tuple, 1)) << ","
+                 << MELD_INT(GET_TUPLE_FIELD(action_tuple, 2)) << ")" << endl;
+            moveTo(MELD_INT(GET_TUPLE_FIELD(action_tuple, 0)),
+                   MELD_INT(GET_TUPLE_FIELD(action_tuple, 1)),
+                   MELD_INT(GET_TUPLE_FIELD(action_tuple, 2)));
+        }
+    } else {
+        cerr << "warning: trying to execure an unkown action fact! (type: " << type << ")" << endl;
     }
 }
 
-/* Run an action onto the block */
+/** Run an action onto the block */
 inline void MeldInterpretVM::execute_run_action (const unsigned char *pc, Register *reg, int isNew) {
     ++pc;
 
@@ -1021,9 +1047,9 @@ inline void MeldInterpretVM::execute_remove (const unsigned char *pc, Register *
     }
 }
 
-/* ************* MOVE INSTRUCTIONS FUNCTIONS ************* */
+/** ************* MOVE INSTRUCTIONS FUNCTIONS ************* */
 
-/* Moves an int to a tuple field */
+/** Moves an int to a tuple field */
 inline void MeldInterpretVM::execute_mvintfield (const unsigned char *pc, Register *reg) {
     ++pc;
 
@@ -1047,7 +1073,7 @@ inline void MeldInterpretVM::execute_mvintfield (const unsigned char *pc, Regist
     memcpy(dst, src, size);
 }
 
-/* Moves pointer to an int to a register */
+/** Moves pointer to an int to a register */
 inline void MeldInterpretVM::execute_mvintreg (const unsigned char *pc, Register *reg) {
     ++pc;
 
@@ -1063,7 +1089,7 @@ inline void MeldInterpretVM::execute_mvintreg (const unsigned char *pc, Register
     memcpy(dst, src, size);
 }
 
-/* Moves pointer to a float to a register */
+/** Moves pointer to a float to a register */
 inline void MeldInterpretVM::execute_mvfloatreg (const unsigned char *pc, Register *reg) {
     ++pc;
 
@@ -1080,7 +1106,7 @@ inline void MeldInterpretVM::execute_mvfloatreg (const unsigned char *pc, Regist
     memcpy(dst, src, size);
 }
 
-/* Moves pointer to a float to a tuple field */
+/** Moves pointer to a float to a tuple field */
 inline void MeldInterpretVM::execute_mvfloatfield (const unsigned char *pc, Register *reg) {
     ++pc;
 
@@ -1104,7 +1130,7 @@ inline void MeldInterpretVM::execute_mvfloatfield (const unsigned char *pc, Regi
     memcpy(dst, src, size);
 }
 
-/* Moves pointer to a tuple field to a register */
+/** Moves pointer to a tuple field to a register */
 inline void MeldInterpretVM::execute_mvfieldreg (const unsigned char *pc, Register *reg) {
     ++pc;
     byte field_reg = FETCH(pc+1);
@@ -1127,7 +1153,7 @@ inline void MeldInterpretVM::execute_mvfieldreg (const unsigned char *pc, Regist
     memcpy(dst, src, size);
 }
 
-/* Moves value pointed at by a register to a field */
+/** Moves value pointed at by a register to a field */
 inline void MeldInterpretVM::execute_mvregfield (const unsigned char *pc, Register *reg) {
     ++pc;
 
@@ -1151,7 +1177,7 @@ inline void MeldInterpretVM::execute_mvregfield (const unsigned char *pc, Regist
     memcpy(dst, src, size);
 }
 
-/* Moves content of a tuple field to another */
+/** Moves content of a tuple field to another */
 inline void MeldInterpretVM::execute_mvfieldfield (const unsigned char *pc, Register *reg) {
     ++pc;
     byte src_field_reg = FETCH(pc+1);
@@ -1180,7 +1206,7 @@ inline void MeldInterpretVM::execute_mvfieldfield (const unsigned char *pc, Regi
     memcpy(dst, src, size);
 }
 
-/* Moves blockId to a tuple field */
+/** Moves blockId to a tuple field */
 inline void MeldInterpretVM::execute_mvhostfield (const unsigned char *pc, Register *reg) {
     ++pc;
 
@@ -1203,7 +1229,7 @@ inline void MeldInterpretVM::execute_mvhostfield (const unsigned char *pc, Regis
     memcpy(dst, src, size);
 }
 
-/* Moves blockId to a register */
+/** Moves blockId to a register */
 inline void MeldInterpretVM::execute_mvhostreg (const unsigned char *pc, Register *reg) {
     ++pc;
 
@@ -1222,7 +1248,7 @@ inline void MeldInterpretVM::execute_mvhostreg (const unsigned char *pc, Registe
     memcpy(dst, src, size);
 }
 
-/* Moves content of a reg to another */
+/** Moves content of a reg to another */
 inline void MeldInterpretVM::execute_mvregreg (const unsigned char *pc, Register *reg) {
     ++pc;
 
@@ -1242,9 +1268,9 @@ inline void MeldInterpretVM::execute_mvregreg (const unsigned char *pc, Register
     memcpy(dst, src, size);
 }
 
-/* ************* OPERATION INSTRUCTIONS FUNCTIONS ************* */
+/** ************* OPERATION INSTRUCTIONS FUNCTIONS ************* */
 
-/* Perform boolean NOT operation */
+/** Perform boolean NOT operation */
 inline void MeldInterpretVM::execute_not (const unsigned char *pc, Register *reg) {
     ++pc;
 
@@ -1265,7 +1291,7 @@ inline void MeldInterpretVM::execute_not (const unsigned char *pc, Register *reg
 #endif
 }
 
-/* Perform boolean OR operation */
+/** Perform boolean OR operation */
 inline void MeldInterpretVM::execute_boolor (const unsigned char *pc, Register *reg) {
     ++pc;
 
@@ -1323,7 +1349,7 @@ inline void MeldInterpretVM::execute_boolnotequal (const unsigned char *pc, Regi
 #endif
 }
 
-/* Compares two blockId and store the result to 'dest' */
+/** Compares two blockId and store the result to 'dest' */
 inline void MeldInterpretVM::execute_addrequal (const unsigned char *pc, Register *reg) {
     ++pc;
 
@@ -1341,7 +1367,7 @@ inline void MeldInterpretVM::execute_addrequal (const unsigned char *pc, Registe
 #endif
 }
 
-/* Compares two blockId and store the result to 'dest' */
+/** Compares two blockId and store the result to 'dest' */
 inline void MeldInterpretVM::execute_addrnotequal (const unsigned char *pc, Register *reg) {
     ++pc;
 
@@ -1359,7 +1385,7 @@ inline void MeldInterpretVM::execute_addrnotequal (const unsigned char *pc, Regi
 #endif
 }
 
-/* Same with and int... */
+/** Same with and int... */
 inline void MeldInterpretVM::execute_intequal (const unsigned char *pc, Register *reg) {
     ++pc;
 
@@ -1716,9 +1742,9 @@ inline void MeldInterpretVM::execute_floatgreaterequal (const unsigned char *pc,
 #endif
 }
 
-/* END OF INSTR EXECUTION FUNCTIONS */
+/** END OF INSTR EXECUTION FUNCTIONS */
 
-/* ************* QUEUE MANAGEMENT FUNCTIONS ************* */
+/** ************* QUEUE MANAGEMENT FUNCTIONS ************* */
 
 int MeldInterpretVM::queue_length (tuple_queue *queue) {
     int i;
@@ -1767,7 +1793,7 @@ tuple_t MeldInterpretVM::queue_dequeue_pos(tuple_queue *_queue, tuple_entry **po
         if(entry == _queue->head)
             _queue->tail = NULL;
         else
-            _queue->tail = (tuple_entry *)pos; /* previous */
+            _queue->tail = (tuple_entry *)pos; /** previous */
     }
 
     *pos = next;
@@ -1830,7 +1856,7 @@ void MeldInterpretVM::p_enqueue(tuple_pqueue *queue, Time priority, tuple_t tupl
     *spot = entry;
 }
 
-/* ************* VM INITIALIZATION FUNCTIONS ************* */
+/** ************* VM INITIALIZATION FUNCTIONS ************* */
 
 static int type;
 void MeldInterpretVM::init_fields(void) {
@@ -1845,7 +1871,7 @@ void MeldInterpretVM::init_fields(void) {
     unsigned char offset, size;
 
     for(i = 0; i < NUM_TYPES; ++i) {
-        arguments[i*2] = start - arguments; /* start */
+        arguments[i*2] = start - arguments; /** start */
         offset = 0;
 
         for(j = 0; j < TYPE_NUMARGS(i); ++j) {
@@ -1879,22 +1905,22 @@ void MeldInterpretVM::init_fields(void) {
                 break;
 
             default:
-                myassert(0);
+                assert(0);
                 size = 0;
                 break;
             }
 
-            start[0] = size; /* argument size */
-            start[1] = offset; /* argument offset */
+            start[0] = size; /** argument size */
+            start[1] = offset; /** argument offset */
 
             offset += size;
             start += 2;
         }
-        arguments[i*2+1] = offset + TYPE_FIELD_SIZE; /* tuple size */
+        arguments[i*2+1] = offset + TYPE_FIELD_SIZE; /** tuple size */
     }
 }
 
-/* Get TYPE id for useful types */
+/** Get TYPE id for useful types */
 void MeldInterpretVM::init_consts() {
     tuple_type i;
     for (i = 0; i < NUM_TYPES; i++) {
@@ -1905,13 +1931,13 @@ void MeldInterpretVM::init_consts() {
     }
 }
 
-/* ************* AGGREGATE RELATED FUNCTIONS ************* */
+/** ************* AGGREGATE RELATED FUNCTIONS ************* */
 
 inline bool MeldInterpretVM::aggregate_accumulate(int agg_type, void *acc, void *obj, int count) {
     switch (agg_type) {
     case AGG_SET_UNION_INT:
     case AGG_SET_UNION_FLOAT:
-        myassert(false);
+        assert(false);
         return false;
 
     case AGG_FIRST:
@@ -1955,11 +1981,11 @@ inline bool MeldInterpretVM::aggregate_accumulate(int agg_type, void *acc, void 
 
     case AGG_SUM_LIST_INT:
     case AGG_SUM_LIST_FLOAT:
-        myassert(false);
+        assert(false);
         return false;
     }
 
-    myassert(0);
+    assert(0);
     while(1);
 }
 
@@ -1987,11 +2013,11 @@ inline bool MeldInterpretVM::aggregate_changed(int agg_type, void *v1, void *v2)
         return false;
 
     default:
-        myassert(0);
+        assert(0);
         return true;
     }
 
-    myassert(0);
+    assert(0);
     while(1);
 }
 
@@ -2018,11 +2044,11 @@ inline void MeldInterpretVM::aggregate_seed(int agg_type, void *acc, void *start
     case AGG_SET_UNION_FLOAT:
     case AGG_SUM_LIST_INT:
     case AGG_SUM_LIST_FLOAT:
-        myassert(false);
+        assert(false);
         return;
     }
 
-    myassert(0);
+    assert(0);
     while(1);
 }
 
@@ -2035,18 +2061,18 @@ inline void MeldInterpretVM::aggregate_free(tuple_t tuple, unsigned char field_a
     case AGG_MIN_FLOAT:
     case AGG_MAX_FLOAT:
     case AGG_SUM_FLOAT:
-        /* nothing to do */
+        /** nothing to do */
         break;
 
     case AGG_SET_UNION_INT:
     case AGG_SET_UNION_FLOAT:
     case AGG_SUM_LIST_INT:
     case AGG_SUM_LIST_FLOAT:
-        myassert(false);
+        assert(false);
         break;
 
     default:
-        myassert(0);
+        assert(0);
         break;
     }
 }
@@ -2064,13 +2090,13 @@ inline void MeldInterpretVM::aggregate_recalc(tuple_entry *agg, Register *reg, b
 
     void* start = GET_TUPLE_FIELD(tuple, agg_field);
 
-    /* make copy */
+    /** make copy */
     size_t size = TYPE_ARG_SIZE(type, agg_field);
     void* accumulator = malloc(size);
 
     aggregate_seed(agg_type, accumulator, start, agg_list->records.count, size);
 
-    /* calculate offsets to copy right side to aggregated tuple */
+    /** calculate offsets to copy right side to aggregated tuple */
     size_t size_offset = TYPE_FIELD_SIZE + TYPE_ARG_OFFSET(type, agg_field) + TYPE_ARG_SIZE(type, agg_field);
     size_t total_copy = TYPE_SIZE(type) - size_offset;
     tuple_t target_tuple = NULL;
@@ -2092,7 +2118,7 @@ inline void MeldInterpretVM::aggregate_recalc(tuple_entry *agg, Register *reg, b
         process_bytecode(agg->tuple, TYPE_START(type), -1, NOT_LINEAR, reg, PROCESS_TUPLE);
         aggregate_free(agg->tuple, agg_field, agg_type);
         memcpy(acc_area, accumulator, size);
-        if (total_copy > 0) /* copy right side from target tuple */
+        if (total_copy > 0) /** copy right side from target tuple */
             memcpy(((unsigned char *)agg->tuple) + size_offset, ((unsigned char *)target_tuple) + size_offset, total_copy);
         process_bytecode(agg->tuple, TYPE_START(type), 1, NOT_LINEAR, reg, PROCESS_TUPLE);
     }
@@ -2100,9 +2126,9 @@ inline void MeldInterpretVM::aggregate_recalc(tuple_entry *agg, Register *reg, b
     free(accumulator);
 }
 
-/* ************* PROCESSING FUNCTIONS ************* */
+/** ************* PROCESSING FUNCTIONS ************* */
 
-/* Handles a tuple, if it is a derivation tuple (isNew > 0):
+/** Handles a tuple, if it is a derivation tuple (isNew > 0):
  * -> Process tuple and add it to the database
  * If it is a retraction tuple (isNew < 0):
  * -> Iterate through the database and find corresponding tuple, dequeue and
@@ -2113,7 +2139,7 @@ void MeldInterpretVM::tuple_do_handle(tuple_type type, tuple_t tuple, int isNew,
         FREE_TUPLE(tuple);
         TERMINATE_CURRENT();
         return;
-    }
+    } 
 
 #ifdef DEBUG_INSTRS
     if (isNew == 1) {
@@ -2146,7 +2172,7 @@ void MeldInterpretVM::tuple_do_handle(tuple_type type, tuple_t tuple, int isNew,
                 cur->records.count += isNew;
 
                 if (cur->records.count <= 0) {
-                    /* Remove fact from database */
+                    /** Remove fact from database */
                     if (!TYPE_IS_LINEAR(type))
                         process_bytecode(tuple, TYPE_START(TUPLE_TYPE(tuple)), isNew,
                                          NOT_LINEAR, reg, PROCESS_TUPLE);
@@ -2154,14 +2180,14 @@ void MeldInterpretVM::tuple_do_handle(tuple_type type, tuple_t tuple, int isNew,
                     fprintf(stdout, "\x1b[1;32m--%d--\tDelete Iter success for  %s\x1b[0m\n", getBlockId(), tuple_names[type]);
 #endif
                     FREE_TUPLE(queue_dequeue_pos(queue, current));
-                    /* Also free retraction fact */
+                    /** Also free retraction fact */
                     FREE_TUPLE(tuple);
 
                     return;
                 }
 
                 if(isNew > 0 && !TYPE_IS_LINEAR(type)) {
-                    /* tuple found, no need to rederive */
+                    /** tuple found, no need to rederive */
                     FREE_TUPLE(tuple);
                     return;
                 }
@@ -2208,7 +2234,7 @@ void MeldInterpretVM::tuple_do_handle(tuple_type type, tuple_t tuple, int isNew,
             continue;
         tuple_queue *agg_queue = cur->records.agg_queue;
 
-        /* AGG_FIRST aggregate optimization */
+        /** AGG_FIRST aggregate optimization */
         if(AGG_AGG(type_aggregate) == AGG_FIRST
            && isNew > 0
            && !queue_is_empty(agg_queue)) {
@@ -2232,10 +2258,10 @@ void MeldInterpretVM::tuple_do_handle(tuple_type type, tuple_t tuple, int isNew,
                     FREE_TUPLE(queue_dequeue_pos(agg_queue, current2));
 
                     if (queue_is_empty(agg_queue)) {
-                        /* aggregate is removed */
+                        /** aggregate is removed */
                         void *aggTuple = queue_dequeue_pos(queue, current);
 
-                        /* delete queue */
+                        /** delete queue */
                         free(agg_queue);
 
                         process_bytecode(aggTuple, TYPE_START(TUPLE_TYPE(aggTuple)),
@@ -2285,7 +2311,7 @@ void MeldInterpretVM::tuple_do_handle(tuple_type type, tuple_t tuple, int isNew,
     tuple_t tuple_cpy = ALLOC_TUPLE(TYPE_SIZE(type));
     memcpy(tuple_cpy, tuple, TYPE_SIZE(type));
 
-    /* create aggregate queue */
+    /** create aggregate queue */
     tuple_queue *agg_queue = (tuple_queue*)malloc(sizeof(tuple_queue));
 
     queue_init(agg_queue);
@@ -2307,183 +2333,183 @@ MeldInterpretVM::print_bytecode(const unsigned char *pc) {
     printDebug(s);
 
     switch (*(const unsigned char*)pc) {
-    case RETURN_INSTR: 		/* 0x0 */
+    case RETURN_INSTR: 		/** 0x0 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "RETURN_INSTR");
         break;
-    case NEXT_INSTR: 		/* 0x1 */
+    case NEXT_INSTR: 		/** 0x1 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "NEXT_INSTR");
         break;
-    case PERS_ITER_INSTR: 		/* 0x02 */
+    case PERS_ITER_INSTR: 		/** 0x02 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "PERS_ITER_INSTR");
         break;
-    case LINEAR_ITER_INSTR: 		/* 0x05 */
+    case LINEAR_ITER_INSTR: 		/** 0x05 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "LINEAR_ITER_INSTR");
         break;
-    case NOT_INSTR: 		/* 0x07 */
+    case NOT_INSTR: 		/** 0x07 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "NOT_INSTR");
         break;
-    case SEND_INSTR: 		/* 0x08 */
+    case SEND_INSTR: 		/** 0x08 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "SEND_INSTR");
         break;
-    case RULE_INSTR: 		/* 0x10 */
+    case RULE_INSTR: 		/** 0x10 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "RULE_INSTR");
         break;
-    case RULE_DONE_INSTR: 		/* 0x11 */
+    case RULE_DONE_INSTR: 		/** 0x11 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "RULE_DONE_INSTR");
         break;
-    case SEND_DELAY_INSTR: 		/* 0x15 */
+    case SEND_DELAY_INSTR: 		/** 0x15 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "SEND_DELAY_INSTR");
         break;
-    case RETURN_LINEAR_INSTR:		/* 0xd0 */
+    case RETURN_LINEAR_INSTR:		/** 0xd0 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "RETURN_LINEAR_INSTR");
         break;
-    case RETURN_DERIVED_INSTR:		/* 0xf0 */
+    case RETURN_DERIVED_INSTR:		/** 0xf0 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "RETURN_DERIVED_INSTR");
         break;
-    case MVINTFIELD_INSTR: 		/* 0x1e */
+    case MVINTFIELD_INSTR: 		/** 0x1e */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "MVINTFIELD_INSTR");
         break;
-    case MVFIELDFIELD_INSTR: 		/* 0x21 */
+    case MVFIELDFIELD_INSTR: 		/** 0x21 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "MVFIELDFIELD_INSTR");
         break;
-    case MVFIELDREG_INSTR: 		/* 0x22 */
+    case MVFIELDREG_INSTR: 		/** 0x22 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "MVFIELDREG_INSTR");
         break;
-    case MVPTRREG_INSTR: 		/* 0x23 */
+    case MVPTRREG_INSTR: 		/** 0x23 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "MVPTRREG_INSTR");
         break;
-    case MVREGFIELD_INSTR: 		/* 0x26 */
+    case MVREGFIELD_INSTR: 		/** 0x26 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "MVFIELDREG_INSTR");
-    case MVHOSTFIELD_INSTR: 		/* 0x28 */
+    case MVHOSTFIELD_INSTR: 		/** 0x28 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "MVHOSTFIELD_INSTR");
         break;
-        /* NOT TESTED */
-    case MVFLOATFIELD_INSTR: 		/* 0x2d */
+        /** NOT TESTED */
+    case MVFLOATFIELD_INSTR: 		/** 0x2d */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "MVFLOATFIELD_INSTR");
         break;
-        /* NOT TESTED */
-    case MVFLOATREG_INSTR: 		/* 0x2e */
+        /** NOT TESTED */
+    case MVFLOATREG_INSTR: 		/** 0x2e */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "MVFLOATREG_INSTR");
         break;
-        /* NOT TESTED */
-    case MVHOSTREG_INSTR: 		/* 0x37 */
+        /** NOT TESTED */
+    case MVHOSTREG_INSTR: 		/** 0x37 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "MVHOSTREG_INSTR");
         break;
-    case ADDRNOTEQUAL_INSTR: 		/* 0x38 */
+    case ADDRNOTEQUAL_INSTR: 		/** 0x38 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "ADDRNOTEQUAL_INSTR");
         break;
-    case ADDREQUAL_INSTR: 		/* 0x39 */
+    case ADDREQUAL_INSTR: 		/** 0x39 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "ADDREQUAL_INSTR");
         break;
-    case INTMINUS_INSTR: 		/* 0x3a */
+    case INTMINUS_INSTR: 		/** 0x3a */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "INTMINUS_INSTR");
         break;
-    case INTEQUAL_INSTR: 		/* 0x3b */
+    case INTEQUAL_INSTR: 		/** 0x3b */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "INTEQUAL_INSTR");
         break;
-    case INTNOTEQUAL_INSTR: 		/* 0x3c */
+    case INTNOTEQUAL_INSTR: 		/** 0x3c */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "INTNOTEQUAL_INSTR");
         break;
 
-    case INTPLUS_INSTR: 		/* 0x3d */
+    case INTPLUS_INSTR: 		/** 0x3d */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "INTPLUS_INSTR");
         break;
-    case INTLESSER_INSTR: 		/* 0x3e */
+    case INTLESSER_INSTR: 		/** 0x3e */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "INTLESSER_INSTR");
         break;
 
-    case INTGREATEREQUAL_INSTR: 		/* 0x3f */
+    case INTGREATEREQUAL_INSTR: 		/** 0x3f */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "INTGREATEREQUAL_INSTR");
         break;
-    case ALLOC_INSTR: 		/* 0x40 */
+    case ALLOC_INSTR: 		/** 0x40 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "ALLOC_INSTR");
         break;
-        /* NOT TESTED */
-    case BOOLOR_INSTR: 		/* 0x41 */
+        /** NOT TESTED */
+    case BOOLOR_INSTR: 		/** 0x41 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "BOOLOR_INSTR");
         break;
 
-    case INTLESSEREQUAL_INSTR: 		/* 0x42 */
+    case INTLESSEREQUAL_INSTR: 		/** 0x42 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "INTLESSEREQUAL_INSTR");
         break;
-    case INTGREATER_INSTR: 		/* 0x43 */
+    case INTGREATER_INSTR: 		/** 0x43 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "INTEGREATER_INSTR");
         break;
-    case INTMUL_INSTR: 		/* 0x44 */
+    case INTMUL_INSTR: 		/** 0x44 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "INTMUL_INSTR");
         break;
-    case INTDIV_INSTR: 		/* 0x45 */
+    case INTDIV_INSTR: 		/** 0x45 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "INTDIV_INSTR");
         break;
-    case FLOATPLUS_INSTR: 		/* 0x46 */
+    case FLOATPLUS_INSTR: 		/** 0x46 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "FLOATPLUS_INSTR");
         break;
-    case FLOATMINUS_INSTR: 		/* 0x47 */
+    case FLOATMINUS_INSTR: 		/** 0x47 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "FLOATMINUS_INSTR");
         break;
-    case FLOATMUL_INSTR: 		/* 0x48 */
+    case FLOATMUL_INSTR: 		/** 0x48 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "FLOATMUL_INSTR");
         break;
-    case FLOATDIV_INSTR: 		/* 0x49 */
+    case FLOATDIV_INSTR: 		/** 0x49 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "FLOATDIV_INSTR");
         break;
-    case FLOATEQUAL_INSTR: 		/* 0x4a */
+    case FLOATEQUAL_INSTR: 		/** 0x4a */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "FLOATEQUAL_INSTR");
         break;
-    case FLOATNOTEQUAL_INSTR: 		/* 0x4b */
+    case FLOATNOTEQUAL_INSTR: 		/** 0x4b */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "FLOATNOTEQUAL_INSTR");
         break;
-    case FLOATLESSER_INSTR: 		/* 0x4c */
+    case FLOATLESSER_INSTR: 		/** 0x4c */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "FLOATLESSER_INSTR");
         break;
-    case FLOATLESSEREQUAL_INSTR: 	/* 0x4d */
+    case FLOATLESSEREQUAL_INSTR: 	/** 0x4d */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "FLOATLESSEREQUAL_INSTR");
         break;
-    case FLOATGREATER_INSTR: 		/* 0x4e */
+    case FLOATGREATER_INSTR: 		/** 0x4e */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "FLOATGREATER_INSTR");
         break;
-    case FLOATGREATEREQUAL_INSTR: 	/* 0x4f */
+    case FLOATGREATEREQUAL_INSTR: 	/** 0x4f */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "FLOATGREATEREQUAL_INSTR");
         break;
-    case MVREGREG_INSTR: 		/* 0x50 */
+    case MVREGREG_INSTR: 		/** 0x50 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "MVREGREG_INSTR");
         break;
-    case BOOLEQUAL_INSTR: 		/* 0x51 */
+    case BOOLEQUAL_INSTR: 		/** 0x51 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "BOOLEQUAL_INSTR");
         break;
 
-    case BOOLNOTEQUAL_INSTR: 		/* 0x51 */
+    case BOOLNOTEQUAL_INSTR: 		/** 0x51 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "BOOLNOTEQUAL_INSTR");
         break;
-    case IF_INSTR: 		/* 0x60 */
+    case IF_INSTR: 		/** 0x60 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "IF_INSTR");
         break;
-    case CALL1_INSTR: 		/* 0x69 */
+    case CALL1_INSTR: 		/** 0x69 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "CALL1_INSTR");
         break;
-    case ADDLINEAR_INSTR: 		/* 0x77 */
+    case ADDLINEAR_INSTR: 		/** 0x77 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "ADDLINEAR_INSTR");
         break;
-    case ADDPERS_INSTR: 		/* 0x78 */
+    case ADDPERS_INSTR: 		/** 0x78 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "ADDPERS_INSTR");
         break;
-    case RUNACTION_INSTR: 		/* 0x79 */
+    case RUNACTION_INSTR: 		/** 0x79 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "RUNACTION_INSTR");
         break;
-    case UPDATE_INSTR: 		/* 0x7b */
+    case UPDATE_INSTR: 		/** 0x7b */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), " UPDATE_INSTR");
         break;
-    case REMOVE_INSTR: 		/* 0x80 */
+    case REMOVE_INSTR: 		/** 0x80 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "REMOVE_INSTR");
         break;
-    case IF_ELSE_INSTR: 		/* 0x81 */
+    case IF_ELSE_INSTR: 		/** 0x81 */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "IF_ELSE_");
         break;
-        /* NOT TESTED */
+        /** NOT TESTED */
     case JUMP_INSTR:
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "JUMP_INSTR");
         break;
-    case INTMOD_INSTR: 		/* 0x3d */
+    case INTMOD_INSTR: 		/** 0x3d */
         snprintf(s, MAX_NAME_SIZE*sizeof(char), "INTMOD_INSTR");
         break;
     default:
@@ -2493,17 +2519,18 @@ MeldInterpretVM::print_bytecode(const unsigned char *pc) {
 }
 #endif
 
-int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, int isNew, int isLinear, Register *reg, byte state) {
+int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, int isNew, int isLinear,
+                                       Register *reg, byte state) {
 #ifdef DEBUG_INSTRS
 
-    /* if (PROCESS_TYPE(state) == PROCESS_TUPLE) { */
-    /*     pthread_mutex_lock(&(printMutex)); */
-    /*     printf ("\n--%d--\tPROCESS TUPLE ", getBlockId()); */
-    /*     tuple_print (tuple, stdout); */
-    /*     printf ("\n"); */
-    /*     pthread_mutex_unlock(&(printMutex)); */
-    /*   } */
-    /* #else */
+    /** if (PROCESS_TYPE(state) == PROCESS_TUPLE) { */
+    /**     pthread_mutex_lock(&(printMutex)); */
+    /**     printf ("\n--%d--\tPROCESS TUPLE ", getBlockId()); */
+    /**     tuple_print (tuple, stdout); */
+    /**     printf ("\n"); */
+    /**     pthread_mutex_unlock(&(printMutex)); */
+    /**   } */
+    /** #else */
 
 
     if (PROCESS_TYPE(state) == PROCESS_TUPLE)
@@ -2514,7 +2541,7 @@ int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, i
                     tuple_names[TUPLE_TYPE(tuple)]);
         }
 
-        /* Dont't print if rule is persistent */
+        /** Dont't print if rule is persistent */
         else if (PROCESS_TYPE(state) == PROCESS_RULE) {
             if (!RULE_ISPERSISTENT(RULE_NUMBER(state)))
                 printf ("--%d--\t PROCESS RULE %d: %s\n", getBlockId(),
@@ -2525,11 +2552,11 @@ int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, i
     }
 #endif
 
-    /* Move tuple to register 0 so it can be accessed */
+    /** Move tuple to register 0 so it can be accessed */
     if (state == PROCESS_TUPLE)
         moveTupleToReg (0, tuple, reg);
-    /* Only if process_bytecode not called by iter, */
-    /* because otherwise the tuple is already in a register */
+    /** Only if process_bytecode not called by iter, */
+    /** because otherwise the tuple is already in a register */
 
     for (;;) {
     eval_loop:
@@ -2540,7 +2567,7 @@ int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, i
 #endif
 
         switch (*(const unsigned char*)pc) {
-        case RETURN_INSTR: {	/* 0x0 */
+        case RETURN_INSTR: {	/** 0x0 */
 #ifdef DEBUG_INSTRS
             if (!(PROCESS_TYPE(state) == PROCESS_RULE
                   && RULE_ISPERSISTENT(RULE_NUMBER(state))) )
@@ -2549,7 +2576,7 @@ int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, i
             return RET_RET;
         }
 
-        case NEXT_INSTR: {	/* 0x1 */
+        case NEXT_INSTR: {	/** 0x1 */
 #ifdef DEBUG_INSTRS
             printf ("--%d--\t NEXT\n", getBlockId());
 #endif
@@ -2565,33 +2592,33 @@ int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, i
                 return RET_RET;                 \
             pc = npc; goto eval_loop;
 
-        case PERS_ITER_INSTR: {	/* 0x02 */
+        case PERS_ITER_INSTR: {	/** 0x02 */
             const byte *npc = pc + ITER_OUTER_JUMP(pc);
             const int ret = execute_iter (pc, reg, isNew, isLinear);
             DECIDE_NEXT_ITER();
         }
 
-        case LINEAR_ITER_INSTR: {	/* 0x05 */
+        case LINEAR_ITER_INSTR: {	/** 0x05 */
             const byte *npc = pc + ITER_OUTER_JUMP(pc);
             const int ret = execute_iter (pc, reg, isNew, isLinear);
             DECIDE_NEXT_ITER();
         }
 
-        case NOT_INSTR: {	/* 0x07 */
+        case NOT_INSTR: {	/** 0x07 */
             const byte *npc = pc + NOT_BASE;
             execute_not (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case SEND_INSTR: {	/* 0x08 */
+        case SEND_INSTR: {	/** 0x08 */
             const byte *npc = pc + SEND_BASE;
             execute_send (pc, reg, isNew);
             pc = npc;
             goto eval_loop;
         }
 
-        case RESET_LINEAR_INSTR: { /* 0x0e */
+        case RESET_LINEAR_INSTR: { /** 0x0e */
             int ret = process_bytecode(tuple, pc + RESET_LINEAR_BASE, isNew, NOT_LINEAR, reg, PROCESS_ITER);
             (void)ret;
             pc += RESET_LINEAR_JUMP(pc);
@@ -2599,10 +2626,10 @@ int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, i
         }
             break;
 
-        case END_LINEAR_INSTR: /* 0x0f */
+        case END_LINEAR_INSTR: /** 0x0f */
             return RET_LINEAR;
 
-        case RULE_INSTR: {	/* 0x10 */
+        case RULE_INSTR: {	/** 0x10 */
             const byte *npc = pc + RULE_BASE;
 #ifdef DEBUG_INSTRS
             byte rule_number = FETCH(++pc);
@@ -2613,7 +2640,7 @@ int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, i
             goto eval_loop;
         }
 
-        case RULE_DONE_INSTR: {	/* 0x11 */
+        case RULE_DONE_INSTR: {	/** 0x11 */
 #ifdef DEBUG_INSTRS
             printf ("--%d--\t RULE DONE\n", getBlockId());
 #endif
@@ -2622,306 +2649,306 @@ int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, i
             goto eval_loop;
         }
 
-            /* NOT TESTED */
-        case SEND_DELAY_INSTR: {	/* 0x15 */
+            /** NOT TESTED */
+        case SEND_DELAY_INSTR: {	/** 0x15 */
             const byte *npc = pc + SEND_DELAY_BASE;
             execute_send_delay (pc, reg, isNew);
             pc = npc;
             goto eval_loop;
         }
 
-        case RETURN_LINEAR_INSTR: {		/* 0xd0 */
+        case RETURN_LINEAR_INSTR: {		/** 0xd0 */
 #ifdef DEBUG_INSTRS
             printf ("--%d--\tRETURN LINEAR\n", getBlockId());
 #endif
             return RET_LINEAR;
         }
 
-        case RETURN_DERIVED_INSTR: {		/* 0xf0 */
+        case RETURN_DERIVED_INSTR: {		/** 0xf0 */
 #ifdef DEBUG_INSTRS
             printf ("--%d--\tRETURN DERIVED\n", getBlockId());
 #endif
             return RET_DERIVED;
         }
 
-        case MVINTFIELD_INSTR: {	/* 0x1e */
+        case MVINTFIELD_INSTR: {	/** 0x1e */
             const byte *npc = pc + MVINTFIELD_BASE;
             execute_mvintfield (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case MVINTREG_INSTR: {	/* 0x1f */
+        case MVINTREG_INSTR: {	/** 0x1f */
             const byte *npc = pc + MVINTREG_BASE;
             execute_mvintreg (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case MVFIELDFIELD_INSTR: {	/* 0x21 */
+        case MVFIELDFIELD_INSTR: {	/** 0x21 */
             const byte *npc = pc + MVFIELDFIELD_BASE;
             execute_mvfieldfield (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case MVFIELDREG_INSTR: {	/* 0x22 */
+        case MVFIELDREG_INSTR: {	/** 0x22 */
             const byte *npc = pc + MVFIELDREG_BASE;
             execute_mvfieldreg (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case MVPTRREG_INSTR: {	/* 0x23 */
+        case MVPTRREG_INSTR: {	/** 0x23 */
             const byte *npc = pc + MVPTRREG_BASE;
 #ifdef DEBUG_INSTRS
             printf ("--%d--\tMOVE PTR TO REG -- Do nothing\n", getBlockId());
 #endif
-            /* TODO: Do something if used elsewhere than axiom derivation */
+            /** TODO: Do something if used elsewhere than axiom derivation */
             pc = npc;
             goto eval_loop;
         }
 
 
-        case MVFIELDFIELDR_INSTR: { /* 0x25 */
+        case MVFIELDFIELDR_INSTR: { /** 0x25 */
             const byte *npc = pc + MVFIELDFIELD_BASE;
             execute_mvfieldfield (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case MVREGFIELD_INSTR: {	/* 0x26 */
+        case MVREGFIELD_INSTR: {	/** 0x26 */
             const byte *npc = pc + MVREGFIELD_BASE;
             execute_mvregfield (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case MVHOSTFIELD_INSTR: {	/* 0x28 */
+        case MVHOSTFIELD_INSTR: {	/** 0x28 */
             const byte *npc = pc + MVHOSTFIELD_BASE;
             execute_mvhostfield (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-            /* NOT TESTED */
-        case MVFLOATFIELD_INSTR: {	/* 0x2d */
+            /** NOT TESTED */
+        case MVFLOATFIELD_INSTR: {	/** 0x2d */
             const byte *npc = pc + MVFLOATFIELD_BASE;
             execute_mvfloatfield (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-            /* NOT TESTED */
-        case MVFLOATREG_INSTR: {	/* 0x2e */
+            /** NOT TESTED */
+        case MVFLOATREG_INSTR: {	/** 0x2e */
             const byte *npc = pc + MVFLOATREG_BASE;
             execute_mvfloatreg (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-            /* NOT TESTED */
-        case MVHOSTREG_INSTR: {	/* 0x37 */
+            /** NOT TESTED */
+        case MVHOSTREG_INSTR: {	/** 0x37 */
             const byte *npc = pc + MVHOSTREG_BASE;
             execute_mvhostreg (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case ADDRNOTEQUAL_INSTR: {	/* 0x38 */
+        case ADDRNOTEQUAL_INSTR: {	/** 0x38 */
             const byte *npc = pc + OP_BASE;
             execute_addrnotequal (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case ADDREQUAL_INSTR: {	/* 0x39 */
+        case ADDREQUAL_INSTR: {	/** 0x39 */
             const byte *npc = pc + OP_BASE;
             execute_addrequal (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case INTMINUS_INSTR: {	/* 0x3a */
+        case INTMINUS_INSTR: {	/** 0x3a */
             const byte *npc = pc + OP_BASE;
             execute_intminus (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case INTEQUAL_INSTR: {	/* 0x3b */
+        case INTEQUAL_INSTR: {	/** 0x3b */
             const byte *npc = pc + OP_BASE;
             execute_intequal (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case INTNOTEQUAL_INSTR: {	/* 0x3c */
+        case INTNOTEQUAL_INSTR: {	/** 0x3c */
             const byte *npc = pc + OP_BASE;
             execute_intnotequal (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case INTPLUS_INSTR: {	/* 0x3d */
+        case INTPLUS_INSTR: {	/** 0x3d */
             const byte *npc = pc + OP_BASE;
             execute_intplus (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case INTLESSER_INSTR: {	/* 0x3e */
+        case INTLESSER_INSTR: {	/** 0x3e */
             const byte *npc = pc + OP_BASE;
             execute_intlesser (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case INTGREATEREQUAL_INSTR: {	/* 0x3f */
+        case INTGREATEREQUAL_INSTR: {	/** 0x3f */
             const byte *npc = pc + OP_BASE;
             execute_intgreaterequal (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case ALLOC_INSTR: {	/* 0x40 */
+        case ALLOC_INSTR: {	/** 0x40 */
             const byte *npc = pc + ALLOC_BASE;
             execute_alloc (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-            /* NOT TESTED */
-        case BOOLOR_INSTR: {	/* 0x41 */
+            /** NOT TESTED */
+        case BOOLOR_INSTR: {	/** 0x41 */
             const byte *npc = pc + OP_BASE;
             execute_boolor (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case INTLESSEREQUAL_INSTR: {	/* 0x42 */
+        case INTLESSEREQUAL_INSTR: {	/** 0x42 */
             const byte *npc = pc + OP_BASE;
             execute_intlesserequal (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case INTGREATER_INSTR: {	/* 0x43 */
+        case INTGREATER_INSTR: {	/** 0x43 */
             const byte *npc = pc + OP_BASE;
             execute_intgreater (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case INTMUL_INSTR: {	/* 0x44 */
+        case INTMUL_INSTR: {	/** 0x44 */
             const byte *npc = pc + OP_BASE;
             execute_intmul (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case INTDIV_INSTR: {	/* 0x45 */
+        case INTDIV_INSTR: {	/** 0x45 */
             const byte *npc = pc + OP_BASE;
             execute_intdiv (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case FLOATPLUS_INSTR: {	/* 0x46 */
+        case FLOATPLUS_INSTR: {	/** 0x46 */
             const byte *npc = pc + OP_BASE;
             execute_floatplus (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case FLOATMINUS_INSTR: {	/* 0x47 */
+        case FLOATMINUS_INSTR: {	/** 0x47 */
             const byte *npc = pc + OP_BASE;
             execute_floatminus (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case FLOATMUL_INSTR: {	/* 0x48 */
+        case FLOATMUL_INSTR: {	/** 0x48 */
             const byte *npc = pc + OP_BASE;
             execute_floatmul (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case FLOATDIV_INSTR: {	/* 0x49 */
+        case FLOATDIV_INSTR: {	/** 0x49 */
             const byte *npc = pc + OP_BASE;
             execute_floatdiv (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case FLOATEQUAL_INSTR: {	/* 0x4a */
+        case FLOATEQUAL_INSTR: {	/** 0x4a */
             const byte *npc = pc + OP_BASE;
             execute_floatequal (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case FLOATNOTEQUAL_INSTR: {	/* 0x4b */
+        case FLOATNOTEQUAL_INSTR: {	/** 0x4b */
             const byte *npc = pc + OP_BASE;
             execute_floatnotequal (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case FLOATLESSER_INSTR: {	/* 0x4c */
+        case FLOATLESSER_INSTR: {	/** 0x4c */
             const byte *npc = pc + OP_BASE;
             execute_floatlesser (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case FLOATLESSEREQUAL_INSTR: {	/* 0x4d */
+        case FLOATLESSEREQUAL_INSTR: {	/** 0x4d */
             const byte *npc = pc + OP_BASE;
             execute_floatlesserequal (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case FLOATGREATER_INSTR: {	/* 0x4e */
+        case FLOATGREATER_INSTR: {	/** 0x4e */
             const byte *npc = pc + OP_BASE;
             execute_floatgreater (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case FLOATGREATEREQUAL_INSTR: {	/* 0x4f */
+        case FLOATGREATEREQUAL_INSTR: {	/** 0x4f */
             const byte *npc = pc + OP_BASE;
             execute_floatgreaterequal (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-            /* NOT TESTED */
-        case MVREGREG_INSTR: {	/* 0x50 */
+            /** NOT TESTED */
+        case MVREGREG_INSTR: {	/** 0x50 */
             const byte *npc = pc + MVREGREG_BASE;
             execute_mvregreg (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-            /* NOT TESTED */
-        case BOOLEQUAL_INSTR: {	/* 0x51 */
+            /** NOT TESTED */
+        case BOOLEQUAL_INSTR: {	/** 0x51 */
             const byte *npc = pc + OP_BASE;
             execute_boolequal (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-            /* NOT TESTED */
-        case BOOLNOTEQUAL_INSTR: {	/* 0x51 */
+            /** NOT TESTED */
+        case BOOLNOTEQUAL_INSTR: {	/** 0x51 */
             const byte *npc = pc + OP_BASE;;
             execute_boolnotequal (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case IF_INSTR: {	/* 0x60 */
+        case IF_INSTR: {	/** 0x60 */
             const byte *npc = pc + IF_BASE;
             byte *base = (byte*)pc;
             ++pc;
@@ -2937,7 +2964,7 @@ int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, i
                 pc = base + IF_JUMP(pc);
                 goto eval_loop;
             }
-            /* else process if content */
+            /** else process if content */
 #ifdef DEBUG_INSTRS
             printf ("--%d--\t IF (reg %d) -- Success\n",
                     getBlockId(), reg_index);
@@ -2946,35 +2973,35 @@ int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, i
             goto eval_loop;
         }
 
-        case CALL1_INSTR: {	/* 0x69 */
+        case CALL1_INSTR: {	/** 0x69 */
             const byte *npc = pc + CALL1_BASE;
             execute_call1 (pc, reg);
             pc = npc;
             goto eval_loop;
         }
 
-        case ADDLINEAR_INSTR: {	/* 0x77 */
+        case ADDLINEAR_INSTR: {	/** 0x77 */
             const byte *npc = pc + ADDLINEAR_BASE;
             execute_addtuple (pc, reg, isNew);
             pc = npc;
             goto eval_loop;
         }
 
-        case ADDPERS_INSTR: {	/* 0x78 */
+        case ADDPERS_INSTR: {	/** 0x78 */
             const byte *npc = pc + ADDPERS_BASE;
             execute_addtuple (pc, reg, isNew);
             pc = npc;
             goto eval_loop;
         }
 
-        case RUNACTION_INSTR: {	/* 0x79 */
+        case RUNACTION_INSTR: {	/** 0x79 */
             const byte *npc = pc + RUNACTION_BASE;
             execute_run_action (pc, reg, isNew);
             pc = npc;
             goto eval_loop;
         }
 
-        case UPDATE_INSTR: {	/* 0x7b */
+        case UPDATE_INSTR: {	/** 0x7b */
             const byte *npc = pc + UPDATE_BASE;
             if (PROCESS_TYPE(state) == PROCESS_ITER)
                 execute_update (pc, reg);
@@ -2982,25 +3009,25 @@ int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, i
             goto eval_loop;
         }
 
-        case REMOVE_INSTR: {	/* 0x80 */
+        case REMOVE_INSTR: {	/** 0x80 */
             const byte *npc = pc + REMOVE_BASE;
             execute_remove (pc, reg, isNew);
             pc = npc;
             goto eval_loop;
         }
 
-            /* NOT TESTED */
-            /* CAUTION: I have no way to ensure that it is the correct way to handle
+            /** NOT TESTED */
+            /** CAUTION: I have no way to ensure that it is the correct way to handle
              * this instruction at this moment, please review this when you encounter it.
              */
-        case IF_ELSE_INSTR: {	/* 0x81 */
+        case IF_ELSE_INSTR: {	/** 0x81 */
             const byte *npc = pc + IF_ELSE_BASE;
             byte *base = (byte*)pc;
             ++pc;
             byte reg_index = FETCH(pc);
             Register *if_reg = (Register*)eval_reg (reg_index, &pc, reg);
 
-            /* If false, jump to else */
+            /** If false, jump to else */
             if (!(unsigned char)(*if_reg)) {
 #ifdef DEBUG_INSTRS
                 printf ("--%d--\t IF_ELSE (reg %d) -- ELSE\n",
@@ -3010,7 +3037,7 @@ int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, i
                 pc = base + IF_JUMP(pc);
                 goto eval_loop;
             } else {
-                /* Else, process if until a jump instruction is encountered
+                /** Else, process if until a jump instruction is encountered
                  * (it seems...)
                  */
 #ifdef DEBUG_INSTRS
@@ -3023,7 +3050,7 @@ int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, i
             }
         }
 
-            /* NOT TESTED */
+            /** NOT TESTED */
         case JUMP_INSTR: {
             ++pc;
 #ifdef DEBUG_INSTRS
@@ -3033,7 +3060,7 @@ int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, i
             goto eval_loop;
         }
 
-        case INTMOD_INSTR: {	/* 0x7d */
+        case INTMOD_INSTR: {	/** 0x7d */
             const byte *npc = pc + OP_BASE;
             execute_intmod (pc, reg);
             pc = npc;
@@ -3054,22 +3081,22 @@ int MeldInterpretVM::process_bytecode (tuple_t tuple, const unsigned char *pc, i
 }
 
 #define MAX_STRING_SIZE 200
-/* Prints a tuple */
+/** Prints a tuple */
 void MeldInterpretVM::tuple_print(tuple_t tuple, FILE *fp) {
-    unsigned char tuple_type = TUPLE_TYPE(tuple);
+    tuple_type type = TUPLE_TYPE(tuple);
     int j;
     char str[MAX_STRING_SIZE];
     char tmp[MAX_STRING_SIZE];
 
-    sprintf(str,"@%d: %s(", getBlockId(), TYPE_NAME(tuple_type));
+    sprintf(str,"@%d: %s(r", getBlockId(), TYPE_NAME(type));
 
-    for(j = 0; j < TYPE_NUMARGS(tuple_type); ++j) {
+    for(j = 0; j < TYPE_NUMARGS(type); ++j) {
         void *field = GET_TUPLE_FIELD(tuple, j);
 
         if (j > 0)
             strcat(str, ", ");
 
-        switch(TYPE_ARG_TYPE(tuple_type, j)) {
+        switch(TYPE_ARG_TYPE(type, j)) {
         case FIELD_INT:
             sprintf(tmp, "%d", MELD_INT(field));
             break;
@@ -3084,7 +3111,7 @@ void MeldInterpretVM::tuple_print(tuple_t tuple, FILE *fp) {
         case FIELD_LIST_ADDR:
         case FIELD_SET_INT:
         case FIELD_SET_FLOAT:
-            myassert(false);
+            assert(false);
             break;
         case FIELD_TYPE:
             sprintf(tmp, "%s", TYPE_NAME(MELD_INT(field)));
@@ -3096,12 +3123,12 @@ void MeldInterpretVM::tuple_print(tuple_t tuple, FILE *fp) {
                 sprintf(tmp, "false");
             break;
         default:
-            myassert(0);
+            assert(0);
             break;
         }
         strcat(str,tmp);
     }
-    strcat(str, ")");
+    strcat(str, ")\n");
 #ifdef LOG_DEBUG
     printDebug(str);
 #else
@@ -3109,7 +3136,7 @@ void MeldInterpretVM::tuple_print(tuple_t tuple, FILE *fp) {
 #endif
 }
 
-/* Prints the content of the whole database */
+/** Prints the content of the whole database */
 void MeldInterpretVM::facts_dump(void) {
     int i;
     char str[MAX_STRING_SIZE];
@@ -3119,9 +3146,9 @@ void MeldInterpretVM::facts_dump(void) {
         // don't print fact types that don't exist
         if (TUPLES[i].head == NULL)
             continue;
-
+        
         // don't print artificial tuple types
-        /*
+        /**
           if (tuple_names[i][0] == '_')
           continue;
         */
@@ -3166,7 +3193,7 @@ void MeldInterpretVM::facts_dump(void) {
     }
 }
 
-/* Print program info, this was designed for the oldVM, not sure if it works or not,
+/** Print program info, this was designed for the oldVM, not sure if it works or not,
  * looks like it should.
  */
 void MeldInterpretVM::print_program_info(void) {
@@ -3213,9 +3240,9 @@ void MeldInterpretVM::print_program_info(void) {
     }
 }
 
-/* If activated, call each blockTick to ensure that tuples such as vacant, neighbor,
- * or neighborCount or don't have duplicates in the database.
- * i.e. numberOfVacant + numberOfNeighbor < NUM_PORTS :
+/** If activated, called each blockTick to ensure that tuples such as vacant, neighbor,
+ *   or neighborCount or don't have duplicates in the database.
+ * i.e. numberOfVacant + numberOfNeighbor < host->getNbInterfaces() :
  * and numberOfNeighborCount == 1 are two conditions which must always be true
  */
 void MeldInterpretVM::databaseConsistencyChecker() {
@@ -3242,13 +3269,13 @@ void MeldInterpretVM::databaseConsistencyChecker() {
         if (i == TYPE_NEIGHBORCOUNT) {
             if (tupleCount <= 1) {
                 fprintf(stderr, "\x1b[1;32m--%d--\ttuple %s (type %d, size: %d), count = %d\x1b[0m\n", getBlockId(), tuple_names[i], i, (int)TYPE_SIZE(i), tupleCount);
-                /* *(char *)0 = 0; */
+                /** *(char *)0 = 0; */
             }
         } else {
-            if ( (neighborTCount + vacantTCount) > 6) {
+            if ( (neighborTCount + vacantTCount) > host->getNbInterfaces()) {
                 fprintf(stderr, "\x1b[31m--%d--\tToo many port tuples! count = %dn +%dv\x1b[0m\n", getBlockId(), neighborTCount, vacantTCount);
             }
-            /* *(char *)0 = 0; */
+            /** *(char *)0 = 0; */
         }
     }
 }

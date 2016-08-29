@@ -11,9 +11,12 @@
 #include "scheduler.h"
 #include "network.h"
 #include "trace.h"
+#include "statsIndividual.h"
+#include "utils.h"
 
 using namespace std;
 using namespace BaseSimulator;
+using namespace BaseSimulator::utils;
 
 //unsigned int Message::nextId = 0;
 //unsigned int Message::nbMessages = 0;
@@ -21,8 +24,7 @@ uint64_t Message::nextId = 0;
 uint64_t Message::nbMessages = 0;
 
 unsigned int P2PNetworkInterface::nextId = 0;
-double P2PNetworkInterface::defaultDataRate=1000000;
-double P2PNetworkInterface::defaultDataRateVariability=0;
+int P2PNetworkInterface::defaultDataRate = 1000000;
 
 //===========================================================================================================
 //
@@ -69,21 +71,24 @@ P2PNetworkInterface::P2PNetworkInterface(BaseSimulator::BuildingBlock *b) {
 	OUTPUT << "P2PNetworkInterface constructor" << endl;
 #endif
 	hostBlock = b;
-//	localId = block->getNextP2PInterfaceLocalId();
 	connectedInterface = NULL;
 	availabilityDate = 0;
-	generator = std::ranlux48(nextId);
 	globalId = nextId;
 	nextId++;
-//	messageBeingTransmitted.reset();
-	dataRate = defaultDataRate;
-	dataRateVariability = defaultDataRateVariability;
+	dataRate = new StaticRate(defaultDataRate);
+}
+
+void P2PNetworkInterface::setDataRate(Rate *r) {
+  assert(r != NULL);
+  delete dataRate;
+  dataRate = r;
 }
 
 P2PNetworkInterface::~P2PNetworkInterface() {
 #ifndef NDEBUG
 	OUTPUT << "P2PNetworkInterface destructor" << endl;
 #endif
+	delete dataRate;
 }
 
 void P2PNetworkInterface::send(Message *m) {
@@ -95,6 +100,7 @@ bool P2PNetworkInterface::addToOutgoingBuffer(MessagePtr msg) {
 
 	if (connectedInterface != NULL) {
 		outgoingQueue.push_back(msg);
+		BaseSimulator::utils::StatsIndividual::incOutgoingMessageQueueSize(hostBlock->stats);
 		if (availabilityDate < BaseSimulator::getScheduler()->now()) availabilityDate = BaseSimulator::getScheduler()->now();
 		if (outgoingQueue.size() == 1 && messageBeingTransmitted == NULL) { //TODO
 			BaseSimulator::getScheduler()->schedule(new NetworkInterfaceStartTransmittingEvent(availabilityDate,this));
@@ -111,8 +117,7 @@ bool P2PNetworkInterface::addToOutgoingBuffer(MessagePtr msg) {
 void P2PNetworkInterface::send() {
 	MessagePtr msg;
 	stringstream info;
-	uint64_t transmissionDuration;
-	double rate;
+	Time transmissionDuration;
 
 	if (!connectedInterface) {
 		info << "*** WARNING *** [block " << hostBlock->blockId << ",interface " << globalId <<"] : trying to send a Message but no interface connected";
@@ -128,11 +133,10 @@ void P2PNetworkInterface::send() {
 
 	msg = outgoingQueue.front();
 	outgoingQueue.pop_front();
-//	transmissionDuration = (msg->size()*8000000ULL)/dataRate;
-    transmissionDuration = 20;
 
-	rate = dataRate - dataRateVariability + (generator()/(double)RAND_MAX) * 2 * dataRateVariability;
-	transmissionDuration = (msg->size()*8000000ULL)/rate;
+	BaseSimulator::utils::StatsIndividual::decOutgoingMessageQueueSize(hostBlock->stats);
+	
+	transmissionDuration = getTransmissionDuration(msg);
 	messageBeingTransmitted = msg;
 	messageBeingTransmitted->sourceInterface = this;
 	messageBeingTransmitted->destinationInterface = connectedInterface;
@@ -142,6 +146,9 @@ void P2PNetworkInterface::send() {
 	getScheduler()->trace(info.str());*/
 
 	BaseSimulator::getScheduler()->schedule(new NetworkInterfaceStopTransmittingEvent(BaseSimulator::getScheduler()->now()+transmissionDuration, this));
+	
+	StatsCollector::getInstance().incMsgCount();
+	StatsIndividual::incSentMessageCount(hostBlock->stats);
 }
 
 void P2PNetworkInterface::connect(P2PNetworkInterface *ni) {
@@ -164,4 +171,11 @@ void P2PNetworkInterface::connect(P2PNetworkInterface *ni) {
 		connectedInterface->connectedInterface = NULL;
 	}
 	connectedInterface = ni;
+}
+
+Time P2PNetworkInterface::getTransmissionDuration(MessagePtr &m) {
+  double rate = dataRate->get();
+  Time transmissionDuration = (m->size()*8000000ULL)/rate;
+  //cerr << "TransmissionDuration: " << transmissionDuration << endl;
+  return transmissionDuration;
 }

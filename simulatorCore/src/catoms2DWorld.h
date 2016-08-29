@@ -8,14 +8,14 @@
 #ifndef CATOMS2DWORLD_H_
 #define CATOMS2DWORLD_H_
 
+#include <vector>
+
 #include "openglViewer.h"
 #include "world.h"
 #include "vector3D.h"
 #include "catoms2DBlock.h"
 #include "objLoader.h"
-#include <boost/asio.hpp>
 #include "trace.h"
-#include <vector>
 
 namespace Catoms2D {
 
@@ -23,7 +23,6 @@ static const Vector3D defaultBlockSize{1.0, 5.0, 1.0};
 
 class Catoms2DWorld : public BaseSimulator::World {
 protected:
-    ObjLoader::ObjLoader *objBlock,*objBlockForPicking,*objRepere;
     GLuint idTextureHexa,idTextureLines;
     static const int numPickingTextures = 7; /* The number of picking textures defined for
                         this type of catom,
@@ -48,9 +47,8 @@ public:
     return((Catoms2DBlock*)World::getBlockById(bId));
     }
 
-    virtual void addBlock(int blockId, BlockCodeBuilder bcb, const Cell3DPosition &pos, const Color &col,
+    virtual void addBlock(bID blockId, BlockCodeBuilder bcb, const Cell3DPosition &pos, const Color &col,
                           short orientation = 0, bool master = false);
-    virtual void deleteBlock(BuildingBlock *blc);
     void loadTextures(const string &str);
 
     /**
@@ -80,9 +78,6 @@ public:
     virtual void menuChoice(int n);
     /** @copydoc World::exportConfiguration() */
     virtual void exportConfiguration();
-
-    void disconnectBlock(Catoms2DBlock *block);
-    void connectBlock(Catoms2DBlock *block);
 };
 
 inline void deleteWorld() {

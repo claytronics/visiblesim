@@ -22,36 +22,20 @@ SmartBlocksWorld::SmartBlocksWorld(const Cell3DPosition &gridSize, const Vector3
                                    int argc, char *argv[]):World(argc, argv) {
     cout << "\033[1;31mSmartBlocksWorld constructor\033[0m" << endl;
 
-    idTextureFloor=0;
-    idTextureDigits=0;
-#ifdef GLUT
-    objBlock = new ObjLoader::ObjLoader("../../simulatorCore/smartBlocksTextures","smartBlockSimple.obj");
-    objRepere = new ObjLoader::ObjLoader("../../simulatorCore/smartBlocksTextures","repere25.obj");
-    objBlockForPicking = new ObjLoader::ObjLoader("../../simulatorCore/smartBlocksTextures",
-                                                  "smartBlockPicking.obj");
-#else
-    objBlock=NULL;
-    objRepere=NULL;
-    objBlockForPicking=NULL;
-#endif
-
-    nbreStats=0;
-    for (int i = 0; i < 10; i++) {
-        tabStatsData[i] = 0;
+    if (GlutContext::GUIisEnabled) {
+        objBlock = new ObjLoader::ObjLoader("../../simulatorCore/resources/textures/smartBlocksTextures",
+                                            "smartBlockSimple.obj");
+        objBlockForPicking = new ObjLoader::ObjLoader("../../simulatorCore/resources/textures/smartBlocksTextures",
+                                                      "smartBlockPicking.obj");
+        objRepere = new ObjLoader::ObjLoader("../../simulatorCore/resources/textures/latticeTextures",
+                                             "repere25.obj");
     }
 
     lattice = new SLattice(gridSize, gridScale.hasZero() ? defaultBlockSize : gridScale);
-    targetGrid = NULL;
 }
 
 SmartBlocksWorld::~SmartBlocksWorld() {
-    cout << "\033[1;31mSmartBlocksWorld destructor" << endl;
-
-/* block linked are deleted by world::~world() */
-    delete objBlock;
-    delete objRepere;
-    delete [] targetGrid;
-    delete capabilities;
+    cout << "\033[1;31mSmartBlocksWorld destructor\033[0m" << endl;
 }
 
 void SmartBlocksWorld::deleteWorld() {
@@ -59,14 +43,14 @@ void SmartBlocksWorld::deleteWorld() {
     world=NULL;
 }
 
-void SmartBlocksWorld::addBlock(int blockId, BlockCodeBuilder bcb,
+void SmartBlocksWorld::addBlock(bID blockId, BlockCodeBuilder bcb,
                                 const Cell3DPosition &pos, const Color &col,
                                 short orientation, bool master) {
 	if (blockId > maxBlockId)
 		maxBlockId = blockId;
-	else if (blockId == -1)
+	else if (blockId == 0)
 		blockId = incrementBlockId();
-        
+
     SmartBlocksBlock *smartBlock = new SmartBlocksBlock(blockId, bcb);
     buildingBlocksMap.insert(std::pair<int,BaseSimulator::BuildingBlock*>
                              (smartBlock->blockId, (BaseSimulator::BuildingBlock*)smartBlock) );
@@ -99,7 +83,7 @@ void SmartBlocksWorld::linkBlock(const Cell3DPosition &pos) {
         if (ptrNeighbor) {
             (ptrBlock)->getInterface(SLattice::Direction(i))->
                 connect(ptrNeighbor->getInterface(SLattice::Direction(
-                                                      SLattice::getOpposite(i))));
+                                                      lattice->getOppositeDirection(i))));
 
             OUTPUT << "connection #" << (ptrBlock)->blockId <<
                 " to #" << ptrNeighbor->blockId << endl;
@@ -107,78 +91,6 @@ void SmartBlocksWorld::linkBlock(const Cell3DPosition &pos) {
             (ptrBlock)->getInterface(SLattice::Direction(i))->connect(NULL);
         }
     }
-}
-
-void SmartBlocksWorld::getPresenceMatrix(const PointCel &pos,PresenceMatrix &pm) {
-    presence *gpm=pm.grid;
-    SmartBlocksBlock **grb;
-
-    for (int i=0; i<9; i++) { *gpm++ = wallCell; };
-    int ix0 = (pos.x<1)?1-pos.x:0,
-        ix1 = (pos.x>lattice->gridSize[0]-2)?lattice->gridSize[0]-pos.x+1:3,
-        iy0 = (pos.y<1)?1-pos.y:0,
-        iy1 = (pos.y>lattice->gridSize[1]-2)?lattice->gridSize[1]-pos.y+1:3,
-        ix,iy;
-    for (iy=iy0; iy<iy1; iy++) {
-        gpm = pm.grid+(iy*3+ix0);
-        // PTHY: TODO: idem fix 2D->3D
-        grb = (SmartBlocksBlock **)lattice->grid+(ix0+pos.x-1+(iy+pos.y-1)*lattice->gridSize[0]);
-        for (ix=ix0; ix<ix1; ix++) {
-            *gpm++ = (*grb)?
-                ((isBorder(ix+pos.x-1,iy+pos.y-1))?
-                 (isSingle(ix+pos.x-1,iy+pos.y-1)?
-                  singleCell
-                  :borderCell)
-                 :fullCell)
-                :emptyCell;
-            grb++;
-        }
-    }
-}
-
-void SmartBlocksWorld::getPresenceMatrix0(const PointCel &pos,PresenceMatrix &pm) {
-    presence *gpm=pm.grid;
-    SmartBlocksBlock **grb;
-
-    for (int i=0; i<9; i++) { *gpm++ = wallCell; };
-
-    int ix0 = (pos.x<1)?1-pos.x:0,
-        ix1 = (pos.x>lattice->gridSize[0]-2)?lattice->gridSize[0]-pos.x+1:3,
-        iy0 = (pos.y<1)?1-pos.y:0,
-        iy1 = (pos.y>lattice->gridSize[1]-2)?lattice->gridSize[1]-pos.y+1:3,
-        ix,iy;
-    for (iy=iy0; iy<iy1; iy++) {
-        gpm = pm.grid+(iy*3+ix0);
-        grb = (SmartBlocksBlock **)lattice->grid+(ix0+pos.x-1+(iy+pos.y-1)*lattice->gridSize[0]);
-        for (ix=ix0; ix<ix1; ix++) {
-            *gpm++ = (*grb)?fullCell:emptyCell;
-            grb++;
-        }
-    }
-}
-
-bool SmartBlocksWorld::isBorder(int x,int y) {
-    SmartBlocksBlock **grb=(SmartBlocksBlock **)lattice->grid+x+y*lattice->gridSize[0];
-    //if ((*grb)->_isBorder) return true;
-    int ix0 = (x<1)?1-x:0,
-        ix1 = (x>lattice->gridSize[0]-2)?lattice->gridSize[0]-x+1:3,
-        iy0 = (y<1)?1-y:0,
-        iy1 = (y>lattice->gridSize[1]-2)?lattice->gridSize[1]-y+1:3,
-        ix,iy;
-    for (iy=iy0; iy<iy1; iy++) {
-        grb = (SmartBlocksBlock **)lattice->grid+(ix0+x-1+(iy+y-1)*lattice->gridSize[0]);
-        for (ix=ix0; ix<ix1; ix++) {
-            //if (*grb==NULL || (*grb)->wellPlaced) return true;
-            if (*grb==NULL) return true;
-            grb++;
-        }
-    }
-    return false;
-}
-
-bool SmartBlocksWorld::isSingle(int x,int y) {
-    SmartBlocksBlock **grb=(SmartBlocksBlock **)lattice->grid+x+y*lattice->gridSize[0];
-    return (*grb)->_isSingle;
 }
 
 void SmartBlocksWorld::glDraw() {
@@ -230,13 +142,11 @@ void SmartBlocksWorld::glDraw() {
 void SmartBlocksWorld::glDrawIdByMaterial() {
     glPushMatrix();
     glDisable(GL_TEXTURE_2D);
-    /*glTranslatef(-lattice->gridSize[0]/2.0f*lattice->gridScale[0],
-      -lattice->gridSize[1]/2.0f*lattice->gridScale[1],0);*/
+
     vector <GlBlock*>::iterator ic=tabGlBlocks.begin();
     int n=1;
     lock();
     while (ic!=tabGlBlocks.end()) {
-        glLoadName(n++);
         ((SmartBlocksGlBlock*)(*ic))->glDrawIdByMaterial(objBlockForPicking, n);
         ic++;
     }
@@ -247,14 +157,12 @@ void SmartBlocksWorld::glDrawIdByMaterial() {
 void SmartBlocksWorld::glDrawId() {
     glPushMatrix();
     glDisable(GL_TEXTURE_2D);
-    /*glTranslatef(-lattice->gridSize[0]/2.0f*lattice->gridScale[0],
-      -lattice->gridSize[1]/2.0f*lattice->gridScale[1],0);*/
+
     vector <GlBlock*>::iterator ic=tabGlBlocks.begin();
     int n=1;
     lock();
     while (ic!=tabGlBlocks.end()) {
-        glLoadName(n++);
-        ((SmartBlocksGlBlock*)(*ic))->glDrawId(objBlock);
+        ((SmartBlocksGlBlock*)(*ic))->glDrawId(objBlock,n);
         ic++;
     }
     unlock();
@@ -262,133 +170,37 @@ void SmartBlocksWorld::glDrawId() {
 }
 
 void SmartBlocksWorld::loadTextures(const string &str) {
-    //string path = str+"/circuit.tga";
-    string path = str+"/bois.tga";
-    int lx,ly;
-    idTextureFloor = GlutWindow::loadTexture(path.c_str(),lx,ly);
+    if (GlutContext::GUIisEnabled) {
+        //string path = str+"/circuit.tga";
+        string path = str+"/bois.tga";
+        int lx,ly;
+        idTextureFloor = GlutWindow::loadTexture(path.c_str(),lx,ly);
 
-    path=str+"/digits.tga";
-    idTextureDigits = GlutWindow::loadTexture(path.c_str(),lx,ly);
-}
-
-void SmartBlocksWorld::connectBlock(SmartBlocksBlock *block) {
-    Cell3DPosition pos = block->position;
-
-    lattice->insert(block, pos);
-//	OUTPUT << "Reconnection " << block->blockId << " pos ="<< ix << "," << iy << endl;
-    linkBlock(pos);
-    linkNeighbors(pos);
-}
-
-void SmartBlocksWorld::disconnectBlock(SmartBlocksBlock *block) {
-    P2PNetworkInterface *fromBlock,*toBlock;
-
-    for(int i=0; i<4; i++) {
-        fromBlock = block->getInterface(SLattice::Direction(i));
-        if (fromBlock && fromBlock->connectedInterface) {
-            toBlock = fromBlock->connectedInterface;
-            fromBlock->connectedInterface=NULL;
-            toBlock->connectedInterface=NULL;
-        }
+        path=str+"/../smartBlocksTextures/digits.tga";
+        idTextureDigits = GlutWindow::loadTexture(path.c_str(),lx,ly);
     }
-
-    lattice->remove(block->position);
-    //	OUTPUT << getScheduler()->now() << " : Disconnection " <<
-    // block->blockId << " pos ="<< ix << "," << iy << endl;
 }
-
-int SmartBlocksWorld::nbreWellPlacedBlock() {
-    std::map<int, BuildingBlock*>::iterator it;
-    int n=0;
-    SmartBlocksBlock *sb;
-    for( it = buildingBlocksMap.begin() ; it != buildingBlocksMap.end() ; ++it) {
-        sb = (SmartBlocksBlock *)(it->second);
-        if (sb->wellPlaced) n++;
-    }
-    return n;
-}
-
-void SmartBlocksWorld::deleteBlock(BuildingBlock *blc) {
-    SmartBlocksBlock *bb = (SmartBlocksBlock *)blc;
-    
-    if (bb->getState() >= SmartBlocksBlock::ALIVE ) {
-        // cut links between bb and others
-        for(int i=0; i<4; i++) {
-            P2PNetworkInterface *bbi = bb->getInterface(SLattice::Direction(i));
-            if (bbi->connectedInterface) {
-                //bb->removeNeighbor(bbi); //Useless
-                bbi->connectedInterface->hostBlock->removeNeighbor(bbi->connectedInterface);
-                bbi->connectedInterface->connectedInterface=NULL;
-                bbi->connectedInterface=NULL;
-            }
-        }
-
-        // free grid cell
-        lattice->remove(bb->position);
-
-        disconnectBlock(bb);
-    }
-
-    if (selectedGlBlock == bb->ptrGlBlock) {
-        selectedGlBlock = NULL;
-        GlutContext::mainWindow->select(NULL);
-    }
-
-    // remove the associated glBlock
-    std::vector<GlBlock*>::iterator cit=tabGlBlocks.begin();
-    if (*cit==bb->ptrGlBlock) tabGlBlocks.erase(cit);
-    else {
-        while (cit!=tabGlBlocks.end() && (*cit)!=bb->ptrGlBlock) {
-            cit++;
-        }
-        if (*cit==bb->ptrGlBlock) tabGlBlocks.erase(cit);
-    }
-    delete bb->ptrGlBlock;
-}
-
 
 void SmartBlocksWorld::setSelectedFace(int n) {
     numSelectedGlBlock = n / 5;
     string name = objBlockForPicking->getObjMtlName(n % 5);
 
-    if (name == "Material__73") numSelectedFace = SLattice::South;
-    else if (name == "Material__68") numSelectedFace = SLattice::East;
-    else if (name == "Material__72") numSelectedFace = SLattice::West;
-    else if (name == "Material__71") numSelectedFace = SLattice::North;
+    if (name == "Material__72") numSelectedFace = SLattice::South;
+    else if (name == "Material__66") numSelectedFace = SLattice::East;
+    else if (name == "Material__71") numSelectedFace = SLattice::West;
+    else if (name == "Material__68") numSelectedFace = SLattice::North;
     else {
-		cerr << "warning: Unrecognized picking face" << endl;
-		numSelectedFace = 5;	// UNDEFINED
+		numSelectedFace = 4;	// Top
         return;
     }
 
-    cerr << name << " = " << numSelectedFace << " = "
-         << SLattice::getString(numSelectedFace) << endl;       
-}
-
-void SmartBlocksWorld::addStat(int n,int v) {
-    tabStatsData[n]+=v;
-    if (nbreStats<=n) nbreStats=n+1;
-}
-
-void SmartBlocksWorld::printStats() {
-    OUTPUT << "stats: \t" << nbreWellPlacedBlock();
-    for (int i=0;i<nbreStats; i++) {
-        OUTPUT << "\t"<< tabStatsData[i] ;
-    }
-    OUTPUT << "\t" << getScheduler()->getNbreMessages() << endl;
-}
-
-void SmartBlocksWorld::initTargetGrid() {
-    if (targetGrid) delete [] targetGrid;
-    int sz = lattice->gridSize[0]*lattice->gridSize[1];
-    targetGrid = new presence[sz];
-    memset(targetGrid,emptyCell,sz*sizeof(presence));
+    // cerr << "SET " << name << " = " << numSelectedFace << " = "
+    //      << lattice->getDirectionString(numSelectedFace) << endl;
 }
 
 void SmartBlocksWorld::exportConfiguration() {
-	SmartBlocksConfigExporter *exporter = new SmartBlocksConfigExporter(this);
-	exporter->exportConfiguration();
-	delete exporter;
+	SmartBlocksConfigExporter exporter = SmartBlocksConfigExporter(this);
+	exporter.exportConfiguration();
 }
 
 

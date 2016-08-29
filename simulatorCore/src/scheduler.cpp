@@ -14,17 +14,20 @@
 #include "scheduler.h"
 #include "trace.h"
 #include "stdint.h"
+#include "statsIndividual.h"
 
 using namespace std;
+using namespace BaseSimulator::utils;
 
 namespace BaseSimulator {
 
 Scheduler *Scheduler::scheduler=NULL;
+std::mutex Scheduler::delMutex;
 
 Scheduler::Scheduler() {
 	OUTPUT << "Scheduler constructor" << endl;
 
-	if (sizeof(uint64_t) != 8) {
+	if (sizeof(Time) != 8) {
 		ERRPUT << "\033[1;31m" << "ERROR : Scheduler requires 8bytes integer that are not available on this computer" << "\033[0m" << endl;
 		exit(EXIT_FAILURE);
 	}
@@ -36,17 +39,15 @@ Scheduler::Scheduler() {
 		exit(EXIT_FAILURE);
 	}
 
-	currentDate = 0;
-	maximumDate = UINT64_MAX; // no time limitation by default
-	eventsMapSize = 0;
-	largestEventsMapSize = 0;
-
 	sem_schedulerStart = new LightweightSemaphore(0);
 }
 
 Scheduler::~Scheduler() {
-	removeKeywords();
 	OUTPUT << "Scheduler destructor" << endl;
+	removeKeywords();
+	if (schedulerThread)
+		delete schedulerThread;
+	delete sem_schedulerStart;
 }
 
 bool Scheduler::schedule(Event *ev) {
@@ -55,10 +56,16 @@ bool Scheduler::schedule(Event *ev) {
 
 	EventPtr pev(ev);
 
+	static bool possibleOverflow = false;
+	static bool tooLate = false;
 	/*info << "Schedule a " << pev->getEventName() << " (" << ev->id << ")";
 	trace(info.str());*/
 
 	if (pev->date < Scheduler::currentDate) {
+	        if (!possibleOverflow) {
+	            cerr << "WARNING: Attempt to schedule an event in the past (possible overflow detected?)!" << endl;
+	            possibleOverflow = true;
+	        }
 		OUTPUT << "ERROR : An event cannot be scheduled in the past !\n";
 		OUTPUT << "current time : " << Scheduler::currentDate << endl;
 		OUTPUT << "ev->eventDate : " << pev->date << endl;
@@ -67,6 +74,10 @@ bool Scheduler::schedule(Event *ev) {
 	}
 
 	if (pev->date > maximumDate) {
+	        if (!tooLate) {
+	            cerr << "WARNING: Maximum simulation date reached!" << endl;
+	            tooLate = true;
+	        }
 		OUTPUT << "WARNING : An event should not be scheduled beyond the end of simulation date !\n";
 		OUTPUT << "pev->date : " << pev->date << endl;
 		OUTPUT << "maximumDate : " << maximumDate << endl;
@@ -75,11 +86,11 @@ bool Scheduler::schedule(Event *ev) {
 
 	lock();
 
-	eventsMap.insert(pair<uint64_t, EventPtr>(pev->date,pev));
+	eventsMap.insert(pair<Time, EventPtr>(pev->date,pev));
 
 	eventsMapSize++;
 
-	if (largestEventsMapSize < eventsMapSize) largestEventsMapSize = eventsMapSize;
+	StatsCollector::getInstance().updateLargestEventsQueueSize(eventsMapSize);
 
 	unlock();
 
@@ -88,14 +99,14 @@ bool Scheduler::schedule(Event *ev) {
 
 void Scheduler::removeEventsToBlock(BuildingBlock *bb) {
 	lock();
-	multimap<uint64_t,EventPtr>::iterator im = eventsMap.begin();
+	multimap<Time,EventPtr>::iterator im = eventsMap.begin();
 	BuildingBlock *cb=NULL;
 	OUTPUT << bb << endl;
 	while (im!=eventsMap.end()) {
 		cb=(*im).second->getConcernedBlock();
 		OUTPUT << cb << endl;
 		if (cb==bb) {
-			multimap<uint64_t,EventPtr>::iterator im2 = im;
+			multimap<Time,EventPtr>::iterator im2 = im;
 			if(im != eventsMap.begin()) {
 				im--;
 				eventsMap.erase(im2);
@@ -108,33 +119,23 @@ void Scheduler::removeEventsToBlock(BuildingBlock *bb) {
 	unlock();
 }
 
-uint64_t Scheduler::now() {
-	return(currentDate);
-}
-
-bool Scheduler::scheduleLock(Event *ev) {
-	return schedule(ev); //lock done in schedule
-}
-
-void Scheduler::trace(string message,int id,const Color &color) {
-#ifdef GLUT
-	mutex_trace.lock();
-	GlutContext::addTrace(message,id,color);
-	mutex_trace.unlock();
-#endif
+void Scheduler::trace(string message, bID id,const Color &color) {
+	if (GlutContext::GUIisEnabled) {
+		mutex_trace.lock();
+		GlutContext::addTrace(message,id,color);
+		mutex_trace.unlock();
+	}
+	
 	OUTPUT.precision(6);
 	OUTPUT << fixed << (double)(currentDate)/1000000 << " #" << id << ": " << message << endl;
 }
 
-void Scheduler::lock() {
-	mutex_schedule.lock();
+void Scheduler::start(int mode) {   
+	scheduler->schedulerMode = mode;
+	scheduler->sem_schedulerStart->signal();	
 }
 
-void Scheduler::unlock() {
-	mutex_schedule.unlock();
-}
-
-void Scheduler::stop(uint64_t date) {
+void Scheduler::stop(Time date) {
 	debugDate=date;
 	schedulerMode = SCHEDULER_MODE_DEBUG;
 }
@@ -144,7 +145,7 @@ void Scheduler::restart() {
 	currentDate=debugDate;
 }
 
-bool Scheduler::debug(const string &command,int &id,string &result) {
+bool Scheduler::debug(const string &command,bID &id,string &result) {
 	ostringstream sout;
 	sout.str("");
 	if (command=="help") {
@@ -189,6 +190,13 @@ bool Scheduler::debug(const string &command,int &id,string &result) {
 		id = currentId;
 	}*/
 	return true;
+}
+
+void Scheduler::printStats() {
+  cout << StatsCollector::getInstance();
+  if (StatsIndividual::enable) {
+    cout << StatsIndividual::getStats();
+  }
 }
 
 

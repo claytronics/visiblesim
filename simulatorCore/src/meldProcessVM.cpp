@@ -275,7 +275,7 @@ void MeldProcessVM::handleDeterministicMode(VMCommand &command){
 }
 
 void MeldProcessVM::handleCommand(VMCommand &command) {
-	uint64_t dateToSchedule;
+	Time dateToSchedule;
 		
 	currentLocalDate = max(getScheduler()->now(), command.getTimestamp());
 	if (getScheduler()->getMode() == SCHEDULER_MODE_FASTEST) {
@@ -291,7 +291,7 @@ void MeldProcessVM::handleCommand(VMCommand &command) {
 		// format: <size> <command> <timestamp> <src> <red> <blue> <green> <intensity>
 		SetColorVMCommand c(command.getData());
 		Color color = c.getColor();
-		getScheduler()->scheduleLock(new SetColorEvent(dateToSchedule, hostBlock, color));
+		getScheduler()->schedule(new SetColorEvent(dateToSchedule, hostBlock, color));
 	}
 	break;
 	case VM_COMMAND_SEND_MESSAGE:
@@ -307,7 +307,7 @@ void MeldProcessVM::handleCommand(VMCommand &command) {
 			ERRPUT << "Interface not found" << endl;
 			return;
 		}
-		getScheduler()->scheduleLock(new VMSendMessageEvent(dateToSchedule, hostBlock,
+		getScheduler()->schedule(new VMSendMessageEvent(dateToSchedule, hostBlock,
 															new ReceiveMessageVMCommand(c), interface));
 	}
 	break;
@@ -332,7 +332,7 @@ void MeldProcessVM::handleCommand(VMCommand &command) {
 		break;
 	case VM_COMMAND_POLL_START:
 		// Polling lasts 1us
-		getScheduler()->scheduleLock(new VMEndPollEvent(dateToSchedule+1, hostBlock));
+		getScheduler()->schedule(new VMEndPollEvent(dateToSchedule+1, hostBlock));
 		polling = true;
 		break;
 	default:
@@ -351,9 +351,9 @@ void MeldProcessVM::closeAllSockets() {
 }
 
 
-bool MeldProcessVM::dateHasBeenReachedByAll(uint64_t date) {
-	static uint64_t minReallyReached = 0;
-	uint64_t min, min2;
+bool MeldProcessVM::dateHasBeenReachedByAll(Time date) {
+	static Time minReallyReached = 0;
+	Time min, min2;
 	int alive = 0, hasNoWork = 0;
 		
 	if (date < minReallyReached) {

@@ -25,9 +25,9 @@ public :
 };
 
 class ScenarioTapEvent:public ScenarioEvent {
-	int blockId;
+	bID blockId;
 public:
-	ScenarioTapEvent(float t,int id):ScenarioEvent(t),blockId(id) {};
+	ScenarioTapEvent(float t, bID id):ScenarioEvent(t),blockId(id) {};
 	~ScenarioTapEvent() {};
     virtual void exportEventToScheduler() {
         BaseSimulator::getWorld()->tapBlock(eventTime * 1000000
@@ -46,9 +46,9 @@ public:
 };
 
 class ScenarioSelectBlockEvent:public ScenarioEvent {
-	int blockId;
+	bID blockId;
 public:
-	ScenarioSelectBlockEvent(float t,int id):ScenarioEvent(t),blockId(id) {};
+	ScenarioSelectBlockEvent(float t,bID id):ScenarioEvent(t),blockId(id) {};
 	~ScenarioSelectBlockEvent() {};
         virtual void exportEventToScheduler() {
             (void)blockId; // Suppress unused member warnings
@@ -60,6 +60,14 @@ class ScenarioAddBlockEvent:public ScenarioEvent {
 public:
 	ScenarioAddBlockEvent(float t,const Vector3D &pos):ScenarioEvent(t),position(pos) {};
 	~ScenarioAddBlockEvent() {};
+	virtual void exportEventToScheduler() {};
+};
+
+class ScenarioRemoveBlockEvent:public ScenarioEvent {
+	Vector3D position;
+public:
+	ScenarioRemoveBlockEvent(float t,const Vector3D &pos):ScenarioEvent(t),position(pos) {};
+	~ScenarioRemoveBlockEvent() {};
 	virtual void exportEventToScheduler() {};
 };
 

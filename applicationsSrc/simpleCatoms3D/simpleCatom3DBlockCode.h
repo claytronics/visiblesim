@@ -11,7 +11,7 @@
 #include "catoms3DBlockCode.h"
 #include "catoms3DSimulator.h"
 
-#include "catoms3DEvents.h"
+#include "rotation3DEvents.h"
 #include "catoms3DBlock.h"
 
 class SimpleCatom3DBlockCode : public Catoms3D::Catoms3DBlockCode {
@@ -28,7 +28,9 @@ public:
 	void processLocalEvent(EventPtr pev);
 	/* virtual bool getAttribute(const string &att,ostringstream &sout); */
 
-	static Catoms3D::Catoms3DBlockCode *buildNewBlockCode(Catoms3D::Catoms3DBlock *host);
+	static BlockCode *buildNewBlockCode(BuildingBlock *host) {
+			return (new SimpleCatom3DBlockCode((Catoms3DBlock*)host));
+	}
 
 };
 

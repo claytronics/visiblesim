@@ -9,7 +9,6 @@
 #define ROBOTBLOCKSWORLD_H_
 
 #include <vector>
-#include <boost/asio.hpp>
 
 #include "openglViewer.h"
 #include "world.h"
@@ -21,12 +20,11 @@
 
 namespace RobotBlocks {
 
-static const Vector3D defaultBlockSize{39.0, 39.0, 40.0};
+static const Vector3D defaultBlockSize{10.0, 10.0, 10.0};
 
 class RobotBlocksWorld : public BaseSimulator::World {
 protected:
-    GLuint idTextureWall;
-    ObjLoader::ObjLoader *objBlock,*objBlockForPicking,*objRepere;
+    GLuint idTextureWall = 0;
 
     virtual ~RobotBlocksWorld();
 public:
@@ -50,9 +48,8 @@ public:
     /**
      * @copydoc World::addBlock
      */
-    virtual void addBlock(int blockId, BlockCodeBuilder bcb, const Cell3DPosition &pos, const Color &col,
+    virtual void addBlock(bID blockId, BlockCodeBuilder bcb, const Cell3DPosition &pos, const Color &col,
                           short orientation = 0, bool master = false);
-    virtual void deleteBlock(BuildingBlock *blc);
     /**
      * \copydoc World::linkBlock
      */
@@ -81,18 +78,6 @@ public:
      * @copydoc World::setSelectedFace
      */
     virtual void setSelectedFace(int n);
-    /**
-     * @copydoc World::menuChoice
-     */
-    virtual void menuChoice(int n);
-    /**
-     * @copydoc World::disconnectBlock
-     */
-    virtual void disconnectBlock(RobotBlocksBlock *block);
-    /**
-     * @copydoc World::connectBlock
-     */
-    virtual void connectBlock(RobotBlocksBlock *block);
     /**
      * @copydoc World::exportConfiguration
      */

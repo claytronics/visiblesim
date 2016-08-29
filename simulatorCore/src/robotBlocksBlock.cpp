@@ -10,19 +10,16 @@
 #include "robotBlocksBlock.h"
 #include "robotBlocksWorld.h"
 #include "robotBlocksSimulator.h"
+#include "lattice.h"
 #include "trace.h"
 
 using namespace std;
 
 namespace RobotBlocks {
 
-RobotBlocksBlock::RobotBlocksBlock(int bId, BlockCodeBuilder bcb) : BaseSimulator::BuildingBlock(bId, bcb) {
+RobotBlocksBlock::RobotBlocksBlock(int bId, BlockCodeBuilder bcb)
+	: BaseSimulator::BuildingBlock(bId, bcb, SCLattice::MAX_NB_NEIGHBORS) {
     OUTPUT << "RobotBlocksBlock constructor" << endl;
-
-    for (int i=0; i<6; i++) {
-		P2PNetworkInterfaces.push_back(new P2PNetworkInterface(this));
-    }
-
 }
 
 RobotBlocksBlock::~RobotBlocksBlock() {
@@ -47,7 +44,23 @@ void RobotBlocksBlock::setPrevNext(const P2PNetworkInterface *prev,const P2PNetw
     getWorld()->updateGlData(this,prevId,nextId);
 }
 
-SCLattice::Direction RobotBlocksBlock::getDirection(P2PNetworkInterface *given_interface) {
+void RobotBlocksBlock::addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target) {
+    OUTPUT << "Simulator: "<< blockId << " add neighbor " << target->blockId << " on "
+		   << getWorld()->lattice->getDirectionString(getDirection(ni)) << endl;
+    getScheduler()->schedule(
+		new AddNeighborEvent(getScheduler()->now(), this,
+							 getWorld()->lattice->getOppositeDirection(getDirection(ni)), target->blockId));
+}
+
+void RobotBlocksBlock::removeNeighbor(P2PNetworkInterface *ni) {
+    OUTPUT << "Simulator: "<< blockId << " remove neighbor on "
+		   << getWorld()->lattice->getDirectionString(getDirection(ni)) << endl;
+    getScheduler()->schedule(
+		new RemoveNeighborEvent(getScheduler()->now(), this,
+								getWorld()->lattice->getOppositeDirection(getDirection(ni))));
+}
+
+int RobotBlocksBlock::getDirection(P2PNetworkInterface *given_interface) {
     if( !given_interface) {
 		return SCLattice::Direction(0);
     }
@@ -57,13 +70,13 @@ SCLattice::Direction RobotBlocksBlock::getDirection(P2PNetworkInterface *given_i
     return SCLattice::Direction(0);
 }
 
-P2PNetworkInterface *RobotBlocksBlock::getP2PNetworkInterfaceByRelPos(const PointRel3D &pos) {
-    if (pos.x==-1) return P2PNetworkInterfaces[SCLattice::Left];
-    else if (pos.x==1) return P2PNetworkInterfaces[SCLattice::Right];
-    else if (pos.y==-1) return P2PNetworkInterfaces[SCLattice::Front];
-    else if (pos.y==1) return P2PNetworkInterfaces[SCLattice::Back];
-    else if (pos.z==-1) return P2PNetworkInterfaces[SCLattice::Bottom];
-    else if (pos.z==1) return P2PNetworkInterfaces[SCLattice::Top];
+P2PNetworkInterface *RobotBlocksBlock::getP2PNetworkInterfaceByRelPos(const Cell3DPosition &pos) {
+    if (pos[0]==-1) return P2PNetworkInterfaces[SCLattice::Left];
+    else if (pos[0]==1) return P2PNetworkInterfaces[SCLattice::Right];
+    else if (pos[1]==-1) return P2PNetworkInterfaces[SCLattice::Front];
+    else if (pos[1]==1) return P2PNetworkInterfaces[SCLattice::Back];
+    else if (pos[2]==-1) return P2PNetworkInterfaces[SCLattice::Bottom];
+    else if (pos[2]==1) return P2PNetworkInterfaces[SCLattice::Top];
 
     return NULL;
 }

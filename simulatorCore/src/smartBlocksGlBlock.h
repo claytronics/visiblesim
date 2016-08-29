@@ -17,14 +17,14 @@ protected :
 //	string popupInfo,textInfo;
 	int displayedValue;
 public :
-	SmartBlocksGlBlock(int id);
-	virtual ~SmartBlocksGlBlock();
-	virtual string getInfo();
+	SmartBlocksGlBlock(bID id) : GlBlock(id), displayedValue(id) {};
+	virtual ~SmartBlocksGlBlock() {};
+
 	/*	virtual string getPopupInfo();*/
 	void setDisplayedValue(int n) { displayedValue=n; }
 	void glDraw(ObjLoader::ObjLoader *ptrObj);
-	void glDrawId(ObjLoader::ObjLoader *ptrObj);
-	void glDrawIdByMaterial(ObjLoader::ObjLoader *ptrObj,int &n);
+	virtual void glDrawId(ObjLoader::ObjLoader *ptrObj,int &n);
+	virtual void glDrawIdByMaterial(ObjLoader::ObjLoader *ptrObj,int &n);
 };
 }
 #endif /* SMARTBLOCKSGLBLOCK_H_ */

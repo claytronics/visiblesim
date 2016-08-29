@@ -14,8 +14,6 @@
 #include <vector>
 #include <mutex>
 
-#include <boost/interprocess/sync/interprocess_mutex.hpp>
-
 #include "assert.h"
 #include "buildingBlock.h"
 #include "glBlock.h"
@@ -23,7 +21,7 @@
 #include "utils.h"
 #include "lattice.h"
 #include "scheduler.h"
-#include "capabilities.h"
+#include "objLoader.h"
 
 using namespace BaseSimulator::utils;
 using namespace std;
@@ -35,32 +33,35 @@ namespace BaseSimulator {
  * @brief Represents the simulation world and manages all blocks 
  */
 class World {
-    boost::interprocess::interprocess_mutex mutex_gl;
+    std::mutex mutex_gl;
 protected:
     /************************************************************
      *   Global variable
      ************************************************************/    
     static World *world;        //!< Global variable to access the single simulation instance of World 
     static vector<GlBlock*>tabGlBlocks; //!< A vector containing pointers to all graphical blocks
-    static map<int, BuildingBlock*>buildingBlocksMap; //!< A map containing all BuildingBlocks in the world, indexed by their blockId
+    static map<bID, BuildingBlock*>buildingBlocksMap; //!< A map containing all BuildingBlocks in the world, indexed by their blockId
 
     /************************************************************
      *   Graphical / UI Attributes
-     ************************************************************/    
-
+     ************************************************************/        
     GlBlock *selectedGlBlock; //!< A pointer to the GlBlock selected by the user
     GLushort numSelectedFace; //!< The id of the face (NeighborDirection) selected by the user
-    GLuint numSelectedGlBlock; //!< The index of the block selected by the user in the tabGlBlocks (== idBlock - 1)
+    GLuint numSelectedGlBlock; //!< The index of the block selected by the user in the tabGlBlock
+
+    ObjLoader::ObjLoader *objBlock = NULL;           //!< Object loader for a block
+    ObjLoader::ObjLoader *objBlockForPicking = NULL; //!< Object loader for a block used during picking
+    ObjLoader::ObjLoader *objRepere = NULL;          //!< Object loader for the frame
+    
     GLint menuId; 
-    Camera *camera; //!< Pointer to the camera object for the graphical simulation, also includes the light source
+    Camera *camera = NULL; //!< Pointer to the camera object for the graphical simulation, also includes the light source
 
     /************************************************************
      *   Simulation Attributes
      ************************************************************/    
 
-    presence *targetGrid; //!< An array representing the target grid of the simulation, i.e. the shape to produce (can be 2D / 3D)
-    Capabilities *capabilities; //!< The capabilities available for the blocks simulated in this world
-    int maxBlockId = 0; //!< The block id of the block with the highest id in the world
+    bID maxBlockId = 0; //!< The block id of the block with the highest id in the world
+    // vector<ScenarioEvent&> tabEvents;
     
     /**
      * @brief World constructor, initializes the camera, light, and user interaction attributes
@@ -100,24 +101,9 @@ public:
     /**
      * @brief Getter for the map containing all blocks of the world
      */    
-    map<int, BuildingBlock*>& getMap() {
+    map<bID, BuildingBlock*>& getMap() {
         return buildingBlocksMap;
     }
-
-    /************************************************************
-     *   Reconfiguration Target Methods
-     ************************************************************/    
-
-    inline presence *getTargetGridPtr(short *gs)
-        { memcpy(gs,lattice->gridSize.pt,3*sizeof(short)); return targetGrid; };
-    inline presence getTargetGrid(int ix,int iy,int iz)
-        { return targetGrid[(iz*lattice->gridSize[1]+iy)*lattice->gridSize[0]+ix]; };
-    inline void setTargetGrid(presence value,int ix,int iy,int iz)
-        { targetGrid[(iz*lattice->gridSize[1]+iy)*lattice->gridSize[0]+ix]=value; };
-    void initTargetGrid();
-    inline void setCapabilities(Capabilities *capa) { capabilities=capa; };
-    void getPresenceMatrix(const PointRel3D &pos,PresenceMatrix &pm);
-    inline Capabilities* getCapabilities() { return capabilities; };
     
     /**
      * @brief Returns the number of blocks in the world
@@ -136,7 +122,7 @@ public:
      * @param numSelectedFace id of face to consider
      * @return true if corresponding cell is free and inside the grid, false otherwise
      */
-    bool canAddBlockToFace(int numSelectedGlBlock, int numSelectedFace);
+    bool canAddBlockToFace(bID numSelectedGlBlock, int numSelectedFace);
 
     /**
      * @brief Returns a pointer to the block of id BId 
@@ -163,7 +149,7 @@ public:
     /**
      * @brief Creates a block and adds it to the simulation
      *
-     * @param blockId : id of the block to be created. If -1, its id will be set to the MAX_CURRENT_ID + 1
+     * @param blockId : id of the block to be created. If 0, its id will be set to the MAX_CURRENT_ID + 1
      * @param bcb : a pointer to the user fonction return the CodeBlock to execute on the block
      * @param pos : the position of the block on the lattice grid
      * @param col : the color of the block
@@ -172,15 +158,36 @@ public:
      *                      0 by default and for all other blocks
      * @param master : indicates if the block is a master block. false by default
      */
-    virtual void addBlock(int blockId, BlockCodeBuilder bcb,
+    virtual void addBlock(bID blockId, BlockCodeBuilder bcb,
                           const Cell3DPosition &pos, const Color &col,
                           short orientation = 0, bool master = false) = 0;
     /**
-     * @brief Deletes a block from the simulation
+     * @brief Deletes a block from the simulation after disconnecting it and all of 
+     *  its neighbors and notifying them
      *
      * @param blc : a pointer to the block to remove from the world
      */
-    virtual void deleteBlock(BuildingBlock *blc) = 0;
+    void deleteBlock(BuildingBlock *blc);
+    /**
+     * @brief Connects the interfaces of a block to all of its neighbors and notifiy them
+     *
+     * @param blc : a pointer to the block to connect to its neighborhood
+     */
+    void connectBlock(BuildingBlock *block);
+    /**
+     * @brief Disconnects the interfaces of a block from all of its neighbors and notify them
+     *
+     * @param blc : a pointer to the block to disconnect from its neighborhood
+     */
+    void disconnectBlock(BuildingBlock *block);
+
+    /**
+     * @brief add an obstacle to the grid as a disabled block
+     * @param pos : position of the inactive block
+     * @param col : color of the obstacle
+     */
+    void addObstacle(const Cell3DPosition &pos,const Color &col);
+
     /**
      * @brief Getter for selectedGlBlock
      *
@@ -194,15 +201,17 @@ public:
      */
     inline GlBlock* setselectedGlBlock(int n) { return (selectedGlBlock=(n>=0)?tabGlBlocks[n]:NULL); };
     /**
-     * @brief Setter for selectedFace
-     * @param n : id of the new selectedFace
+     * @brief Setter for selected picking face
+     * @param n : id of the texture that has been clicked by the user
+     *  This function retrieves the names of the picking textures for the compares it to set the 
+     *   numSelectedFace variable to the corresponding face
      */
     virtual void setSelectedFace(int n) = 0;
     /**
      * @brief Returns the Glblock of id n 
      * @param n : id of the Glblock to retrieve
      */
-    inline GlBlock* getBlockByNum(int n) { return tabGlBlocks[n]; };
+    inline GlBlock* getBlockByNum(bID n) { return tabGlBlocks[n]; };
     /**
      * @brief Returns the total number of blocks in the world
      * @return the number of blocks in the world
@@ -282,24 +291,18 @@ public:
      *
      * @param date the date at which the tap event must be consumed
      * @param bId the id of the target block
+     * @param face id of the tapped face, or -1 if not a picking face
      */
-    void tapBlock(uint64_t date, int bId);
+    void tapBlock(Time date, bID bId, int face);
     /**
      * @brief Stops all block in the world
      */
     void stopSimulation();
     /**
-     * @brief Generate an array of n random ids 
-     *
-     * @param n : number of ids to generate
-     * @param ids : array in which the ids will be stored, must have a size >= n
-     */
-    void generateIds(int n, int *ids);
-    /**
      * @brief Increment the maximum block id present the world by one and returns it
      * @return the maximum block id present in the world + 1
      */
-    inline int incrementBlockId() { return ++maxBlockId; }
+    inline bID incrementBlockId() { return ++maxBlockId; }
 };
 
 /**

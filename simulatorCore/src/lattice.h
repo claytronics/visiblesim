@@ -22,15 +22,36 @@ namespace BaseSimulator {
  */
 class Lattice {
     struct InvalidInsertionException : std::exception {
-        const char* what() const noexcept {return "Ooops!\n";}
-    };    
+        const char* what() const noexcept {
+            return "trying to insert a block out of the lattice\n";
+        }
+    };
+    struct InvalidDimensionsException : std::exception {
+        const char* what() const noexcept {
+            return "lattice size in any direction cannot be negative or null\n";
+        }
+    };
+
+    static const string directionName[];    
 public:
-    enum Direction {};
-    
+    enum Direction {MAX_NB_NEIGHBORS}; //!< Labels for a lattice cell's neighboring cells (virtual)
+    /**
+     * @brief Returns an integer corresponding to the direction opposite to d
+     * @param d id of the direction from which we want the opposite
+     * @return id of direction opposite to d
+     */
+    virtual int getOppositeDirection(int d) { return -1; };
+    /**
+     * @brief Returns the name string corresponding to direction d
+     * @param d id of the direction from which we want the name
+     * @return name string corresponding to direction d
+     */
+    virtual string getDirectionString(int d);
+
     Cell3DPosition gridSize; //!< The size of the 3D grid
     Vector3D gridScale; //!< The real size of a cell in the simulated world (Dimensions of a block)
     BuildingBlock **grid; //!< The grid as a 1-Dimensional array of BuildingBlock pointers
-
+   
     /**
      * @brief Abstract Lattice constructor. 
      */
@@ -128,18 +149,16 @@ public:
      * @brief Overriden getter to get the maximum number of neighbor a lattice cell can have
      * @return the maximum number of neighbor for the callee lattice
      */
-    virtual inline const int getMaxNumNeighbors() { return 0; };
-
-    virtual inline const int getOppositeDirection(Direction i) { return 0; };
+    virtual inline const int getMaxNumNeighbors() { return MAX_NB_NEIGHBORS; };
 };
 
 /*! @brief 2-Dimensional Lattice abstract class
  *
  */
 class Lattice2D : public Lattice {
-
+    static const string directionName[];    
 public:
-    enum Direction {};
+    enum Direction {MAX_NB_NEIGHBORS}; //!< @copydoc Lattice::Direction
 
     /**
      * @brief Abstract Lattice 2D constructor. 
@@ -178,9 +197,9 @@ public:
  *
  */
 class Lattice3D : public Lattice {
-
+    static const string directionName[];
 public:
-    enum Direction {};
+    enum Direction {MAX_NB_NEIGHBORS}; //!< @copydoc Lattice::Direction
 
     /**
      * @brief Abstract Lattice 3D constructor. 
@@ -230,11 +249,11 @@ class SLattice : public Lattice2D {
 
     static const string directionName[];
 public:
-    enum Direction {North = 0, East, South, West, MAX_NB_NEIGHBORS};
-    static int getOpposite(int d);
-    static string getString(int d);
-
-    static const int maxNumNeighbors = 4; //!< The maximum number of neighbors every cell on a lattice can have
+    enum Direction {North = 0, East, South, West, MAX_NB_NEIGHBORS}; //!< @copydoc Lattice::Direction
+    //!< @copydoc Lattice::getOppositeDirection
+    virtual int getOppositeDirection(int d);
+    //!< @copydoc Lattice::getDirectionString
+    virtual string getDirectionString(int d);
     
     /**
      * @brief SLattice constructor. 
@@ -266,9 +285,7 @@ public:
     /**
      * @copydoc Lattice::getMaxNumNeighbors
      */    
-    virtual inline const int getMaxNumNeighbors() { return maxNumNeighbors; }
-
-    virtual inline const int getOppositeDirection(Direction i) { return 0; };
+    virtual inline const int getMaxNumNeighbors() { return MAX_NB_NEIGHBORS; }
 };
 
 /*! @brief Hexagonal 2D Lattice
@@ -298,9 +315,11 @@ class HLattice : public Lattice2D {
     static const string directionName[];
 public:   
     enum Direction {Right = 0, TopRight = 1, TopLeft = 2,
-                    Left = 3, BottomLeft = 4, BottomRight = 5, MAX_NB_NEIGHBORS};
-    static int getOpposite(int d);
-    static string getString(int d);
+                    Left = 3, BottomLeft = 4, BottomRight = 5, MAX_NB_NEIGHBORS}; //!< @copydoc Lattice::Direction
+    //!< @copydoc Lattice::getOppositeDirection
+    virtual int getOppositeDirection(int d);
+    //!< @copydoc Lattice::getDirectionString
+    virtual string getDirectionString(int d);
 
     /**
      * @brief HLattice constructor. 
@@ -316,8 +335,6 @@ public:
      * @brief HLattice destructor. 
      */
     ~HLattice();
-
-    static const int maxNumNeighbors = 6; //!< The maximum number of neighbors every cell on a lattice can have
     
     /**
      * @copydoc Lattice::gridToWorldPosition
@@ -334,7 +351,7 @@ public:
     /**
      * @copydoc Lattice::getMaxNumNeighbors
      */    
-    virtual inline const int getMaxNumNeighbors() { return maxNumNeighbors; }
+    virtual inline const int getMaxNumNeighbors() { return MAX_NB_NEIGHBORS; }
 };
 
 /*! @brief 3D Face-Centered Cubic Lattice
@@ -377,9 +394,11 @@ class FCCLattice : public Lattice3D {
     static const string directionName[];
 public:
     enum Direction {Con0 = 0, Con1, Con2, Con3, Con4, Con5,
-                    Con6, Con7, Con8, Con9, Con10, Con11, MAX_NB_NEIGHBORS};
-    static int getOpposite(int d);
-    static string getString(int d);
+                    Con6, Con7, Con8, Con9, Con10, Con11, MAX_NB_NEIGHBORS}; //!< @copydoc Lattice::Direction
+    //!< @copydoc Lattice::getOppositeDirection
+    virtual int getOppositeDirection(int d);
+    //!< @copydoc Lattice::getDirectionString
+    virtual string getDirectionString(int d);
     
     /**
      * @brief FCCLattice constructor. 
@@ -395,8 +414,6 @@ public:
      * @brief FCCLattice destructor. 
      */
     ~FCCLattice();
-
-    static const int maxNumNeighbors = 12; //!< The maximum number of neighbors every cell on a lattice can have
     
     /**
      * @copydoc Lattice::gridToWorldPosition
@@ -413,7 +430,7 @@ public:
     /**
      * @copydoc Lattice::getMaxNumNeighbors
      */    
-    virtual inline const int getMaxNumNeighbors() { return maxNumNeighbors; }
+    virtual inline const int getMaxNumNeighbors() { return MAX_NB_NEIGHBORS; }
 };
 
 /*! @brief 3D Simple Cubic Lattice
@@ -432,9 +449,11 @@ class SCLattice : public Lattice3D {
             }; //!< Vector containing relative position of neighboring cells
     static const string directionName[];
 public:
-    enum Direction { Bottom = 0, Back = 1, Right, Front, Left, Top, MAX_NB_NEIGHBORS};
-    static int getOpposite(int d);
-    static string getString(int d);
+    enum Direction { Bottom = 0, Back = 1, Right, Front, Left, Top, MAX_NB_NEIGHBORS}; //!< @copydoc Lattice::Direction
+    //!< @copydoc Lattice::getOppositeDirection
+    virtual int getOppositeDirection(int d);
+    //!< @copydoc Lattice::getDirectionString
+    virtual string getDirectionString(int d);
     
     /**
      * @brief SCLattice constructor. 
@@ -450,8 +469,6 @@ public:
      * @brief SCLattice destructor. 
      */
     ~SCLattice();
-
-    static const int maxNumNeighbors = 6; //!< The maximum number of neighbors every cell on a lattice can have
     
     /**
      * @copydoc Lattice::gridToWorldPosition
@@ -468,8 +485,58 @@ public:
     /**
      * @copydoc Lattice::getMaxNumNeighbors
      */    
-    virtual inline const int getMaxNumNeighbors() { return maxNumNeighbors; }
+    virtual inline const int getMaxNumNeighbors() { return MAX_NB_NEIGHBORS; }
 };
+
+/*! @brief 3D Broadcast Lattice
+ *
+ * Used by MultiRobots. All blocks are connected to each other.
+ *
+ *
+ */
+class BCLattice : public Lattice3D {
+public:
+    enum Direction {BROADCAST = 0, MAX_NB_NEIGHBORS}; //!< @copydoc Lattice::Direction
+    //!< @copydoc Lattice::getOppositeDirection
+    virtual int getOppositeDirection(int d);
+    //!< @copydoc Lattice::getDirectionString
+    virtual string getDirectionString(int d);
+
+    list<BuildingBlock*> connected; //!< contains all cells with a block on it
+    
+    /**
+     * @brief BCLattice constructor. 
+     */
+    BCLattice();
+    /**
+     * @brief BCLattice constructor. 
+     * @param gsz The size of the grid
+     * @param gsc The real size of a block on the grid, also equal to the scale of the grid
+     */
+    BCLattice(const Cell3DPosition &gsz, const Vector3D &gsc);
+    /**
+     * @brief BCLattice destructor. 
+     */
+    ~BCLattice();
+
+    /**
+     * @copydoc Lattice::gridToWorldPosition
+     */
+    virtual Vector3D gridToWorldPosition(const Cell3DPosition &pos);
+    /**
+     * @copydoc Lattice::worldToGridPosition
+     */
+    virtual Cell3DPosition worldToGridPosition(const Vector3D &pos);
+    /**
+     * @copydoc Lattice::getRelativeConnectivity
+     */
+    virtual std::vector<Cell3DPosition> getRelativeConnectivity(const Cell3DPosition &p);
+    /**
+     * @copydoc Lattice::getMaxNumNeighbors
+     */    
+    virtual inline const int getMaxNumNeighbors() { return MAX_NB_NEIGHBORS; }
+};
+
 
 }
 

@@ -13,7 +13,7 @@
 
 #include "catoms3DBlockCode.h"
 #include "catoms3DSimulator.h"
-#include "catoms3DEvents.h"
+#include "rotation3DEvents.h"
 #include "catoms3DBlock.h"
 #include "scheduler.h"
 #include "events.h"
@@ -36,7 +36,7 @@ public:
 	void processLocalEvent(EventPtr pev);
     void sendDistanceMessage();
 
-	static Catoms3D::Catoms3DBlockCode *buildNewBlockCode(Catoms3D::Catoms3DBlock *host);
+	static BlockCode *buildNewBlockCode(BuildingBlock *host);
 
 };
 

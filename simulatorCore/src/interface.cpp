@@ -9,6 +9,9 @@
 #include "trace.h"
 #include "scheduler.h"
 
+#define __STDC_FORMAT_MACROS
+#include <cinttypes>
+
 #define ID_SW_BUTTON_OPEN	1001
 #define ID_SW_BUTTON_CLOSE	1002
 #define ID_SW_SLD			1003
@@ -125,15 +128,18 @@ GLfloat GlutWindow::drawString(GLfloat x,GLfloat y,const char *str,void *mode,GL
 GlutSlidingMainWindow::GlutSlidingMainWindow(GLint px,GLint py,GLint pw,GLint ph,const char *titreTexture):
 GlutWindow(NULL,1,px,py,pw,ph,titreTexture) {
 	openingLevel=0;
-	buttonOpen = new GlutButton(this,ID_SW_BUTTON_OPEN,5,68,32,32,"../../simulatorCore/smartBlocksTextures/boutons_fg.tga");
-	buttonClose = new GlutButton(this,ID_SW_BUTTON_CLOSE,5,26,32,32,"../../simulatorCore/smartBlocksTextures/boutons_fd.tga",false);
-	slider = new GlutSlider(this,ID_SW_SLD,pw+400-20,5,ph-60,"../../simulatorCore/smartBlocksTextures/slider.tga",(ph-60)/13);
+	buttonOpen = new GlutButton(this,ID_SW_BUTTON_OPEN,5,68,32,32,
+								"../../simulatorCore/resources/textures/UITextures/boutons_fg.tga");
+	buttonClose = new GlutButton(this,ID_SW_BUTTON_CLOSE,5,26,32,32,
+								 "../../simulatorCore/resources/textures/UITextures/boutons_fd.tga",false);
+	slider = new GlutSlider(this,ID_SW_SLD,pw+400-20,5,ph-60,
+							"../../simulatorCore/resources/textures/UITextures/slider.tga",(ph-60)/13);
 	selectedGlBlock=NULL;
 }
 
 GlutSlidingMainWindow::~GlutSlidingMainWindow() {
 	// clean the map
-	multimap<uint64_t,BlockDebugData*>::iterator it = traces.begin();
+	multimap<Time,BlockDebugData*>::iterator it = traces.begin();
 	while (it != traces.end()) {
 		delete (*it).second;
 		++it;
@@ -172,7 +178,7 @@ void GlutSlidingMainWindow::glDraw() {
 		glVertex2i(40,h);
 		glEnd();
 		char str[256];
-		uint64_t t = BaseSimulator::getScheduler()->now();
+		Time t = BaseSimulator::getScheduler()->now();
 		if (t < 10*1000*1000) { //10sec
 			sprintf(str,"Current time : %d:%d ms",int(t/1000),int((t%1000))); // ms
 		} else {
@@ -184,7 +190,7 @@ void GlutSlidingMainWindow::glDraw() {
 		if (selectedGlBlock) {
 			sprintf(str,"Selected Block : %s",selectedGlBlock->getInfo().c_str());
 			drawString(42.0,h-40.0,str);
-			multimap<uint64_t,BlockDebugData*>::iterator it = traces.begin();
+			multimap<Time,BlockDebugData*>::iterator it = traces.begin();
 			GLfloat posy = h-65;
 			stringstream line;
 			int pos=slider->getPosition();
@@ -207,7 +213,7 @@ void GlutSlidingMainWindow::glDraw() {
 		} else {
 			sprintf(str, "Selected Block : None (use [Ctrl]+click)");
 			drawString(42.0,h-40.0,str);
-			multimap<uint64_t,BlockDebugData*>::iterator it = traces.begin();
+			multimap<Time,BlockDebugData*>::iterator it = traces.begin();
 			GLfloat posy = h-65;
 			stringstream line;
 			int pos=slider->getPosition();
@@ -275,9 +281,9 @@ void GlutSlidingMainWindow::reshapeFunc(int mx,int my,int mw,int mh) {
     slider->update();
 }
 
-void GlutSlidingMainWindow::addTrace(int id,const string &str,const Color &color) {
+void GlutSlidingMainWindow::addTrace(bID id,const string &str,const Color &color) {
 	BlockDebugData *bdd = new BlockDebugData(id,str,color);
-	traces.insert(pair<uint64_t,BlockDebugData*>(BaseSimulator::getScheduler()->now(),bdd));
+	traces.insert(pair<Time,BlockDebugData*>(BaseSimulator::getScheduler()->now(),bdd));
 	if (selectedGlBlock) {
 		if (selectedGlBlock->blockId==id) slider->incDataTextLines();
 	} else {
@@ -289,7 +295,7 @@ void GlutSlidingMainWindow::select(GlBlock *sb) {
 	selectedGlBlock=sb;
 	if (selectedGlBlock) {
 		int n=0;
-		multimap<uint64_t,BlockDebugData*>::iterator it = traces.begin();
+		multimap<Time,BlockDebugData*>::iterator it = traces.begin();
 		while (it != traces.end()) {
 			if (((*it).second)->blockId==selectedGlBlock->blockId) {
 				n++;
@@ -308,9 +314,12 @@ void GlutSlidingMainWindow::select(GlBlock *sb) {
 GlutSlidingDebugWindow::GlutSlidingDebugWindow(GLint px,GLint py,GLint pw,GLint ph,const char *titreTexture):
 GlutWindow(NULL,2,px,py,pw,ph,titreTexture) {
 	openingLevel=0;
-	buttonOpen = new GlutButton(this,ID_SD_BUTTON_OPEN,5,168,32,32,"../../simulatorCore/smartBlocksTextures/boutons_fg.tga");
-	buttonClose = new GlutButton(this,ID_SD_BUTTON_CLOSE,5,126,32,32,"../../simulatorCore/smartBlocksTextures/boutons_fd.tga",false);
-	slider = new GlutSlider(this,ID_SD_SLD,pw+400-20,5,ph-75,"../../simulatorCore/smartBlocksTextures/slider.tga",(ph-60)/13);
+	buttonOpen = new GlutButton(this,ID_SD_BUTTON_OPEN,5,168,32,32,
+								"../../simulatorCore/resources/textures/UITextures/boutons_fg.tga");
+	buttonClose = new GlutButton(this,ID_SD_BUTTON_CLOSE,5,126,32,32,
+								 "../../simulatorCore/resources/textures/UITextures/boutons_fd.tga",false);
+	slider = new GlutSlider(this,ID_SD_SLD,pw+400-20,5,ph-75,
+							"../../simulatorCore/resources/textures/UITextures/slider.tga",(ph-60)/13);
 	input = new GlutInputWindow(this,ID_SD_INPUT,pw+10,ph-66,380,36);
 	debugId=1;
 }
@@ -361,14 +370,14 @@ void GlutSlidingDebugWindow::glDraw() {
 		glEnd();
 
 		char str[256];
-		uint64_t t = BaseSimulator::getScheduler()->now();
+		Time t = BaseSimulator::getScheduler()->now();
 		sprintf(str,"Current time : %d:%d",int(t/1000),int((t%1000)));
         glColor3f(1.0,1.0,0.0);
 		drawString(45.0,h-20.0,str);
 		if (input->hasFocus) {
             drawString(w-85,h-20.0,"DEBUG MODE");
             char c[6];
-            sprintf(c,"%d",debugId);
+            sprintf(c,"%" PRIu64,debugId);
             drawString(w/2-45,h-20.0,c);
 		}
 
@@ -409,7 +418,7 @@ int GlutSlidingDebugWindow::mouseFunc(int button,int state,int mx,int my) {
 }
 
 int GlutSlidingDebugWindow::keyFunc(int charcode) {
-	int id=0;
+    bID id=0;
 
 	vector <GlutWindow*>::const_iterator cw = children.begin();
 	while (cw!=children.end()) {
@@ -505,7 +514,6 @@ bool GlutButton::passiveMotionFunc(int mx,int my) {
 // loadTextures
 // lecture de l'identifiant de texture
 GLuint GlutWindow::loadTexture(const char *titre,int &tw,int &th) {
-#ifdef GLUT
 	unsigned char *image;
 	GLuint id=0;
 	OUTPUT << "loading " << titre << endl;
@@ -523,7 +531,6 @@ GLuint GlutWindow::loadTexture(const char *titre,int &tw,int &th) {
 		delete [] image;
 	}
 	return id;
-#endif
 }
 
 unsigned char *GlutWindow::lectureTarga(const char *titre, int& width, int& height ,bool retourner)
@@ -712,7 +719,7 @@ GlutHelpWindow::GlutHelpWindow(GlutWindow *parent,GLint px,GLint py,GLint pw,GLi
 	isVisible=false;
 	text=NULL;
 
-	//GlutButton *btn = new GlutButton(this, 999,pw-35,ph-35,32,32,"../../simulatorCore/smartBlocksTextures/close.tga");
+	//GlutButton *btn = new GlutButton(this, 999,pw-35,ph-35,32,32,"../../simulatorCore/resources/textures/UITextures/close.tga");
 
 	ifstream fin(textFile);
 	if(!fin) {

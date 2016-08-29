@@ -6,6 +6,11 @@
  */
  
 #include "trace.h"
+#include "scheduler.h"
 
-std::ofstream log_file("simulation.log");
+std::ofstream log_file{};
 
+void ConsoleStream::flush() {
+    scheduler->trace(stream.str(),blockId);
+    stream.str("");
+};

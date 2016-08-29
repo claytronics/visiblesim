@@ -34,15 +34,13 @@ public:
 		OUTPUT << "I'm a MeldInterpretScheduler" << endl;
 	}
 
-	void start(int mode);
-
 	void waitForSchedulerEnd() {
 		schedulerThread->join();
 	}
 
 	// stop for good
-	void stop(uint64_t date);
-	void pause(uint64_t date);
+	void stop(Time date);
+	void pause(Time date);
 	void unPause();
 
 	// NOT TESTED
@@ -53,14 +51,7 @@ public:
 		}
 		return !r;
 	}
-
-	/* In the scheduler thread, schedule function is called. In the
-	 * other thread scheduleLock should be called to not interfer
-	 * with the scheduler thread.
-	 */
-	bool schedule(Event *ev);
-	bool scheduleLock(Event *ev);
-
+   
 	void SemWaitOrReadDebugMessage();
 
 	inline int getMode() { return schedulerMode; }

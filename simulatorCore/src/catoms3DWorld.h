@@ -8,7 +8,6 @@
 #ifndef CATOMS3DWORLD_H_
 #define CATOMS3DWORLD_H_
 
-#include <boost/asio.hpp>
 #include <vector>
 
 #include "buildingBlock.h"
@@ -32,10 +31,7 @@ static const Vector3D defaultBlockSize{10.0, 10.0, 10.0};
 class Catoms3DWorld : public BaseSimulator::World {
 protected:
     GLuint idTextureHexa,idTextureGrid;
-    Skeleton *skeleton;
-/*	presence *targetGrid;
-	Catoms3DCapabilities *capabilities;*/
-    ObjLoader::ObjLoader *objBlock,*objBlockForPicking,*objRepere;
+    Skeleton *skeleton = NULL;
 
     virtual ~Catoms3DWorld();
 public:
@@ -57,20 +53,10 @@ public:
     }
 
 
-    virtual void addBlock(int blockId, BlockCodeBuilder bcb, const Cell3DPosition &pos, const Color &col,
+    virtual void addBlock(bID blockId, BlockCodeBuilder bcb, const Cell3DPosition &pos, const Color &col,
                           short orientation, bool master);
-    virtual void deleteBlock(BuildingBlock *blc);
-
-    //inline presence *getTargetGridPtr(int *gs) { memcpy(gs,gridSize,3*sizeof(int)); return targetGrid; };
-    //inline presence getTargetGrid(int ix,int iy,int iz) { return targetGrid[(iz*lattice->gridSize[1]+iy)*lattice->gridSize[0]+ix]; };
-    //inline void setTargetGrid(presence value,int ix,int iy,int iz) { targetGrid[(iz*lattice->gridSize[1]+iy)*lattice->gridSize[0]+ix]=value; };
     inline void setSkeleton(Skeleton *s) { skeleton=s; };
     inline double getSkeletonPotentiel(const Vector3D& pos) { return (skeleton==NULL)?-1:skeleton->potentiel(pos); };
-    //void initTargetGrid();
-
-    //inline void setCapabilities(Catoms3DCapabilities *capa) { capabilities=capa; };
-    //void getPresenceMatrix(const PointRel3D &pos,PresenceMatrix &pm);
-    //inline Catoms3DCapabilities* getCapabilities() { return capabilities; };
 
     /**
      * \brief Connects block on grid cell pos to its neighbor
@@ -88,10 +74,7 @@ public:
     void updateGlData(Catoms3DBlock*blc, const Vector3D &position);
     void updateGlData(Catoms3DBlock*blc, const Matrix &mat);
     virtual void setSelectedFace(int n);
-    virtual void disconnectBlock(Catoms3DBlock *block);
-    virtual void connectBlock(Catoms3DBlock *block);
     virtual void exportConfiguration();
-
     
 /**
  * \brief load the background textures (internal)

@@ -6,8 +6,10 @@
  */
 
 #include <iostream>
-#include "world.h"
+
 #include "buildingBlock.h"
+#include "world.h"
+#include "simulator.h"
 #include "scheduler.h"
 #include "trace.h"
 
@@ -15,7 +17,8 @@ using namespace std;
 
 namespace BaseSimulator {
 
-int BuildingBlock::nextId = 0;
+bID BuildingBlock::nextId = 0;
+bool BuildingBlock::userConfigHasBeenParsed = false;
 
 //===========================================================================================================
 //
@@ -23,23 +26,44 @@ int BuildingBlock::nextId = 0;
 //
 //===========================================================================================================
 
-BuildingBlock::BuildingBlock(int bId, BlockCodeBuilder bcb) {
+  BuildingBlock::BuildingBlock(int bId, BlockCodeBuilder bcb, int nbInterfaces) {
     OUTPUT << "BuildingBlock constructor (id:" << nextId << ")" << endl;
+	
     if (bId < 0) {
-		blockId = nextId;
-		nextId++;
+      blockId = nextId;
+      nextId++;
     } else {
-		blockId = bId;
+      blockId = bId;
     }
-    P2PNetworkInterfaceNextLocalId = 0;
+
     state.store(ALIVE);
-    clock = NULL;
-    std::random_device rd;
-    generator = std::ranlux48(rd());
-    dis = uniform_int_distribution<>(0, 50 * blockId);
+    clock = new PerfectClock();
+
+    ruint seed = Simulator::getSimulator()->getRandomUint();
+    seed *= bId;
+    generator = uintRNG(seed);
+
     buildNewBlockCode = bcb;
-	blockCode = (BaseSimulator::BlockCode*)bcb(this);
-	isMaster = false;
+
+    if (utils::StatsIndividual::enable) {
+      stats = new StatsIndividual();
+    }
+    
+    for (int i = 0; i < nbInterfaces; i++) {
+        P2PNetworkInterfaces.push_back(new P2PNetworkInterface(this));
+    }
+
+    //setDefaultHardwareParameters();
+    
+    blockCode = (BaseSimulator::BlockCode*)bcb(this);
+
+    // Parse user configuration from configuration file, only performed once
+    if (!userConfigHasBeenParsed) {
+      userConfigHasBeenParsed = true;
+      blockCode->parseUserElements(Simulator::getSimulator()->getConfigDocument());
+    }
+    
+    isMaster = false;
 }
 
 BuildingBlock::~BuildingBlock() {
@@ -48,16 +72,14 @@ BuildingBlock::~BuildingBlock() {
 
 	if (clock != NULL) {
 		delete clock;
-    }
+	}
 
+	if (stats != NULL) {
+	        delete stats;
+	}
+	
 	for (P2PNetworkInterface *p2p : P2PNetworkInterfaces)
 		delete p2p;
-}
-
-unsigned int BuildingBlock::getNextP2PInterfaceLocalId() {
-    int id = P2PNetworkInterfaceNextLocalId;
-    P2PNetworkInterfaceNextLocalId++;
-    return(id);
 }
 
 bool BuildingBlock::addP2PNetworkInterfaceAndConnectTo(BuildingBlock *destBlock) {
@@ -114,7 +136,7 @@ P2PNetworkInterface *BuildingBlock::getP2PNetworkInterfaceByBlockRef(BuildingBlo
     return NULL;
 }
 
-P2PNetworkInterface*BuildingBlock::getP2PNetworkInterfaceByDestBlockId(int destBlockId) {
+P2PNetworkInterface*BuildingBlock::getP2PNetworkInterfaceByDestBlockId(bID destBlockId) {
     for(P2PNetworkInterface *p2p : P2PNetworkInterfaces) {
 		if (p2p->connectedInterface) {
 			if (p2p->connectedInterface->hostBlock->blockId == destBlockId) {
@@ -130,8 +152,8 @@ void BuildingBlock::scheduleLocalEvent(EventPtr pev) {
     localEventsList.push_back(pev);
 
     if (localEventsList.size() == 1) {
-		uint64_t date;
-		date = this->blockCode->availabilityDate;
+		Time date;
+		date = max(pev->date,this->blockCode->availabilityDate); // WARNING: is blockCode->availabilityDate considered?
 		if (date < getScheduler()->now()) date=getScheduler()->now();
 		getScheduler()->schedule(new ProcessLocalEvent(date,this));
     }
@@ -149,6 +171,11 @@ void BuildingBlock::processLocalEvent() {
     pev = localEventsList.front();
     localEventsList.pop_front();
     blockCode->processLocalEvent(pev);
+
+    if (pev->eventType == EVENT_NI_RECEIVE ) {
+      utils::StatsIndividual::decIncommingMessageQueueSize(stats);
+    }
+    
     if (blockCode->availabilityDate < getScheduler()->now()) blockCode->availabilityDate = getScheduler()->now();
     if (localEventsList.size() > 0) {
 		getScheduler()->schedule(new ProcessLocalEvent(blockCode->availabilityDate,this));
@@ -173,29 +200,64 @@ void BuildingBlock::setPosition(const Cell3DPosition &p) {
     getWorld()->updateGlData(this);
 }
     
-void BuildingBlock::tap(uint64_t date, bool debug) {
+void BuildingBlock::tap(Time date, int face) {
     OUTPUT << "tap scheduled" << endl;
-    getScheduler()->scheduleLock(new TapEvent(date, this, debug));
+    getScheduler()->schedule(new TapEvent(date, this, (uint8_t)face));
 }
     
-int BuildingBlock::getNextRandomNumber() {
-    return dis(generator);
+ruint BuildingBlock::getRandomUint() {
+    return generator();
 }
 
-uint64_t BuildingBlock::getTime() {
+void BuildingBlock::setClock(Clock *c) {
+  if (clock != NULL) {
+    delete clock;
+  }
+  clock = c;
+}
+
+Time BuildingBlock::getLocalTime(Time simTime) {
+  if (clock == NULL) {
+    cerr << "device has no internal clock" << endl;
+    return 0;
+  }
+  return clock->getTime(simTime);
+}
+  
+Time BuildingBlock::getLocalTime() {
     if (clock == NULL) {
-		cerr << "device has no internal clock" << endl;
-		return 0;
+      cerr << "device has no internal clock" << endl;
+      return 0;
     }
     return clock->getTime();
 }
 
-uint64_t BuildingBlock::getSchedulerTimeForLocalTime(uint64_t localTime) {
+Time BuildingBlock::getSimulationTime(Time localTime) {
     if (clock == NULL) {
-		cerr << "device has no internal clock" << endl;
-		return localTime;
+      cerr << "device has no internal clock" << endl;
+      return localTime;
     }
-    return clock->getSchedulerTimeForLocalTime(localTime);
+    return clock->getSimulationTime(localTime);
 }
+
+/*************************************************
+ *            MeldInterpreter Functions  
+ *************************************************/
+
+unsigned short BuildingBlock::getNeighborIDForFace(int faceNum) {
+    short nodeID = P2PNetworkInterfaces[faceNum]->getConnectedBlockId();
+	
+	return nodeID > 0  ? (unsigned short)nodeID : 0;
+}
+
+int BuildingBlock::getFaceForNeighborID(int nId) {
+	for (uint face = 0; face < P2PNetworkInterfaces.size(); face++) {
+		if (nId == getNeighborIDForFace(face))
+			return face;
+	}
+
+	return -1;
+}
+
 
 } // BaseSimulator namespace

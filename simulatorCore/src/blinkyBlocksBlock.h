@@ -27,21 +27,18 @@ public:
 
 	inline virtual BlinkyBlocksGlBlock* getGlBlock() { return (BlinkyBlocksGlBlock *)ptrGlBlock; };
 
-	inline P2PNetworkInterface *getInterface(SCLattice::Direction d)
-		{ return P2PNetworkInterfaces[d]; }
-
 	P2PNetworkInterface *getInterfaceDestId(int id);
-	SCLattice::Direction getDirection(P2PNetworkInterface*);
+	int getDirection(P2PNetworkInterface*);
 
 	/* schedule the appropriate event for this action */
-	/* void tap(uint64_t date); Now a generic event in buildingBlock.cpp */
-	void accel(uint64_t date, int x, int y, int z);
-	void shake(uint64_t date, int f);
+	/* void tap(Time date); Now a generic event in buildingBlock.cpp */
+	void accel(Time date, int x, int y, int z);
+	void shake(Time date, int f);
 
 	void addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target);
 	void removeNeighbor(P2PNetworkInterface *ni);
-	void stopBlock(uint64_t date, State s);
-	void pauseClock(uint64_t delay, uint64_t start);
+	void stopBlock(Time date, State s);
+	void pauseClock(Time delay, Time start);
 };
 
 std::ostream& operator<<(std::ostream &stream, BlinkyBlocksBlock const& bb);

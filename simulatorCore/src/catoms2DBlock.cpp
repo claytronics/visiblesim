@@ -10,52 +10,53 @@
 #include "buildingBlock.h"
 #include "catoms2DWorld.h"
 #include "catoms2DSimulator.h"
-#include "catoms2DMove.h"
-#include "catoms2DEvents.h"
+
+#include "rotation2DEvents.h"
 #include "trace.h"
 
 using namespace std;
+using namespace BaseSimulator::utils;
 
 namespace Catoms2D {
 
-Catoms2DBlock::Catoms2DBlock(int bId, BlockCodeBuilder bcb) : BaseSimulator::BuildingBlock(bId, bcb) {
+Catoms2DBlock::Catoms2DBlock(int bId, BlockCodeBuilder bcb)
+  : BaseSimulator::BuildingBlock(bId, bcb, HLattice::MAX_NB_NEIGHBORS) {
     OUTPUT << "Catoms2DBlock constructor" << endl;
 
-    for (int i=0; i<HLattice::MAX_NB_NEIGHBORS; i++) {
-		getP2PNetworkInterfaces().push_back(new P2PNetworkInterface(this));
-    }
-
     angle = 0;
+    doubleRNG g = Random::getNormalDoubleRNG(getRandomUint(),CATOMS2D_MOTION_SPEED_MEAN,CATOMS2D_MOTION_SPEED_SD);
+    RandomRate *speed = new RandomRate(g);
+    motionEngine = new MotionEngine(speed);
 }
 
 Catoms2DBlock::~Catoms2DBlock() {
     OUTPUT << "Catoms2DBlock destructor " << blockId << endl;
 }
 
-HLattice::Direction Catoms2DBlock::getDirection(P2PNetworkInterface *p2p) {
+// PTHY: TODO: Can be genericized in BuildingBlocks
+int Catoms2DBlock::getDirection(P2PNetworkInterface *p2p) {
     if (!p2p) {
-		return HLattice::Direction(0);
+      return HLattice::Direction(0);
     }
 
     for (int i = 0; i < HLattice::MAX_NB_NEIGHBORS; ++i) {
-		if (getInterface(HLattice::Direction(i)) == p2p) {
-			return HLattice::Direction(i);
-		}
+      if (getInterface(HLattice::Direction(i)) == p2p) {
+	return HLattice::Direction(i);
+      }
     }
     return HLattice::Direction(0);
 }
   
-// PTHY: TODO: Can be genericized in BuildingBlocks
+// PTHY: TODO: Take rotation into account
 Cell3DPosition Catoms2DBlock::getPosition(HLattice::Direction d) {   
     World *wrl = getWorld();
     vector<Cell3DPosition> nCells = wrl->lattice->getRelativeConnectivity(position);
-    
     return position + nCells[d];
 }
 
 // PTHY: TODO: Can be genericized in BuildingBlocks
 Cell3DPosition Catoms2DBlock::getPosition(P2PNetworkInterface *p2p) {
-    return getPosition(getDirection(p2p));
+    return getPosition((HLattice::Direction)getDirection(p2p));
 }
 
 std::ostream& operator<<(std::ostream &stream, Catoms2DBlock const& bb) {
@@ -189,20 +190,36 @@ P2PNetworkInterface* Catoms2DBlock::getNextInterface(RelativeDirection::Directio
 
 int Catoms2DBlock::getCCWMovePivotId() {
     for (int j = 0; j < 6; j++) {
-		P2PNetworkInterface *p2p = getInterface((HLattice::Direction)j);
-
-		if (p2p->connectedInterface) {
+		P2PNetworkInterface *p2pPivot = getInterface((HLattice::Direction)j);
+		
+		if (p2pPivot->connectedInterface) {
+			// cout << j << ".isConnected: ";
+					
 			bool res = true;
 			for (int i = 1; i < 4; i++) {
-				int dir = ((j + i) % 6);
-				Cell3DPosition p = getPosition((HLattice::Direction)dir);
-				if (!getWorld()->lattice->isFree(p)) {
+				int index = ((j - i)%6 + 6)%6;
+				P2PNetworkInterface *p2pIf = getInterface((HLattice::Direction)index);
+				if (p2pIf->connectedInterface) {
+					// cout << index << ".false ";
 					res = false;
+				} else {
+					// cout << index << ".true ";
 				}
 			}
 
-			if (res)
-				return p2p->getConnectedBlockId();
+			// cout << endl;
+
+			if (res) {
+				Catoms2DBlock *piv = static_cast<Catoms2DBlock*>(p2pPivot->connectedInterface->hostBlock);
+				int idDestIf = ((piv->getDirection(p2pPivot->connectedInterface) + 1)%6 + 6)%6;
+				Cell3DPosition dest  = piv->getPosition((HLattice::Direction)idDestIf);
+				if (getWorld()->lattice->isInGrid(dest)) {
+					// cout << "Block " << position << " wants to CCW MOVEP: " << dest << endl;
+					return p2pPivot->getConnectedBlockId();
+				} else {
+					// cout << "CCW Destination " << dest << " not in grid" << endl;
+				}
+			}
 		}
     }
 
@@ -210,21 +227,35 @@ int Catoms2DBlock::getCCWMovePivotId() {
 }
 
 int Catoms2DBlock::getCWMovePivotId() {
-    for (int j = 5; j > 0; j--) {
-		P2PNetworkInterface *p2p = getInterface((HLattice::Direction)j);
+    for (int j = 5; j >= 0; j--) {
+		P2PNetworkInterface *p2pPivot = getInterface((HLattice::Direction)j);
 
-		if (p2p->connectedInterface) {
+		if (p2pPivot->connectedInterface) {
+			// cout << j << ".isConnected: ";
+						
 			bool res = true;
 			for (int i = 1; i < 4; i++) {
-				int dir = ((j - i)%6 + 6)%6;
-				Cell3DPosition p = getPosition((HLattice::Direction)dir);
-				if (!getWorld()->lattice->isFree(p)) {
+				int index = ((j + i)%6 + 6)%6;
+				P2PNetworkInterface *p2pIf = getInterface((HLattice::Direction)index);
+				if (p2pIf->connectedInterface) {
+					// cout << index << ".false ";
 					res = false;
+				} else {
+					// cout << index << ".true ";
 				}
 			}
 
-			if (res)
-				return p2p->getConnectedBlockId();
+			if (res) {
+				Catoms2DBlock *piv = static_cast<Catoms2DBlock*>(p2pPivot->connectedInterface->hostBlock);
+				int idDestIf = ((piv->getDirection(p2pPivot->connectedInterface) - 1)%6 + 6)%6;
+				Cell3DPosition dest  = piv->getPosition((HLattice::Direction)idDestIf);
+				if (getWorld()->lattice->isInGrid(dest)) {
+					// cout << "Block " << position << " wants to CW MOVEP: " << dest << endl;
+					return p2pPivot->getConnectedBlockId();
+				} else {
+					// cout << "CW Destination " << dest << " not in grid" << endl;
+				}
+			}
 		}
     }
 
@@ -233,7 +264,7 @@ int Catoms2DBlock::getCWMovePivotId() {
 
 
 // Motion
-bool Catoms2DBlock::canMove(Catoms2DMove &m) {
+bool Catoms2DBlock::canMove(Rotation2DMove &m) {
     // physical moving condition
     // pivot is a neighbor (physically connected)
     // move CW around i connector: i+1, i+2 and i+3 should be free
@@ -284,17 +315,28 @@ bool Catoms2DBlock::canMove(Catoms2DMove &m) {
     return res;
 }
 
-void Catoms2DBlock::startMove(Catoms2DMove &m, uint64_t t) {
-    getScheduler()->schedule(new MotionStartEvent(t,this,m));
+void Catoms2DBlock::startMove(Rotation2DMove &m, Time t) {
+  getScheduler()->schedule(new Rotation2DStartEvent(t,this,m));
 }
 
-void Catoms2DBlock::startMove(Catoms2DMove &m) {
+void Catoms2DBlock::startMove(Rotation2DMove &m) {
     startMove(m,getScheduler()->now());
 }
 
-// inline string Catoms2DBlock::xmlBuildingBlock() {
-//   return "\t\t<block position=" + ConfigUtils::Vector3D3DToXmlString(position)
-//     + " color=" + ConfigUtils::colorToXmlString(color) + " />\n";
-// }
+void Catoms2DBlock::addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target) {
+    // OUTPUT << "Simulator: "<< blockId << " add neighbor " << target->blockId << " on "
+	// 	   << getWorld()->lattice->getDirectionString(getDirection(ni)) << endl;
+getScheduler()->schedule(
+	new AddNeighborEvent(getScheduler()->now(), this,
+						 getWorld()->lattice->getOppositeDirection(getDirection(ni)), target->blockId));
+}
+
+void Catoms2DBlock::removeNeighbor(P2PNetworkInterface *ni) {
+    // OUTPUT << "Simulator: "<< blockId << " remove neighbor on "
+	// 	   << getWorld()->lattice->getDirectionString(getDirection(ni)) << endl;
+    getScheduler()->schedule(
+		new RemoveNeighborEvent(getScheduler()->now(), this,
+								getWorld()->lattice->getOppositeDirection(getDirection(ni))));
+}
 
 }

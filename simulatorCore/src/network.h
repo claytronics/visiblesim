@@ -11,6 +11,8 @@
 #include <deque>
 #include <string.h>
 
+#include "tDefs.h"
+#include "rate.h"
 #include "buildingBlock.h"
 
 using namespace std;
@@ -81,11 +83,9 @@ class MessageOf:public Message {
 class P2PNetworkInterface {
 protected:
 	static unsigned int nextId;
-	static double defaultDataRate;
-	static double defaultDataRateVariability;
-	double dataRate; // bit/s
-	double dataRateVariability;
-	std::ranlux48 generator;
+	static int defaultDataRate;
+	
+	BaseSimulator::Rate* dataRate;
 public:
 	
 	unsigned int globalId;
@@ -94,7 +94,7 @@ public:
 
 	P2PNetworkInterface *connectedInterface;
 	BaseSimulator::BuildingBlock *hostBlock;
-	uint64_t availabilityDate;
+	Time availabilityDate;
 
 	MessagePtr messageBeingTransmitted;
 
@@ -106,7 +106,7 @@ public:
 	bool addToOutgoingBuffer(MessagePtr msg);
 	void send();
 	void connect(P2PNetworkInterface *ni);
-    int getConnectedBlockId() {
+	int getConnectedBlockId() {
         return (connectedInterface!=NULL && connectedInterface->hostBlock!=NULL)?connectedInterface->hostBlock->blockId:-1;
 	}
 
@@ -114,9 +114,9 @@ public:
 	void disconnect();
 	static void setDefaultDataRate(unsigned int rate) { defaultDataRate = rate; }
 	*/
-	
-	void setDataRate(unsigned int rate) { dataRate = rate; }
-	void setDataRateVariability(unsigned int variability) { dataRateVariability = variability; }
+
+	void setDataRate(BaseSimulator::Rate* r); 
+	Time getTransmissionDuration(MessagePtr &m);
 };
 
 #endif /* NETWORK_H_ */

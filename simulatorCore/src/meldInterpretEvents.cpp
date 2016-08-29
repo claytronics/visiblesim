@@ -9,6 +9,8 @@
 #include "meldInterpretScheduler.h"
 #include "meldInterpretVM.h"
 
+using namespace BaseSimulator;
+
 namespace MeldInterpret{
 
 //===========================================================================================================
@@ -17,7 +19,7 @@ namespace MeldInterpret{
 //
 //===========================================================================================================
 
-VMSetIdEvent::VMSetIdEvent(uint64_t t, BuildingBlock *conBlock): BlockEvent(t, conBlock) {
+VMSetIdEvent::VMSetIdEvent(Time t, BuildingBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_SET_ID;
 }
@@ -45,7 +47,7 @@ const string VMSetIdEvent::getEventName() {
 //
 //===========================================================================================================
 
-VMStopEvent::VMStopEvent(uint64_t t, BuildingBlock *conBlock): BlockEvent(t, conBlock) {
+VMStopEvent::VMStopEvent(Time t, BuildingBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_STOP;
 }
@@ -74,11 +76,11 @@ const string VMStopEvent::getEventName() {
 //
 //===========================================================================================================
 
-VMSendMessageEvent::VMSendMessageEvent(uint64_t t, BuildingBlock *conBlock, MessagePtr mes, P2PNetworkInterface *ni):BlockEvent(t, conBlock) {
+VMSendMessageEvent::VMSendMessageEvent(Time t, BuildingBlock *conBlock, MessagePtr mes, P2PNetworkInterface *ni):BlockEvent(t, conBlock) {
 	eventType = EVENT_SEND_MESSAGE;
 	message = mes;
 	sourceInterface = ni;
-	randomNumber = conBlock->getNextRandomNumber();
+	randomNumber = conBlock->getRandomUint();
 	EVENT_CONSTRUCTOR_INFO();
 }
 
@@ -105,11 +107,79 @@ const string VMSendMessageEvent::getEventName() {
 
 //===========================================================================================================
 //
+//          VMSendMessageEvent2  (class)
+//
+//===========================================================================================================
+
+VMSendMessageEvent2::VMSendMessageEvent2(Time t, BuildingBlock *conBlock, MessagePtr mes,
+										 BaseSimulator::BuildingBlock* _sentto):BlockEvent(t, conBlock) {
+	eventType = EVENT_SEND_MESSAGE_TO_BLOCK;
+	message = mes;
+	target = _sentto;
+	randomNumber = conBlock->getRandomUint();
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+VMSendMessageEvent2::VMSendMessageEvent2(VMSendMessageEvent2 *ev) : BlockEvent(ev) {
+	message = ev->message;
+	target = ev->target;
+	//randomNumber = ev->randomNumber;
+	EVENT_CONSTRUCTOR_INFO();
+}
+
+VMSendMessageEvent2::~VMSendMessageEvent2() {
+	message.reset();
+	EVENT_DESTRUCTOR_INFO();
+}
+
+void VMSendMessageEvent2::consumeBlockEvent() {
+	EVENT_CONSUME_INFO();
+	//concernedBlock->processLocalEvent();
+	concernedBlock->scheduleLocalEvent(EventPtr(new VMSendMessageEvent2(this)));
+}
+
+const string VMSendMessageEvent2::getEventName() {
+	return("VMSendMessage Event 2");
+}
+
+//===========================================================================================================
+//
+//          VMReceiveMessageEvent2  (class)
+//
+//===========================================================================================================
+VMReceiveMessageEvent2::VMReceiveMessageEvent2(Time t, BaseSimulator::BuildingBlock *conBlock, MessagePtr mes): BlockEvent(t, conBlock) {
+  EVENT_CONSTRUCTOR_INFO();
+  eventType = EVENT_RECEIVE_MESSAGE_FROM_BLOCK;
+  message = mes;
+  randomNumber = conBlock->getRandomUint();
+}
+
+VMReceiveMessageEvent2::VMReceiveMessageEvent2(VMReceiveMessageEvent2* ev) : BlockEvent(ev) {
+  EVENT_CONSTRUCTOR_INFO();
+  message = ev->message;
+}
+
+VMReceiveMessageEvent2::~VMReceiveMessageEvent2() {
+  message.reset();
+  EVENT_DESTRUCTOR_INFO();
+}
+
+void VMReceiveMessageEvent2::consumeBlockEvent() {
+  EVENT_CONSUME_INFO();
+  concernedBlock->scheduleLocalEvent(EventPtr(new VMReceiveMessageEvent2(this)));
+}
+
+const string VMReceiveMessageEvent2::getEventName() {
+  return("VMReceiveMessage Event2");
+}
+
+//===========================================================================================================
+//
 //          VMHandleDebugMessageEvent  (class)
 //
 //===========================================================================================================
 
-VMHandleDebugCommandEvent::VMHandleDebugCommandEvent(uint64_t t, BuildingBlock *conBlock): BlockEvent(t, conBlock) {
+VMHandleDebugCommandEvent::VMHandleDebugCommandEvent(Time t, BuildingBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_HANDLE_DEBUG_COMMAND;
 	//command = c;
@@ -139,7 +209,7 @@ const string VMHandleDebugCommandEvent::getEventName() {
 //
 //===========================================================================================================
 
-VMDebugPauseSimEvent::VMDebugPauseSimEvent(uint64_t t): Event(t) {
+VMDebugPauseSimEvent::VMDebugPauseSimEvent(Time t): Event(t) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_DEBUG_PAUSE_SIMULATION;
 }
@@ -169,9 +239,9 @@ const string VMDebugPauseSimEvent::getEventName() {
 //
 //===========================================================================================================
 
-VMEndPollEvent::VMEndPollEvent(uint64_t t, BuildingBlock *conBlock) : BlockEvent(t, conBlock) {
+VMEndPollEvent::VMEndPollEvent(Time t, BuildingBlock *conBlock) : BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
-	randomNumber = conBlock->getNextRandomNumber();
+	randomNumber = conBlock->getRandomUint();
 	eventType = EVENT_END_POLL;
 }
 
@@ -199,7 +269,7 @@ const string VMEndPollEvent::getEventName() {
 //
 //===========================================================================================================
 
-ComputePredicateEvent::ComputePredicateEvent(uint64_t t, BuildingBlock *conBlock): BlockEvent(t, conBlock) {
+ComputePredicateEvent::ComputePredicateEvent(Time t, BuildingBlock *conBlock): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_COMPUTE_PREDICATE;
 }
@@ -228,7 +298,7 @@ const string ComputePredicateEvent::getEventName() {
 //
 //===========================================================================================================
 
-AddTupleEvent::AddTupleEvent(uint64_t t, BuildingBlock *conBlock, tuple_t tpl, byte f): BlockEvent(t, conBlock) {
+AddTupleEvent::AddTupleEvent(Time t, BuildingBlock *conBlock, tuple_t tpl, byte f): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_ADD_TUPLE;
 	tuple = tpl;
@@ -261,7 +331,7 @@ const string AddTupleEvent::getEventName() {
 //
 //===========================================================================================================
 
-RemoveTupleEvent::RemoveTupleEvent(uint64_t t, BuildingBlock *conBlock, tuple_t tpl, byte f): BlockEvent(t, conBlock) {
+RemoveTupleEvent::RemoveTupleEvent(Time t, BuildingBlock *conBlock, tuple_t tpl, byte f): BlockEvent(t, conBlock) {
 	EVENT_CONSTRUCTOR_INFO();
 	eventType = EVENT_REMOVE_TUPLE;
 	tuple = tpl;

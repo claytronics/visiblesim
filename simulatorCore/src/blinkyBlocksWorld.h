@@ -8,15 +8,12 @@
 #ifndef BLINKYBLOCKSWORLD_H_
 #define BLINKYBLOCKSWORLD_H_
 
-#include <blinkyBlocksScenario.h>
 #include <vector>
-#include <boost/asio.hpp>
 
-#include "openglViewer.h"
 #include "world.h"
+#include "openglViewer.h"
 #include "vector3D.h"
 #include "blinkyBlocksBlock.h"
-#include "objLoader.h"
 #include "trace.h"
 
 namespace BlinkyBlocks {
@@ -24,10 +21,8 @@ namespace BlinkyBlocks {
 static const Vector3D defaultBlockSize{40.0, 40.0, 41.0};
 
 class BlinkyBlocksWorld : public BaseSimulator::World {
-protected:
-    ObjLoader::ObjLoader *objBlock,*objBlockForPicking,*objRepere;
+protected:   
     GLuint idTextureWall;
-    vector<ScenarioEvent*> tabEvents;
 
     virtual ~BlinkyBlocksWorld();
 public:
@@ -47,9 +42,8 @@ public:
         return((BlinkyBlocksBlock*)World::getBlockById(bId));
     }
 
-    virtual void addBlock(int blockId, BlockCodeBuilder bcb, const Cell3DPosition &pos, const Color &col,
+    virtual void addBlock(bID blockId, BlockCodeBuilder bcb, const Cell3DPosition &pos, const Color &col,
                           short orientation = 0, bool master = false);
-    virtual void deleteBlock(BuildingBlock *blc);
 
     virtual void linkBlock(const Cell3DPosition &pos);
     virtual void loadTextures(const string &str);
@@ -60,12 +54,12 @@ public:
     virtual void setSelectedFace(int n);
     virtual void exportConfiguration();
 
-    /* Sends the appropriate message (tap, ...) to the VM associated to bId block (through the scheduler)*/
-    void accelBlock(uint64_t date, int bId, int x, int y, int z);
-    void shakeBlock(uint64_t date, int bId, int f);
-    virtual void stopBlock(uint64_t date, int bId);
+    /* Sends the appropriate message (tap, ...) to the VM associated to id block (through the scheduler)*/
+    void accelBlock(Time date, bID id, int x, int y, int z);
+    void shakeBlock(Time date, bID id, int f);
+    virtual void stopBlock(Time date, bID id);
 
-    void addScenarioEvent(ScenarioEvent *ev) { tabEvents.push_back(ev); };
+    // void addScenarioEvent(ScenarioEvent *ev) { tabEvents.push_back(ev); };
 
     // Prints information about the blocks
     void dump();

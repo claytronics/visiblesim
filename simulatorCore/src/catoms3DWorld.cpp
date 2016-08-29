@@ -34,14 +34,14 @@ Catoms3DWorld::Catoms3DWorld(const Cell3DPosition &gridSize, const Vector3D &gri
 							 int argc, char *argv[]):World(argc, argv) {
     OUTPUT << "\033[1;31mCatoms3DWorld constructor\033[0m" << endl;
 
-    idTextureHexa=0;
-    idTextureGrid=0;
-    objBlock = new ObjLoader::ObjLoader("../../simulatorCore/catoms3DTextures","catom3DV2connectorID.obj");
-    objBlockForPicking =
-		new ObjLoader::ObjLoader("../../simulatorCore/catoms3DTextures","catom3D_picking.obj");
-    objRepere = new ObjLoader::ObjLoader("../../simulatorCore/catoms3DTextures","repereCatom3D.obj");
-
-    skeleton=NULL;
+    if (GlutContext::GUIisEnabled) {
+		objBlock = new ObjLoader::ObjLoader("../../simulatorCore/resources/textures/catoms3DTextures",
+											"catom3DV2connectorID.obj");
+		objBlockForPicking =
+			new ObjLoader::ObjLoader("../../simulatorCore/resources/textures/catoms3DTextures",
+									 "catom3D_picking.obj");
+		objRepere = new ObjLoader::ObjLoader("../../simulatorCore/resources/textures/catoms3DTextures","repereCatom3D.obj");
+	}   
 
     lattice = new FCCLattice(gridSize, gridScale.hasZero() ? defaultBlockSize : gridScale);
 }
@@ -49,21 +49,17 @@ Catoms3DWorld::Catoms3DWorld(const Cell3DPosition &gridSize, const Vector3D &gri
 Catoms3DWorld::~Catoms3DWorld() {
     OUTPUT << "Catoms3DWorld destructor" << endl;
     /*	block linked are deleted by world::~world() */
-    //delete [] targetGrid;
-    delete objBlock;
-    delete objBlockForPicking;
-    delete objRepere;
 }
 
 void Catoms3DWorld::deleteWorld() {
     delete((Catoms3DWorld*)world);
 }
 
-void Catoms3DWorld::addBlock(int blockId, BlockCodeBuilder bcb, const Cell3DPosition &pos, const Color &col,
+void Catoms3DWorld::addBlock(bID blockId, BlockCodeBuilder bcb, const Cell3DPosition &pos, const Color &col,
 							 short orientation, bool master) {
 	if (blockId > maxBlockId)
 		maxBlockId = blockId;
-	else if (blockId == -1)
+	else if (blockId == 0)
 		blockId = incrementBlockId();
 	
     Catoms3DBlock *catom = new Catoms3DBlock(blockId,bcb);
@@ -80,34 +76,6 @@ void Catoms3DWorld::addBlock(int blockId, BlockCodeBuilder bcb, const Cell3DPosi
     catom->setColor(col);
     lattice->insert(catom, pos);
     glBlock->setPosition(lattice->gridToWorldPosition(pos));
-}
-
-/**
-   \brief Connect a block to its neighbors after a motion
-*/
-void Catoms3DWorld::connectBlock(Catoms3DBlock *block) {
-    Cell3DPosition pos = block->position;
-    lattice->insert(block, pos);
-    OUTPUT << "Reconnection " << block->blockId << " pos ="<< pos << endl;
-    linkBlock(pos);
-    linkNeighbors(pos);
-}
-
-void Catoms3DWorld::disconnectBlock(Catoms3DBlock *block) {
-    P2PNetworkInterface *fromBlock,*toBlock;
-
-    for(int i=0; i<12; i++) {
-		fromBlock = block->getInterface(i);
-		if (fromBlock && fromBlock->connectedInterface) {
-			toBlock = fromBlock->connectedInterface;
-			fromBlock->connectedInterface=NULL;
-			toBlock->connectedInterface=NULL;
-		}
-    }
-
-    lattice->remove(block->position);
-    OUTPUT << getScheduler()->now() << " : Disconnection " << block->blockId << " pos = "
-		   << block->position << endl;
 }
 
 /**
@@ -131,41 +99,6 @@ void Catoms3DWorld::linkBlock(const Cell3DPosition& pos) {
 			}
 		}
     }
-}
-
-void Catoms3DWorld::deleteBlock(BuildingBlock *blc) {
-	Catoms3DBlock *bb = (Catoms3DBlock *)blc;
-
-    if (bb->getState() >= Catoms3DBlock::ALIVE ) {
-		// cut links between bb and others
-		for(int i=0; i<12; i++) {
-			P2PNetworkInterface *bbi = bb->getInterface(i);
-			if (bbi->connectedInterface) {
-				//bb->removeNeighbor(bbi); //Useless
-				bbi->connectedInterface->hostBlock->removeNeighbor(bbi->connectedInterface);
-				bbi->connectedInterface->connectedInterface=NULL;
-				bbi->connectedInterface=NULL;
-			}
-		}
-		// free grid cell
-		lattice->remove(bb->position);
-
-		disconnectBlock(bb);
-    }
-    if (selectedGlBlock == bb->ptrGlBlock) {
-		selectedGlBlock = NULL;
-		GlutContext::mainWindow->select(NULL);
-    }
-    // remove the associated glBlock
-    std::vector<GlBlock*>::iterator cit=tabGlBlocks.begin();
-    if (*cit==bb->ptrGlBlock) tabGlBlocks.erase(cit);
-    else {
-		while (cit!=tabGlBlocks.end() && (*cit)!=bb->ptrGlBlock) {
-			cit++;
-		}
-		if (*cit==bb->ptrGlBlock) tabGlBlocks.erase(cit);
-    }
-    delete bb->ptrGlBlock;
 }
 
 /**
@@ -392,9 +325,8 @@ void Catoms3DWorld::setSelectedFace(int n) {
 }
 
 void Catoms3DWorld::exportConfiguration() {
-	Catoms3DConfigExporter *exporter = new Catoms3DConfigExporter(this);
-	exporter->exportConfiguration();
-	delete exporter;
+	Catoms3DConfigExporter exporter = Catoms3DConfigExporter(this);
+	exporter.exportConfiguration();
 }
 
 

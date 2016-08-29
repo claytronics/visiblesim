@@ -16,48 +16,38 @@ using namespace BaseSimulator::utils;
 
 namespace Catoms3D {
 
-Catoms3DBlockCode*(* Catoms3DSimulator::buildNewBlockCode)(Catoms3DBlock*)=NULL;
-
 void Catoms3DSimulator::help() {
 	cerr << "VisibleSim:" << endl;
 	cerr << "Catoms3D" << endl;
 	exit(EXIT_SUCCESS);
 }
 
-Catoms3DSimulator::Catoms3DSimulator(int argc, char *argv[], Catoms3DBlockCode *(*catoms3DBlockCodeBuildingFunction)(Catoms3DBlock*)) : BaseSimulator::Simulator(argc, argv) {
-//	OUTPUT << "\033[1;34m" << "Catoms3DSimulator constructor" << "\033[0m" << endl;
-
-	buildNewBlockCode = catoms3DBlockCodeBuildingFunction;
-	newBlockCode = (BlockCode *(*)(BuildingBlock *))catoms3DBlockCodeBuildingFunction;
-	parseWorld(argc, argv);
-
-	testMode = false;
-	((Catoms3DWorld*)world)->linkBlocks();
-
-//	getScheduler()->sem_schedulerStart->post();
-//	getScheduler()->setState(Scheduler::NOTSTARTED);
-
-	if (!testMode) {
-		GlutContext::mainLoop();
-	}
+Catoms3DSimulator::Catoms3DSimulator(int argc, char *argv[], BlockCodeBuilder bcb)
+	: BaseSimulator::Simulator(argc, argv, bcb) {
+	OUTPUT << "\033[1;34m" << "Catoms3DSimulator constructor" << "\033[0m" << endl;
 }
 
 Catoms3DSimulator::~Catoms3DSimulator() {
 	OUTPUT << "\033[1;34m" << "Catoms3DSimulator destructor" << "\033[0m" <<endl;
 }
 
-void Catoms3DSimulator::createSimulator(int argc, char *argv[], Catoms3DBlockCode *(*catoms3DBlockCodeBuildingFunction)(Catoms3DBlock*)) {
-	simulator =  new Catoms3DSimulator(argc, argv, catoms3DBlockCodeBuildingFunction);
+void Catoms3DSimulator::createSimulator(int argc, char *argv[], BlockCodeBuilder bcb) {
+	simulator =  new Catoms3DSimulator(argc, argv, bcb);
+	simulator->parseConfiguration(argc, argv);
+	simulator->startSimulation();
 }
 
 void Catoms3DSimulator::loadWorld(const Cell3DPosition &gridSize, const Vector3D &gridScale,
 				      int argc, char *argv[]) {
     world = new Catoms3DWorld(gridSize, gridScale, argc, argv);
-    world->loadTextures("../../simulatorCore/catoms3DTextures");
+
+	if (GlutContext::GUIisEnabled) 
+		world->loadTextures("../../simulatorCore/resources/textures/latticeTextures");
+	
     World::setWorld(world);
 }
 
-void Catoms3DSimulator::loadBlock(TiXmlElement *blockElt, int blockId, BlockCodeBuilder bcb,
+void Catoms3DSimulator::loadBlock(TiXmlElement *blockElt, bID blockId, BlockCodeBuilder bcb,
 								  const Cell3DPosition &pos, const Color &color, bool master) {
 
 	// Any additional configuration file parsing exclusive to this type of block should be performed
@@ -75,7 +65,6 @@ void Catoms3DSimulator::loadBlock(TiXmlElement *blockElt, int blockId, BlockCode
 	((Catoms3DWorld*)world)->addBlock(blockId, bcb, pos, color, orientation, master);
 }
 
-// PTHY: TODO: Refactor / Genericize
 void Catoms3DSimulator::parseSkeleton() {
 /* loading skeleton*/
 	TiXmlNode *nodeGrid = xmlWorldNode->FirstChild("skeleton");

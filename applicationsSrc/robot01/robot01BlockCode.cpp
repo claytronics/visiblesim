@@ -10,7 +10,7 @@
 
 #include "robot01BlockCode.h"
 #include "scheduler.h"
-#include "robotBlocksEvents.h"
+#include "translationEvents.h"
 #include "capabilities.h"
 
 using namespace std;
@@ -20,29 +20,40 @@ const int COM_DELAY=1000;
 
 presence *initGrid(short gridSize[3],presence *init) {
 	int size = gridSize[0]*gridSize[1]*gridSize[2];
-	presence *targetGrid = new presence[size];
-	memcpy(targetGrid,init,size);
-	return targetGrid;
+	presence *targetGrid2 = new presence[size];
+	memcpy(targetGrid2,init,size);
+	return targetGrid2;
 }
 
 Robot01BlockCode::Robot01BlockCode(RobotBlocksBlock *host):RobotBlocksBlockCode(host) {
-	cout << "Robot01BlockCode constructor" << endl;
+	// cout << "Robot01BlockCode constructor" << endl;
 	scheduler = getScheduler();
 	robotBlock = (RobotBlocksBlock*)hostBlock;
 
 // initialize object deleted in destructor
 	targetGrid=NULL;
 	possibleMotions=NULL;
+	lattice = BaseSimulator::getWorld()->lattice;		
 }
 
 Robot01BlockCode::~Robot01BlockCode() {
-	cout << "Robot01BlockCode destructor" << endl;
-	delete [] targetGrid;
+	// cout << "Robot01BlockCode destructor" << endl;
+	if (targetGrid) {
+		delete [] targetGrid;
+		targetGrid = NULL;
+	}
+	
+	if (capabilities){
+		delete capabilities;
+	    capabilities = NULL;
+	}
+	
 	delete possibleMotions;
 }
 
 void Robot01BlockCode::startup() {
 	stringstream info;
+	
 	info << "start #" << robotBlock->blockId;
 	nbreOfWaitedAnswers=0;
 	block2Answer = NULL;
@@ -53,9 +64,7 @@ void Robot01BlockCode::startup() {
 	//If i am master block
 	if(robotBlock->isMaster)
 	{
-		RobotBlocksWorld *wrl = RobotBlocksWorld::getWorld();
-		
-	    presence *tg = wrl->getTargetGridPtr(gridSize);
+	    presence *tg = getTargetGridPtr(gridSize);
 		info << " (Master Block at " << robotBlock->position[0] << "," << robotBlock->position[1] << "," << robotBlock->position[2] << ")";
 		scheduler->trace(info.str(),robotBlock->blockId,YELLOW);
 		targetGrid = initGrid(gridSize,tg);
@@ -73,10 +82,10 @@ void Robot01BlockCode::processLocalEvent(EventPtr pev) {
 	MessagePtr message;
 
 	switch (pev->eventType) {
-    case EVENT_MOTION_END:
+    case EVENT_TRANSLATION_END:
 		robotBlock->setColor(LIGHTBLUE);
 		info.str("");
-		info << robotBlock->blockId << " rec.: EVENT_MOTION_END";
+		info << robotBlock->blockId << " rec.: EVENT_TRANSLATION_END";
 		scheduler->trace(info.str(),hostBlock->blockId);
 		// prepare for next motion
 		nbreOfWaitedAnswers=0;
@@ -293,10 +302,10 @@ void Robot01BlockCode::processLocalEvent(EventPtr pev) {
 			finalPosition.set(robotBlock->position.pt[0]+motionVector.x,
 							  robotBlock->position.pt[1]+motionVector.y,robotBlock->position.pt[2]+motionVector.z);
 			blockToUnlock=0;
-			scheduler->schedule(new MotionStartEvent(recvMessage->globalRDVTime,robotBlock,finalPosition));
+			scheduler->schedule(new TranslationStartEvent(recvMessage->globalRDVTime,robotBlock,finalPosition));
 			stringstream info;
 			info.str("");
-			info << robotBlock->blockId << " MotionStartEvent(" << recvMessage->globalRDVTime << ")";
+			info << robotBlock->blockId << " TranslationStartEvent(" << recvMessage->globalRDVTime << ")";
 			scheduler->trace(info.str(),hostBlock->blockId,LIGHTGREY);
 			if (trainPrevious) {
 				AnswerDelayMessage *adm_message = new AnswerDelayMessage(recvMessage->globalRDVTime,false);
@@ -330,7 +339,7 @@ void Robot01BlockCode::processLocalEvent(EventPtr pev) {
 				}
 			}
 			if (found) {
-				uint64_t time = scheduler->now();
+				Time time = scheduler->now();
 				MotionDelayMessage *message = new MotionDelayMessage(time,true);
 				scheduler->schedule(new NetworkInterfaceEnqueueOutgoingEvent(time + COM_DELAY, message, p2p));
 				stringstream info;
@@ -365,8 +374,8 @@ void Robot01BlockCode::processLocalEvent(EventPtr pev) {
 	robotBlock->setColor((trainPrevious?(trainNext?MAGENTA:PINK):(trainNext?RED:goodPlace?GREEN:YELLOW)));
 }
 
-RobotBlocksBlockCode* Robot01BlockCode::buildNewBlockCode(RobotBlocksBlock *host) {
-	return(new Robot01BlockCode(host));
+BlockCode* Robot01BlockCode::buildNewBlockCode(BuildingBlock *host) {
+	return(new Robot01BlockCode((RobotBlocksBlock*)host));
 }
 
 void Robot01BlockCode::sendMapToNeighbors(P2PNetworkInterface *p2pExcept) {
@@ -398,7 +407,6 @@ void Robot01BlockCode::sendAckMap(P2PNetworkInterface *p2p) {
 void Robot01BlockCode::calcPossibleMotions(const PointRel3D &posTrainGoal) {
 	stringstream info;
 	PresenceMatrix pm,localTargetGrid;
-	RobotBlocksWorld *wrl = RobotBlocksWorld::getWorld();
 
 	if (possibleMotions) {
 		vector <Validation*>::const_iterator ci = possibleMotions->begin();
@@ -417,13 +425,13 @@ void Robot01BlockCode::calcPossibleMotions(const PointRel3D &posTrainGoal) {
 	pos.y = robotBlock->position[1];
 	pos.z = robotBlock->position[2];
 	goodPlace = targetGrid[(pos.z*gridSize[1]+pos.y)*gridSize[0]+pos.x]==fullCell;
-	wrl->getPresenceMatrix(pos,pm);
+	getPresenceMatrix(pos,pm);
 	if (posTrainGoal.isSet()) {
 		pm.add(lockedCell,posTrainGoal,pos);
 	}
 // détermination de la localTargetGrid
 	getLocalTargetGrid(pos,localTargetGrid);
-	possibleMotions = wrl->getCapabilities()->validateMulti(pm,localTargetGrid);
+	possibleMotions = getCapabilities()->validateMulti(pm,localTargetGrid);
 	if (possibleMotions) {
 		info.str("");
 		info << possibleMotions->size();
@@ -486,8 +494,11 @@ void Robot01BlockCode::sendLinkTrainMessages(P2PNetworkInterface *sender) {
 		info << "FirstCondifition :"<< firstCondition->isHead << ":" << firstCondition->isEnd << firstCondition->name;
 		scheduler->trace(info.str(),hostBlock->blockId,DARKORANGE);
 
+		PointRel3D pos;
 		if (firstCondition->isEnd) {
-			P2PNetworkInterface *p2p = robotBlock->getP2PNetworkInterfaceByRelPos(*firstCondition->linkPrevPos);
+			pos = *firstCondition->linkPrevPos;
+			P2PNetworkInterface *p2p = robotBlock->getP2PNetworkInterfaceByRelPos(
+				Cell3DPosition(pos.x,pos.y,pos.z));
 			AckTrainMessage *message = new AckTrainMessage(currentTrainGain>0);
 			scheduler->schedule(new NetworkInterfaceEnqueueOutgoingEvent(scheduler->now() + COM_DELAY, message,p2p));
 			stringstream info;
@@ -498,7 +509,9 @@ void Robot01BlockCode::sendLinkTrainMessages(P2PNetworkInterface *sender) {
 			trainPrevious = currentTrainGain>0?p2p->connectedInterface:NULL;
 			robotBlock->setPrevNext(trainPrevious,trainNext);
 		} else {
-			P2PNetworkInterface *p2p = robotBlock->getP2PNetworkInterfaceByRelPos(*firstCondition->linkNextPos);
+			pos = *firstCondition->linkNextPos;
+			P2PNetworkInterface *p2p = robotBlock->getP2PNetworkInterfaceByRelPos(
+				Cell3DPosition(pos.x,pos.y,pos.z));
 			// si c'est la tête du train on envoie la nouvelle position
 			// sinon on transmet celle recue
 			TrainMessage *message;
@@ -535,9 +548,9 @@ void Robot01BlockCode::sendLinkTrainMessages(P2PNetworkInterface *sender) {
 	}
 }
 
-void Robot01BlockCode::sendAnswerDelayOrMotionDelayMessage(uint64_t gt) {
+void Robot01BlockCode::sendAnswerDelayOrMotionDelayMessage(Time gt) {
 	if (motionVector!=nextMotionVector) {
-		uint64_t time = scheduler->now(),
+		Time time = scheduler->now(),
 			rdvTime = time+(time-gt)*1.5;
 		if (trainPrevious) {
 			AnswerDelayMessage *adm_message = new AnswerDelayMessage(rdvTime,trainNext!=NULL);
@@ -550,10 +563,10 @@ void Robot01BlockCode::sendAnswerDelayOrMotionDelayMessage(uint64_t gt) {
 		Vector3D finalPosition(robotBlock->position.pt[0]+motionVector.x,
 							   robotBlock->position.pt[1]+motionVector.y,
 							   robotBlock->position.pt[2]+motionVector.z);
-		scheduler->schedule(new MotionStartEvent(rdvTime,robotBlock,finalPosition));
+		scheduler->schedule(new TranslationStartEvent(rdvTime,robotBlock,finalPosition));
 		stringstream info;
 		info.str("");
-		info << robotBlock->blockId << " MotionStartEvent(" << rdvTime << ")";
+		info << robotBlock->blockId << " TranslationStartEvent(" << rdvTime << ")";
 		scheduler->trace(info.str(),hostBlock->blockId,LIGHTGREY);
 		if (trainNext) {
 			blockToUnlock=trainNext->hostBlock->blockId;
@@ -601,7 +614,9 @@ void Robot01BlockCode::sendReLinkTrainMessage() {
 		if (firstCondition->isHead) {
 			sendLinkTrainMessages(NULL);
 		} else if (firstCondition->linkPrevPos) {
-			P2PNetworkInterface *p2p = robotBlock->getP2PNetworkInterfaceByRelPos(*firstCondition->linkPrevPos);
+						PointRel3D pos = *firstCondition->linkPrevPos;
+			P2PNetworkInterface *p2p = robotBlock->getP2PNetworkInterfaceByRelPos(
+				Cell3DPosition(pos.x,pos.y,pos.z));
 			ReLinkTrainMessage *message = new ReLinkTrainMessage();
 			scheduler->schedule(new NetworkInterfaceEnqueueOutgoingEvent(scheduler->now() + COM_DELAY, message, p2p));
 			info.str("");
@@ -658,7 +673,7 @@ AckTrainMessage::~AckTrainMessage() {
 }
 
 
-MotionDelayMessage::MotionDelayMessage(uint64_t time,bool unlock):Message(){
+MotionDelayMessage::MotionDelayMessage(Time time,bool unlock):Message(){
 	id = MOTIONDELAY_MSG_ID;
 	globalTime = time;
 	unlockMode = unlock;
@@ -667,7 +682,7 @@ MotionDelayMessage::MotionDelayMessage(uint64_t time,bool unlock):Message(){
 MotionDelayMessage::~MotionDelayMessage() {
 }
 
-AnswerDelayMessage::AnswerDelayMessage(uint64_t time,bool b2ul):Message(){
+AnswerDelayMessage::AnswerDelayMessage(Time time,bool b2ul):Message(){
 	id = ANSWERDELAY_MSG_ID;
 	globalRDVTime = time;
 	block2unlock=b2ul;
@@ -691,3 +706,111 @@ ReLinkTrainMessage::ReLinkTrainMessage() {
 ReLinkTrainMessage::~ReLinkTrainMessage() {
 }
 
+void Robot01BlockCode::parseUserElements(TiXmlDocument *config) {
+	TiXmlNode *xmlWorldNode = config->FirstChild("world");
+
+	TiXmlNode *nodeGrid = xmlWorldNode->FirstChild("targetGrid");
+	vector<Cell3DPosition> targetCells; // Locations of all target full cells
+
+	if (nodeGrid) {
+		TiXmlNode *block = nodeGrid->FirstChild("block");
+		Cell3DPosition position;
+		const char *attr;
+		TiXmlElement* element;
+		while (block) {
+			element = block->ToElement();
+			attr = element->Attribute("position");
+			if (attr) {
+				string str(attr);
+				int pos = str.find_first_of(',');
+				int pos2 = str.find_last_of(',');
+				int ix = atof(str.substr(0,pos).c_str()),
+					iy = atoi(str.substr(pos+1,pos2-pos-1).c_str()),
+					iz = atoi(str.substr(pos2+1,str.length()-pos2-1).c_str());
+
+				position.pt[0] = ix;
+				position.pt[1] = iy;
+				position.pt[2] = iz;
+
+				targetCells.push_back(Cell3DPosition(position[0], position[1], position[2]));
+			}
+
+			block = block->NextSibling("block");
+		}
+
+		block = nodeGrid->FirstChild("targetLine");
+		int line = 0, plane = 0;
+		while (block) {
+			TiXmlElement* element = block->ToElement();
+			const char *attr = element->Attribute("line");
+			if (attr) {
+				line = atoi(attr);
+			}
+			attr = element->Attribute("plane");
+			if (attr) {
+				plane = atoi(attr);
+			}
+			attr = element->Attribute("values");
+			if (attr) {
+				string str(attr);
+				int n = str.length();
+				for(int i = 0; i < n; i++) {
+					if(str[i] == '1') {
+						targetCells.push_back(Cell3DPosition(i, line, plane));
+					}
+				}
+			}
+
+			block = block->NextSibling("targetLine");
+		}
+	} else {
+		ERRPUT << "warning: No target grid in configuration file" << endl;
+	}
+
+	// Add target cells to world
+    initTargetGrid();
+	for (Cell3DPosition p : targetCells) {
+	    setTargetGrid(fullCell, p[0], p[1], p[2]);
+	}
+
+	// then parse and load capabilities...
+	TiXmlNode *nodeCapa = xmlWorldNode->FirstChild("capabilities");
+	if (nodeCapa) {
+		setCapabilities(new Capabilities(nodeCapa));
+	}
+}
+
+void Robot01BlockCode::initTargetGrid() {
+	if (targetGrid) delete [] targetGrid;
+	int sz = lattice->gridSize[0]*lattice->gridSize[1]*lattice->gridSize[2];
+	targetGrid = new presence[lattice->gridSize[0]*lattice->gridSize[1]*lattice->gridSize[2]];
+	memset(targetGrid,0,sz*sizeof(presence));
+}
+
+void Robot01BlockCode::getPresenceMatrix(const PointRel3D &pos, PresenceMatrix &pm) {
+	presence *gpm = pm.grid;
+    BuildingBlock **grb;
+
+	//memset(pm.grid,wall,27*sizeof(presence));
+
+	for (int i = 0; i < 27; i++) { *gpm++ = wallCell; };
+
+	int ix0 = (pos.x < 1) ? 1  -  pos.x : 0,
+		ix1 = (pos.x > lattice->gridSize[0] - 2) ? lattice->gridSize[0] - pos.x + 1 : 3,
+		iy0 = (pos.y < 1) ? 1 - pos.y : 0,
+		iy1 = (pos.y > lattice->gridSize[1] - 2) ? lattice->gridSize[1] - pos.y + 1 : 3,
+		iz0 = (pos.z < 1) ? 1 - pos.z : 0,
+		iz1 = (pos.z > lattice->gridSize[2] - 2) ? lattice->gridSize[2] - pos.z + 1 : 3,
+		ix,iy,iz;
+	for (iz = iz0; iz < iz1; iz++) {
+		for (iy = iy0; iy < iy1; iy++) {
+			gpm = pm.grid + ((iz * 3 + iy) * 3 + ix0);
+			grb = (BuildingBlock **)lattice->grid +
+				(ix0 + pos.x - 1 + (iy + pos.y - 1 +
+									(iz + pos.z - 1) * lattice->gridSize[1]) * lattice->gridSize[0]);
+			for (ix = ix0; ix < ix1; ix++) {
+				*gpm++ = (*grb++) ? fullCell : emptyCell;
+			}
+		}
+	}
+}

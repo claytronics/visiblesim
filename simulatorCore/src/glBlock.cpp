@@ -1,6 +1,10 @@
 #include "glBlock.h"
 
-GlBlock::GlBlock(int id):blockId(id) {
+#include <sstream>
+
+#include "objLoader.h"
+
+GlBlock::GlBlock(bID id):blockId(id) {
 	position[0] = 0.0;
 	position[1] = 0.0;
 	position[2] = 0.0;
@@ -11,7 +15,7 @@ GlBlock::GlBlock(int id):blockId(id) {
 	isHighlighted = false;
 }
 
-GlBlock::GlBlock(int id,const Vector3D &pos, const Vector3D &col) : blockId(id) {
+GlBlock::GlBlock(bID id,const Vector3D &pos, const Vector3D &col) : blockId(id) {
 	position[0] = pos[0];
 	position[1] = pos[1];
 	position[2] = pos[2];
@@ -55,15 +59,34 @@ void GlBlock::toggleHighlight() {
 }
 
 string GlBlock::getInfo() {
-	char tmp[1024];
-	sprintf(tmp,"%d\nPos=(%.1f,%.1f,%.1f) Col=(%4.1f,%4.1f,%4.1f)",blockId,position[0],position[1],position[2],color[0],color[1],color[2]);
+    ostringstream out;
+	out << blockId << "\n";
+	out << fixed;
+	out.precision(1);
+	out << "Pos=(" << position[0] << "," << position[1] << "," << position[2] << ") ";
+	out << "Col=(" << (int)(color[0] * 255) << "," << (int)(color[1] * 255) << "," << (int)(color[2] * 255) << ")";
 
-	return string(tmp);
+	return out.str();
 }
 
 string GlBlock::getPopupInfo() {
-	char tmp[1024];
-	sprintf(tmp,"#%d",blockId);
+    ostringstream out;
+	out << blockId << "\n";
 
-	return string(tmp);
+	return out.str();
+}
+
+
+void GlBlock::glDrawId(ObjLoader::ObjLoader *ptrObj,int &n) {
+	glPushMatrix();
+	glTranslatef(position[0],position[1],position[2]);
+	ptrObj->glDrawId(n);
+	glPopMatrix();
+}
+
+void GlBlock::glDrawIdByMaterial(ObjLoader::ObjLoader *ptrObj,int &n) {
+	glPushMatrix();
+	glTranslatef(position[0],position[1],position[2]);
+	ptrObj->glDrawIdByMaterial(n);
+	glPopMatrix();
 }

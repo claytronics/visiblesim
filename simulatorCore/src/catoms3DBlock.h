@@ -8,7 +8,6 @@
 #ifndef CATOMS3DBLOCK_H_
 #define CATOMS3DBLOCK_H_
 
-#include <boost/asio.hpp>
 #include <stdexcept>
 
 #include "buildingBlock.h"
@@ -57,21 +56,30 @@ public:
 /**
    \brief Get the interface from the neighbor position in the grid
    \param pos: position of the cell (if in the grid)
-   \return return interface if it exists one connected, NULL otherwise
-*/
+   \return return interface if it exists one connected, NULL otherwise */
 	P2PNetworkInterface *getInterface(const Cell3DPosition &pos);
 	inline P2PNetworkInterface *getInterface(int d) { return P2PNetworkInterfaces[d]; };
 /**
    \brief Get the position of the gridcell in the direction of the given connector
    \param connectorId: id of connector (0..11)
    \param pos: position of the cell (if in the grid)
-   \return return true if the cell is in the grid, false otherwise.
-*/
+   \return return true if the cell is in the grid, false otherwise. */
 	bool getNeighborPos(short connectorId,Cell3DPosition &pos);
 
 	int getDirection(P2PNetworkInterface*);
 
 	static short getOrientationFromMatrix(const Matrix &mat);
+	
+	// MeldInterpreter
+	/**
+	 * @copydoc BuildingBlock::addNeighbor
+	 */
+	virtual void addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target);
+	/**
+	 * @copydoc BuildingBlock::removeNeighbor
+	 */
+	virtual void removeNeighbor(P2PNetworkInterface *ni);
+
 };
 
 std::ostream& operator<<(std::ostream &stream, Catoms3DBlock const& bb);

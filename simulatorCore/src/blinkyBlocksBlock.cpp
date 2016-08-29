@@ -1,3 +1,4 @@
+
 /*
  * blinkyBlocksBlock.cpp
  *
@@ -7,6 +8,7 @@
 
 #include <iostream>
 
+#include "tDefs.h"
 #include "blinkyBlocksBlock.h"
 #include "buildingBlock.h"
 #include "blinkyBlocksWorld.h"
@@ -14,8 +16,12 @@
 #include "blinkyBlocksEvents.h"
 #include "trace.h"
 #include "clock.h"
-#include "meldProcessEvents.h"
 #include "meldInterpretEvents.h"
+#include "lattice.h"
+
+#ifdef ENABLE_MELDPROCESS
+#include "meldProcessEvents.h"
+#endif
 
 using namespace std;
 
@@ -25,33 +31,31 @@ using namespace std;
 
 namespace BlinkyBlocks {
 
-BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, BlockCodeBuilder bcb) : BaseSimulator::BuildingBlock(bId, bcb) {
+  BlinkyBlocksBlock::BlinkyBlocksBlock(int bId, BlockCodeBuilder bcb)
+    : BaseSimulator::BuildingBlock(bId, bcb, SCLattice::MAX_NB_NEIGHBORS) {
     OUTPUT << "BlinkyBlocksBlock constructor" << endl;
-    double dataRateMin = ((BLINKYBLOCKS_PACKET_DATASIZE*pow(10,6)*8)
-						  / (BLINKYBLOCKS_TRANSMISSION_MAX_TIME*1000));
-    double dataRateMax = ((BLINKYBLOCKS_PACKET_DATASIZE*pow(10,6)*8)
-						  / (BLINKYBLOCKS_TRANSMISSION_MIN_TIME*1000));
+    
+    double dataRateMin = ((BLINKYBLOCKS_PACKET_DATASIZE*pow(10,6)*8) / (BLINKYBLOCKS_TRANSMISSION_MAX_TIME*1000));
+    double dataRateMax = ((BLINKYBLOCKS_PACKET_DATASIZE*pow(10,6)*8)  / (BLINKYBLOCKS_TRANSMISSION_MIN_TIME*1000));
 
-    for (int i=0; i<6; i++) {
-		P2PNetworkInterface *p2p = new P2PNetworkInterface(this);
-		getP2PNetworkInterfaces().push_back(p2p);
-		p2p->setDataRate((dataRateMax+dataRateMin)/2);
-		p2p->setDataRateVariability((dataRateMax-dataRateMin)/2);
+    for (int i = 0; i < SCLattice::MAX_NB_NEIGHBORS; i++) {
+      P2PNetworkInterface *p2p = P2PNetworkInterfaces[i];
+      doubleRNG g = Random::getUniformDoubleRNG(getRandomUint(),dataRateMin,dataRateMax);
+      RandomRate *r = new RandomRate(g);
+      p2p->setDataRate(r);
     }
-
-    clock = new Clock(Clock::XMEGA_RTC_OSC1K_CRC, this);
 }
 
 BlinkyBlocksBlock::~BlinkyBlocksBlock() {
     OUTPUT << "BlinkyBlocksBlock destructor " << blockId << endl;
 }
 
-void BlinkyBlocksBlock::pauseClock(uint64_t delay, uint64_t start){
+void BlinkyBlocksBlock::pauseClock(Time delay, Time start) {
     //while(BaseSimulator::getScheduler()->now()<delay+start){
 
 }
     
-SCLattice::Direction BlinkyBlocksBlock::getDirection(P2PNetworkInterface *given_interface) {
+int BlinkyBlocksBlock::getDirection(P2PNetworkInterface *given_interface) {
     if( !given_interface) {
 		return SCLattice::Direction(0);
     }
@@ -63,31 +67,31 @@ SCLattice::Direction BlinkyBlocksBlock::getDirection(P2PNetworkInterface *given_
     return SCLattice::Direction(0);
 }
 
-void BlinkyBlocksBlock::accel(uint64_t date, int x, int y, int z) {
-    getScheduler()->scheduleLock(new AccelEvent(date, this, x, y, z));
+void BlinkyBlocksBlock::accel(Time date, int x, int y, int z) {
+    getScheduler()->schedule(new AccelEvent(date, this, x, y, z));
 }
 
-void BlinkyBlocksBlock::shake(uint64_t date, int f) {
-    getScheduler()->scheduleLock(new ShakeEvent(getScheduler()->now(), this, f));
+void BlinkyBlocksBlock::shake(Time date, int f) {
+    getScheduler()->schedule(new ShakeEvent(getScheduler()->now(), this, f));
 }
 
 void BlinkyBlocksBlock::addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target) {
     OUTPUT << "Simulator: "<< blockId << " add neighbor " << target->blockId << " on "
-		   << SCLattice::getString(getDirection(ni)) << endl;
-    getScheduler()->scheduleLock(
+		   << getWorld()->lattice->getDirectionString(getDirection(ni)) << endl;
+    getScheduler()->schedule(
 		new AddNeighborEvent(getScheduler()->now(), this,
-							 SCLattice::getOpposite(getDirection(ni)), target->blockId));
+							 getWorld()->lattice->getOppositeDirection(getDirection(ni)), target->blockId));
 }
 
 void BlinkyBlocksBlock::removeNeighbor(P2PNetworkInterface *ni) {
     OUTPUT << "Simulator: "<< blockId << " remove neighbor on "
-		   << SCLattice::getString(getDirection(ni)) << endl;
-    getScheduler()->scheduleLock(
+		   << getWorld()->lattice->getDirectionString(getDirection(ni)) << endl;
+    getScheduler()->schedule(
 		new RemoveNeighborEvent(getScheduler()->now(), this,
-								SCLattice::getOpposite(getDirection(ni))));
+								getWorld()->lattice->getOppositeDirection(getDirection(ni))));
 }
 
-void BlinkyBlocksBlock::stopBlock(uint64_t date, State s) {
+void BlinkyBlocksBlock::stopBlock(Time date, State s) {
     OUTPUT << "Simulator: stop scheduled" << endl;
     setState(s);
     if (s == STOPPED) {
@@ -97,10 +101,14 @@ void BlinkyBlocksBlock::stopBlock(uint64_t date, State s) {
 
 	getWorld()->updateGlData(this);
 
+#ifdef ENABLE_MELDPROCESS
     if(BaseSimulator::Simulator::getType() == BaseSimulator::Simulator::MELDPROCESS){
-		getScheduler()->scheduleLock(new MeldProcess::VMStopEvent(getScheduler()->now(), this));
-    } else if (BaseSimulator::Simulator::getType() == BaseSimulator::Simulator::MELDINTERPRET) {
-		getScheduler()->scheduleLock(new MeldInterpret::VMStopEvent(getScheduler()->now(), this));
+		getScheduler()->schedule(new MeldProcess::VMStopEvent(getScheduler()->now(), this));
+    } 
+#endif
+
+	if (BaseSimulator::Simulator::getType() == BaseSimulator::Simulator::MELDINTERPRET) {
+		getScheduler()->schedule(new MeldInterpret::VMStopEvent(getScheduler()->now(), this));
     }
 }
 

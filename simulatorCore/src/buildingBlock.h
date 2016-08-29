@@ -1,8 +1,8 @@
-/*
- * buildingBlock.h
- *
- *  Created on: 22 mars 2013
- *      Author: dom
+/**
+ *  @file buildingBlock.h
+ *  @date 22 mars 2013
+ *  @author: dom
+ *  @brief Defines a an abstract single module of the simulated ensemble
  */
 
 #ifndef BUILDINGBLOCK_H_
@@ -13,11 +13,13 @@
 #include <atomic>
 #include <memory>
 
+#include "tDefs.h"
 #include "glBlock.h"
 #include "blockCode.h"
 #include "clock.h"
 #include "cell3DPosition.h"
-#include "capabilities.h"
+#include "statsIndividual.h"
+#include "random.h"
 
 class Event;
 typedef std::shared_ptr<Event> EventPtr;
@@ -29,8 +31,8 @@ class P2PNetworkInterface;
 namespace BaseSimulator {
 
 class BlockCode;
-class Clock;
 class BuildingBlock;
+class Clock;
 
 typedef BlockCode *(*BlockCodeBuilder)(BuildingBlock*);
 
@@ -45,28 +47,23 @@ typedef BlockCode *(*BlockCodeBuilder)(BuildingBlock*);
  */
 class BuildingBlock {
 public:
-	//!< Enumeration of possible values for the state of a BuildingBlock. The block is considered alive if its state is >= 2
+	//!< State of a BuildingBlock. The block is considered alive if its state is >= 2
 	enum State {STOPPED = 0, REMOVED = 1, ALIVE = 2, COMPUTING = 3};
 private:
 	/** 
 	 * \brief state of the block, with atomic access
-	 * Graphical interface and Scheduler can access to the state of
-	 * block. The scheduler only read the state, usually read on int
-	 * can be considered as atomic but it depends on the platform
-	 * architecture. We can also use atomic type (c++11, or boost 1.53)
 	 */
 	std::atomic<State> state;
 protected:
-	static int nextId;
-
-	int P2PNetworkInterfaceNextLocalId; // @todo
+	static bID nextId;
+	static bool userConfigHasBeenParsed; //!< Indicates if the user parsing as already been performed by blockCode->parseUserElements. Used to ensure that user configuration is parsed only once.
+	
 	vector<P2PNetworkInterface*> P2PNetworkInterfaces; //!< Vector of size equal to the number of interfaces of the block, contains pointers to the block's interfaces
 
 	list<EventPtr> localEventsList; //!< List of local events scheduled for this block
 public:
-	int blockId; //!< id of the block
-	std::ranlux48 generator; //!< random device to generate random numbers for BlinkyBlocks determinism
-    std::uniform_int_distribution<> dis; //!< random int distribution based on generator
+    bID blockId; //!< id of the block
+	uintRNG generator; //!< random number generator
 	BlockCode *blockCode; //!< blockcode program executed by the block
 	Clock *clock; //!< internal clock of the block
 	Color color; //!< color of the block
@@ -74,31 +71,45 @@ public:
 	bool isMaster; //!< indicates is the block is a master block
 	GlBlock *ptrGlBlock; //!< ptr to the GL object corresponding to this block
 	BlockCodeBuilder buildNewBlockCode; //!< function ptr to the block's blockCodeBuilder
-	
+	utils::StatsIndividual *stats = NULL; //!< Module stats collected during the simulation
 	/**
 	 * @brief BuildingBlock constructor
 	 * @param bId : the block id of the block to create
 	 * @param bcb : function pointer to the getter for the block's CodeBlock
+	 * @param nbInterfaces : number of initial interfaces of the block (Necessary for MeldInterpretVM init)
+	 * @param seed : seed used to create the block random generator
 	 */
-	BuildingBlock(int bId, BlockCodeBuilder bcb);
-    /**
+	BuildingBlock(int bId, BlockCodeBuilder bcb, int nbInterfaces);
+	
+	/**
 	 * @brief BuildingBlock destructor
 	 */
-	virtual ~BuildingBlock();
-
-	unsigned int getNextP2PInterfaceLocalId();
+	virtual ~BuildingBlock();  
 
 	/**
 	 * @brief Getter for P2PNetworkInterfaces attribute
 	 * @return A vector containing pointers to the block's interfaces
 	 */
-    vector<P2PNetworkInterface*>& getP2PNetworkInterfaces() {return P2PNetworkInterfaces;}
+    vector<P2PNetworkInterface*>& getP2PNetworkInterfaces() { return P2PNetworkInterfaces; }
+	/**
+	 * @brief Getter for a specific P2PNetworkInterface
+	 * @param i : index of interface to return
+	 * @return A pointer to the P2PNeighborInterface at index i of interface vector
+	 */
+    P2PNetworkInterface *getInterface(int i) { return P2PNetworkInterfaces[i]; }
+	/**
+	 * @brief Getter for a specific P2PNetworkInterface, identified by its direction
+	 * For all blocks that cannot rotate, the direction will always be equal to the index in the P2PNetworkInterfaces array.
+	 * However, for all rotation-enabled blocks, we have to consider the angle as an offset to the index.
+	 * @param direction : Lattice::Direction to which the interface is pointing
+	 * @return A pointer to the P2PNeighborInterface at direction of the block */
+    // virtual P2PNetworkInterface *getInterfaceForDirection(int direction) { return P2PNetworkInterfaces[i]; }
 	/**
 	 * @brief Returns the interface from this block that is connected to block of id destBlockId
 	 * @param destBlockId : id of the block connected to the interface we are looking for
 	 * @return a pointer to the interface connected to the requested block, or NULL
 	 */
-	P2PNetworkInterface *getP2PNetworkInterfaceByDestBlockId(int destBlockId);
+	P2PNetworkInterface *getP2PNetworkInterfaceByDestBlockId(bID destBlockId);
 	/**
 	 * @brief Creates a new interface to this block and connects it to destBlock
 	 * @param destBlock : pointer to the building block to connect to the newly created interface
@@ -159,22 +170,33 @@ public:
 	 */
 	inline Vector3D getPositionVector() { return Vector3D(position[0], position[1], position[2]);};
 	/**
-	 * @brief Adds block targer as neighbor for this block on interface ni
-	 * @param ni : pointer to the interface to connect
-	 * @param target : pointer to the BuildingBlock to connect to interface ni
+	 * @brief Schedules an AddNewNeighbor event
+	 * @param ni : pointer to the interface that was just connected
+	 * @param target : pointer to the BuildingBlock connected to interface ni
 	 */
-	virtual void addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target) {};
+	virtual void addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target) {};	
 	/**
-	 * @brief Disconnect interface ni
-	 * @param ni : pointer to the interface to disconnect
+	 * @brief Schedules a RemoveNeighborEvent
+	 * @param ni : pointer to the disconnected interface
 	 */
 	virtual void removeNeighbor(P2PNetworkInterface *ni) {};
+	/**
+	 * @brief Returns the number of interfaces for this block
+	 * @return number of interface for this block
+	 */
+	inline unsigned short getNbInterfaces() {	return P2PNetworkInterfaces.size(); };
 	/**
 	 * @brief Schedules a stop event for this block at a given date and update its state
 	 * @param date : date at which the stop event must be processed
 	 * @param s : new state of the block
 	 */
-	virtual void stop(uint64_t date, State s) {};
+	virtual void stop(Time date, State s) {};
+	/**
+	 * @brief Returns the direction (defined in lattice.h) corresponding to the interface p2p
+	 * @param p2p interface to consider
+	 * @return direction on which p2p is
+	 */	
+	virtual int getDirection(P2PNetworkInterface *p2p) = 0;
 	/**
 	 * @brief Atomic getter for the block's state
 	 * No guarantee that state value will remain the same, it just avoids
@@ -189,25 +211,56 @@ public:
 	 * @param s : new state of the block
 	 */   	
 	inline void setState(State s) { state.store(s); }
-	/* For Blinky Block determinism version */
-	int getNextRandomNumber();
+	/**
+	 * @brief Return a random unsigned int (ruint) using the generator field
+	 * @return random ruint
+	 */ 
+	ruint getRandomUint();
 	/**
 	 * @brief Schedules a tap event at a given date for this blocks
 	 * When triggered from the simulation menu,
 	 *  can be used as an interactive event for debug on all catom types
 	 * @param date : date of the tap event
+	 * @param face : id of the tapped face
 	 */   	
-	void tap(uint64_t date, bool debug = false);// PTHY: TEMPORARY! Debug event should be handled by user
+	void tap(Time date, int face);
+	/**
+	 * @brief Set the internal clock to the clock in parameter
+	 * @param c clock which the internal clock will be set
+	 */
+	void setClock(Clock *c);
+	/**
+	 * @brief Returns the current local time of the block according to its internal clock
+	 * @return current local time of the block according to its internal clock
+	 */   	
+	Time getLocalTime();
 	/**
 	 * @brief Returns the local time of the block according to its internal clock
+	 * @para simTime simulation time for which this function returns the block clock local time
 	 * @return local time of the block according to its internal clock
-	 */   	
-	uint64_t getTime();
+	 */ 
+	Time getLocalTime(Time simTime);
 	/**
 	 * @brief Converts the block's local time into the global time of the simulation and returns it
 	 * @return global time corresponding to the local time in parameter
 	 */   	
-	uint64_t getSchedulerTimeForLocalTime(uint64_t localTime);
+	Time getSimulationTime(Time localTime);
+
+	/*************************************************
+	 *            MeldInterpreter Functions  
+	 *************************************************/
+	/**
+	 * @brief Returns the id of the block connected on interface #faceNum of this block
+	 * @param faceNum : id of the connected interface
+	 * @return id of the block connected to interface faceNum 
+	 */
+	unsigned short getNeighborIDForFace(int faceNum);
+	/**
+	 * @brief Returns the id of the face from this block connected to block of id nId
+	 * @param nId : id of the connected block 
+	 * @return the id of the face connected to block nId, or -1 if the two blocks are not neighbors
+	 */
+	int getFaceForNeighborID(int nId);
 };
 
 } // BaseSimulator namespace

@@ -18,9 +18,7 @@ int main(int argc, char **argv) {
 	cout << "\033[1;33m" << "Starting Catom3D simulation (main) ..." << "\033[0m" << endl;
 
 	createSimulator(argc, argv, CsgCatoms3DBlockCode::buildNewBlockCode);
-	Scheduler *scheduler = getScheduler();
 	getSimulator()->printInfo();
-	scheduler->printInfo();
 	BaseSimulator::getWorld()->printInfo();
 /*
 	scheduler->start(SCHEDULER_MODE_FASTEST);
@@ -29,14 +27,14 @@ int main(int argc, char **argv) {
 	deleteSimulator();
 
 	cout << "\033[1;33m" << "end (main)" << "\033[0m" << endl;
-    cout << "Difference stoy = " << CsgCatoms3DBlockCode::difference_stoy << endl;
-    cout << "Difference mesh = " << CsgCatoms3DBlockCode::difference_mesh << endl;
-    cout << "Difference bitmap = " << CsgCatoms3DBlockCode::difference_bitmap << endl;
-    cout << "Total catoms in csg = " << CsgCatoms3DBlockCode::total_csg << endl;
-    cout << "bitmap_time_elapsed = " << CsgCatoms3DBlockCode::bitmap_time_elapsed/1000000 << endl;
-    cout << "csg_time_elapsed = " << CsgCatoms3DBlockCode::csg_time_elapsed/1000000 << endl;
-    cout << "stoy_time_elapsed = " << CsgCatoms3DBlockCode::stoy_time_elapsed/1000000<< endl;
-    cout << "mesh_time_elapsed = " << CsgCatoms3DBlockCode::mesh_time_elapsed/1000000 << endl;
+    cout << "Difference stoy = " << CsgCatoms3DStats::difference_stoy << endl;
+    cout << "Difference mesh = " << CsgCatoms3DStats::difference_mesh << endl;
+    cout << "Difference bitmap = " << CsgCatoms3DStats::difference_bitmap << endl;
+    cout << "Total catoms in csg = " << CsgCatoms3DStats::total_csg << endl;
+    cout << "bitmap_time_elapsed = " << CsgCatoms3DStats::bitmap_time_elapsed/1000000 << endl;
+    cout << "csg_time_elapsed = " << CsgCatoms3DStats::csg_time_elapsed/1000000 << endl;
+    cout << "stoy_time_elapsed = " << CsgCatoms3DStats::stoy_time_elapsed/1000000<< endl;
+    cout << "mesh_time_elapsed = " << CsgCatoms3DStats::mesh_time_elapsed/1000000 << endl;
 
 /*    fstream bitmapFile("bitmap.out", fstream::out);
     unsigned char c;

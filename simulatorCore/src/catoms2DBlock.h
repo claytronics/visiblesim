@@ -8,18 +8,19 @@
 #ifndef CATOMS2DBLOCK_H_
 #define CATOMS2DBLOCK_H_
 
-#include <boost/asio.hpp>
 #include <stdexcept>
 
 #include "buildingBlock.h"
 #include "catoms2DBlockCode.h"
 #include "catoms2DGlBlock.h"
 #include "lattice.h"
+#include "motionEngine.h"
+
+class Rotation2DMove;
 
 namespace Catoms2D {
 
 class Catoms2DBlockCode;
-class Catoms2DMove;
 
 class RelativeDirection {
  public:
@@ -32,6 +33,7 @@ protected:
 
 public:
 	int angle;
+	MotionEngine *motionEngine;
 	
 	Catoms2DBlock(int bId, BlockCodeBuilder bcb);
 	~Catoms2DBlock();
@@ -41,12 +43,11 @@ public:
 	inline P2PNetworkInterface *getInterface(int d) {
 		return P2PNetworkInterfaces[(HLattice::Direction)d];
 	}
-	P2PNetworkInterface *getP2PNetworkInterfaceByRelPos(const PointRel3D &pos);
 
 	Cell3DPosition getPosition(HLattice::Direction d);
 	Cell3DPosition getPosition(P2PNetworkInterface *p2p);
 
-	HLattice::Direction getDirection(P2PNetworkInterface* p2p);
+	int getDirection(P2PNetworkInterface* p2p);
 	int nbNeighbors(bool groundIsNeighbor = false);
 	int nbConsecutiveNeighbors(bool groundIsNeighbor = false);
 	int nbConsecutiveEmptyFaces(bool groundIsNeighbor = false);
@@ -59,11 +60,22 @@ public:
 
 	// Motion
 	bool isBlocked();
-	bool canMove(Catoms2DMove &m);
+	bool canMove(Rotation2DMove &m);
 	int getCCWMovePivotId();
 	int getCWMovePivotId();
-	void startMove(Catoms2DMove &m, uint64_t t);
-	void startMove(Catoms2DMove &m);   
+	void startMove(Rotation2DMove &m, Time t);
+	void startMove(Rotation2DMove &m);
+
+	// MeldInterpreter
+	/**
+	 * @copydoc BuildingBlock::addNeighbor
+	 */
+	virtual void addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target);
+	/**
+	 * @copydoc BuildingBlock::removeNeighbor
+	 */
+	virtual void removeNeighbor(P2PNetworkInterface *ni);
+
 };
 
 std::ostream& operator<<(std::ostream &stream, Catoms2DBlock const& bb);

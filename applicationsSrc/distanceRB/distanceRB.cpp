@@ -7,11 +7,9 @@ using namespace RobotBlocks;
 
 int main(int argc, char **argv) {
 	createSimulator(argc, argv, DistanceRBCode::buildNewBlockCode);
-	Scheduler *scheduler = getScheduler();
 
 	getSimulator()->printInfo();
-	scheduler->printInfo();
 	BaseSimulator::getWorld()->printInfo();
-	deleteSimulator();
+	BaseSimulator::deleteSimulator();
 	return(0);
 }

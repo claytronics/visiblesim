@@ -2,12 +2,6 @@
 
 namespace RobotBlocks {
 
-RobotBlocksGlBlock::RobotBlocksGlBlock(int id) : GlBlock(id) {
-}
-
-RobotBlocksGlBlock::~RobotBlocksGlBlock() {
-}
-
 void RobotBlocksGlBlock::glDraw(ObjLoader::ObjLoader *ptrObj) {
 	glPushMatrix();
 
@@ -25,28 +19,6 @@ void RobotBlocksGlBlock::glDraw(ObjLoader::ObjLoader *ptrObj) {
 	}
 	ptrObj->glDraw();
     glPopMatrix();
-}
-
-void RobotBlocksGlBlock::glDrawId(ObjLoader::ObjLoader *ptrObj,int &n) {
-	glPushMatrix();
-	glTranslatef(position[0],position[1],position[2]);
-	ptrObj->glDrawId(n);
-	glPopMatrix();
-}
-
-void RobotBlocksGlBlock::glDrawIdByMaterial(ObjLoader::ObjLoader *ptrObj,int &n) {
-	glPushMatrix();
-	glTranslatef(position[0],position[1],position[2]);
-	ptrObj->glDrawIdByMaterial(n);
-	glPopMatrix();
-}
-
-
-string RobotBlocksGlBlock::getInfo() {
-    char tmp[1024];
-	sprintf(tmp,"%d\nPos=(%.1f,%.1f,%.1f) Col=(%4.1f,%4.1f,%4.1f)\n",blockId,position[0],position[1],position[2],color[0],color[1],color[2]);
-
-	return string(tmp);
 }
 
 void RobotBlocksGlBlock::setPrevNext(int p,int n) {

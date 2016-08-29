@@ -11,6 +11,8 @@ using namespace std;
 
 /********************* Lattice *********************/
 
+const string Lattice::directionName[] = {};
+
 Lattice::Lattice() {
     grid = NULL;
 }
@@ -20,7 +22,8 @@ Lattice::Lattice(const Cell3DPosition &gsz, const Vector3D &gsc) {
     gridScale = gsc;
 
     if (gsz[0] <= 0 || gsz[1] <= 0 || gsz[2] <= 0) {
-        cerr << "error: Incorrect lattice size: size in any direction cannot be negative or null)" << endl;
+        cerr << "error: Incorrect lattice size: size in any direction cannot be negative or null" << endl;
+        throw InvalidDimensionsException();
     }
 
     grid = new BuildingBlock*[gridSize[0] * gridSize[1] * gridSize[2]]{NULL};
@@ -49,7 +52,7 @@ void Lattice::insert(BuildingBlock* bb, const Cell3DPosition &p) {
         grid[index] = bb;
     } else {
         cerr << "error: trying to add block of id " << bb->blockId << " on non-empty cell " << p << endl;
-        throw new InvalidInsertionException;
+        throw InvalidInsertionException();
         // exit(EXIT_FAILURE);
     }
 
@@ -114,24 +117,25 @@ vector<Cell3DPosition> Lattice::getNeighborhood(const Cell3DPosition &pos) {
     return neighborhood;
 }
 
+string Lattice::getDirectionString(int d) {
+    return isInRange(d, 0, this->getMaxNumNeighbors() - 1) ? directionName[d] : "undefined";
+}
+
 /********************* Lattice2D *********************/
 Lattice2D::Lattice2D() : Lattice() {}
 Lattice2D::Lattice2D(const Cell3DPosition &gsz, const Vector3D &gsc) : Lattice(gsz,gsc) {}
 Lattice2D::~Lattice2D() {}
-
+const string Lattice2D::directionName[] = {};
 /********************* Lattice3D *********************/
 Lattice3D::Lattice3D() : Lattice() {}
 Lattice3D::Lattice3D(const Cell3DPosition &gsz, const Vector3D &gsc) : Lattice(gsz,gsc) {}
 Lattice3D::~Lattice3D() {}
-
+const string Lattice3D::directionName[] = {};
 /********************* HLattice *********************/
 HLattice::HLattice() : Lattice2D() {}
 HLattice::HLattice(const Cell3DPosition &gsz, const Vector3D &gsc) : Lattice2D(gsz,gsc) {}
 HLattice::~HLattice() {}
 
-
-// If new blocks are added with different shapes for the same lattice, we may consider
-//  using a different function again for each block, or at least different sub operations
 Vector3D HLattice::gridToWorldPosition(const Cell3DPosition &pos) {
     Vector3D res;
 
@@ -156,14 +160,14 @@ Cell3DPosition HLattice::worldToGridPosition(const Vector3D &pos) {
 
     res.pt[2] = round(pos[2] / (M_SQRT3_2 * gridScale[2]));
     res.pt[1] = 0;              // grid is 2D (x,z)
-    res.pt[0] = (short)((pos[0] / gridScale[0]) - ((int)res.pt[2] % 2) * 0.5);
+    res.pt[0] = round((pos[0] / gridScale[0] - ((int)res.pt[2] % 2) * 0.5));
 
     /*
       cout << "------------computation worldToGridPosition--------------" << endl;
       cout << pos << endl;
       cout << res << endl;
-      cout << "---------------------------------------------------------" << endl;*/
-
+      cout << "---------------------------------------------------------" << endl;
+    */
     return res;
 }
 
@@ -178,7 +182,7 @@ vector<Cell3DPosition> HLattice::getRelativeConnectivity(const Cell3DPosition &p
 const string HLattice::directionName[] = {"Right","TopRight","TopLeft",
                                                              "Left","BottomLeft","BottomRight"};
 
-int HLattice::getOpposite(int d) {
+int HLattice::getOppositeDirection(int d) {
     switch (Direction(d)) {
     case BottomLeft:
         return TopRight;
@@ -205,7 +209,7 @@ int HLattice::getOpposite(int d) {
     }
 }
 
-string HLattice::getString(int d) {
+string HLattice::getDirectionString(int d) {
     return directionName[d];
 }
 
@@ -236,7 +240,7 @@ Cell3DPosition SLattice::worldToGridPosition(const Vector3D &pos) {
 
 const string SLattice::directionName[] = {"North","East","South","West"};
 
-int SLattice::getOpposite(int d) {
+int SLattice::getOppositeDirection(int d) {
     switch(d) {
     case North :
         return South;
@@ -257,7 +261,7 @@ int SLattice::getOpposite(int d) {
     }
 }
 
-string SLattice::getString(int d) {
+string SLattice::getDirectionString(int d) {
     return directionName[d];
 }
 
@@ -322,7 +326,7 @@ const string FCCLattice::directionName[] = {"Con0", "Con1", "Con2",
                                                                "Con6", "Con7", "Con8",
                                                                "Con9", "Con10", "Con11"};
 
-int FCCLattice::getOpposite(int d) {
+int FCCLattice::getOppositeDirection(int d) {
     switch (Direction(d)) {
     case Con0:	return Con6; break;
     case Con1:	return Con7; break;
@@ -343,7 +347,7 @@ int FCCLattice::getOpposite(int d) {
     }
 }
 
-string FCCLattice::getString(int d) {
+string FCCLattice::getDirectionString(int d) {
     return directionName[d];
 }
 
@@ -371,7 +375,7 @@ Cell3DPosition SCLattice::worldToGridPosition(const Vector3D &pos) {
 
 const string SCLattice::directionName[] = {"Bottom", "Back", "Right","Front", "Left", "Top"};
 
-int SCLattice::getOpposite(int d) {
+int SCLattice::getOppositeDirection(int d) {
     switch (Direction(d)) {
     case Front:	return Back; break;
     case Back:	return Front; break;
@@ -386,22 +390,35 @@ int SCLattice::getOpposite(int d) {
     }
 }
 
-string SCLattice::getString(int d) {
+string SCLattice::getDirectionString(int d) {
     return directionName[d];
 }
 
-// std::vector<int> SCLattice::getActiveNeighborDirections(BuildingBlock *bb) {
-//     vector<int> neighborDirections;
-//     vector<Cell3DPosition> relativeNCells =
-//         getRelativeConnectivity(bb->position);
+/********************* BCLattice *********************/
+BCLattice::BCLattice() : Lattice3D() {}
+BCLattice::BCLattice(const Cell3DPosition &gsz, const Vector3D &gsc) : Lattice3D(gsz,gsc) {}
+BCLattice::~BCLattice() {}
 
-//     // Check if each neighbor cell is in grid and if it is, determine the corresponding direction
-//     for (Cell3DPosition p : relativeNCells) {
-//         Cell3DPosition v = bb->position + p;
-//         if (isInGrid(v) && !isFree(v)) {
-//             neighborDirections.push_back(determineDirection(p));
-//         }
-//     }
+vector<Cell3DPosition> BCLattice::getRelativeConnectivity(const Cell3DPosition &p) {
+    return vector<Cell3DPosition>();
+}
 
-//     return neighborDirections;
-// }
+Vector3D BCLattice::gridToWorldPosition(const Cell3DPosition &pos) {
+    return Vector3D(pos[0] * gridScale[0],
+                    pos[1] * gridScale[1],
+                    pos[2] * gridScale[2]);
+}
+
+Cell3DPosition BCLattice::worldToGridPosition(const Vector3D &pos) {
+    return Cell3DPosition(pos[0] / gridScale[0],
+                          pos[1] / gridScale[1],
+                          pos[2] / gridScale[2]);
+}
+
+int BCLattice::getOppositeDirection(int d) {
+    return -1;
+}
+
+string BCLattice::getDirectionString(int d) {
+    return "Wireless";
+}

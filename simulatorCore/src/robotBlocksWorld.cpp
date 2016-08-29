@@ -25,35 +25,32 @@ RobotBlocksWorld::RobotBlocksWorld(const Cell3DPosition &gridSize, const Vector3
 								   int argc, char *argv[]):World(argc, argv) {
 	OUTPUT << "\033[1;31mRobotBlocksWorld constructor\033[0m" << endl;
 
-	targetGrid=NULL;
-
-	idTextureWall=0;
-	objBlock = new ObjLoader::ObjLoader("../../simulatorCore/robotBlocksTextures","robotBlock.obj");
-	objBlockForPicking = new ObjLoader::ObjLoader("../../simulatorCore/robotBlocksTextures",
-												  "robotBlockPicking.obj");
-	objRepere = new ObjLoader::ObjLoader("../../simulatorCore/smartBlocksTextures","repere25.obj");
-
+	if (GlutContext::GUIisEnabled) {
+		objBlock = new ObjLoader::ObjLoader("../../simulatorCore/resources/textures/robotBlocksTextures",
+											"robotBlock.obj");
+		objBlockForPicking = new ObjLoader::ObjLoader("../../simulatorCore/resources/textures/robotBlocksTextures",
+													  "robotBlockPicking.obj");
+		objRepere = new ObjLoader::ObjLoader("../../simulatorCore/resources/textures/latticeTextures",
+											 "repere25.obj");
+	}
+	
 	lattice = new SCLattice(gridSize, gridScale.hasZero() ? defaultBlockSize : gridScale);
 }
 
 RobotBlocksWorld::~RobotBlocksWorld() {
 	OUTPUT << "RobotBlocksWorld destructor" << endl;
 	/*	block linked are deleted by world::~world() */
-	delete [] targetGrid;
-	delete objBlock;
-	delete objBlockForPicking;
-	delete objRepere;
 }
 
 void RobotBlocksWorld::deleteWorld() {
 	delete((RobotBlocksWorld*)world);
 }
 
-void RobotBlocksWorld::addBlock(int blockId, BlockCodeBuilder bcb, const Cell3DPosition &pos,
+void RobotBlocksWorld::addBlock(bID blockId, BlockCodeBuilder bcb, const Cell3DPosition &pos,
 								const Color &col, short orientation, bool master) {
 	if (blockId > maxBlockId)
 		maxBlockId = blockId;
-	else if (blockId == -1)
+	else if (blockId == 0)
 		blockId = incrementBlockId();
 
 	RobotBlocksBlock *robotBlock = new RobotBlocksBlock(blockId, bcb);
@@ -77,31 +74,6 @@ void RobotBlocksWorld::addBlock(int blockId, BlockCodeBuilder bcb, const Cell3DP
 	}
 }
 
-void RobotBlocksWorld::connectBlock(RobotBlocksBlock *block) {
-	Cell3DPosition pos = block->position;
-	lattice->insert(block, pos);
-	OUTPUT << "Reconnection " << block->blockId << " pos = " << pos << endl;
-	linkBlock(pos);
-	linkNeighbors(pos);
-}
-
-void RobotBlocksWorld::disconnectBlock(RobotBlocksBlock *block) {
-	P2PNetworkInterface *fromBlock,*toBlock;
-
-	for(int i=0; i<6; i++) {
-		fromBlock = block->getInterface(SCLattice::Direction(i));
-		if (fromBlock && fromBlock->connectedInterface) {
-			toBlock = fromBlock->connectedInterface;
-			fromBlock->connectedInterface=NULL;
-			toBlock->connectedInterface=NULL;
-		}
-	}
-
-	lattice->remove(block->position);
-	OUTPUT << getScheduler()->now() << " : Disconnection " << block->blockId
-		   << " pos =" << block->position << endl;
-}
-
 void RobotBlocksWorld::linkBlock(const Cell3DPosition &pos) {
 	RobotBlocksBlock *ptrNeighbor;
 	RobotBlocksBlock *ptrBlock = (RobotBlocksBlock*)lattice->getBlock(pos);
@@ -115,48 +87,15 @@ void RobotBlocksWorld::linkBlock(const Cell3DPosition &pos) {
 		if (ptrNeighbor) {
 			(ptrBlock)->getInterface(SCLattice::Direction(i))->
 				connect(ptrNeighbor->getInterface(SCLattice::Direction(
-													  SCLattice::getOpposite(i))));
+													  lattice->getOppositeDirection(i))));
 
-			OUTPUT << "connection #" << (ptrBlock)->blockId << ":" << SCLattice::getString(i) <<
+			OUTPUT << "connection #" << (ptrBlock)->blockId << ":" << lattice->getDirectionString(i) <<
 				" to #" << ptrNeighbor->blockId << ":"
-				   << SCLattice::getString(SCLattice::getOpposite(i)) << endl;
+				   << lattice->getDirectionString(lattice->getOppositeDirection(i)) << endl;
 		} else {
 			(ptrBlock)->getInterface(SCLattice::Direction(i))->connect(NULL);
 		}
 	}
-}
-
-void RobotBlocksWorld::deleteBlock(BuildingBlock *blc) {
-	RobotBlocksBlock *bb = (RobotBlocksBlock *)blc;
-
-	if (bb->getState() >= RobotBlocksBlock::ALIVE ) {
-		// cut links between bb and others
-		for(int i=0; i<6; i++) {
-			P2PNetworkInterface *bbi = bb->getInterface(SCLattice::Direction(i));
-			if (bbi->connectedInterface) {
-				//bb->removeNeighbor(bbi); //Useless
-				bbi->connectedInterface->hostBlock->removeNeighbor(bbi->connectedInterface);
-				bbi->connectedInterface->connectedInterface=NULL;
-				bbi->connectedInterface=NULL;
-			}
-		}
-
-		disconnectBlock(bb);
-	}
-	if (selectedGlBlock == bb->ptrGlBlock) {
-		selectedGlBlock = NULL;
-		GlutContext::mainWindow->select(NULL);
-	}
-	// remove the associated glBlock
-	std::vector<GlBlock*>::iterator cit=tabGlBlocks.begin();
-	if (*cit==bb->ptrGlBlock) tabGlBlocks.erase(cit);
-	else {
-		while (cit!=tabGlBlocks.end() && (*cit)!=bb->ptrGlBlock) {
-			cit++;
-		}
-		if (*cit==bb->ptrGlBlock) tabGlBlocks.erase(cit);
-	}
-	delete bb->ptrGlBlock;
 }
 
 void RobotBlocksWorld::glDraw() {
@@ -303,31 +242,6 @@ void RobotBlocksWorld::updateGlData(RobotBlocksBlock*blc,int prev,int next) {
 	}
 }
 
-void RobotBlocksWorld::menuChoice(int n) {
-	RobotBlocksBlock *bb = (RobotBlocksBlock *)getBlockById(tabGlBlocks[numSelectedGlBlock]->blockId);
-	switch (n) {
-	case 1 : {
-		OUTPUT << "ADD block link to : " << bb->blockId << "     num Face : " << numSelectedFace << endl;
-		vector<Cell3DPosition> nCells = lattice->getRelativeConnectivity(bb->position);
-		Cell3DPosition nPos = bb->position + nCells[numSelectedFace];
-
-		addBlock(-1, bb->buildNewBlockCode, nPos, bb->color);
-		linkBlock(nPos);
-		linkNeighbors(nPos);
-	} break;
-	case 2 : {
-		OUTPUT << "DEL num block : " << tabGlBlocks[numSelectedGlBlock]->blockId << endl;
-		deleteBlock(bb);
-	} break;
-	case 3 : {
-		tapBlock(getScheduler()->now(), bb->blockId);
-	} break;
-	case 4:                 // Save current configuration
-		exportConfiguration();
-		break;
-	}
-}
-
 void RobotBlocksWorld::setSelectedFace(int n) {
 	numSelectedGlBlock=n/6;
 	string name = objBlockForPicking->getObjMtlName(n%6);
@@ -340,9 +254,8 @@ void RobotBlocksWorld::setSelectedFace(int n) {
 }
 
 void RobotBlocksWorld::exportConfiguration() {
-	RobotBlocksConfigExporter *exporter = new RobotBlocksConfigExporter(this);
-	exporter->exportConfiguration();
-	delete exporter;
+	RobotBlocksConfigExporter exporter = RobotBlocksConfigExporter(this);
+	exporter.exportConfiguration();
 }
 
 } // RobotBlock namespace

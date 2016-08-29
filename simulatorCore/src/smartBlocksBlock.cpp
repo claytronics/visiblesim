@@ -14,28 +14,24 @@ using namespace std;
 namespace SmartBlocks {
     
 SmartBlocksBlock::SmartBlocksBlock(int bId, BlockCodeBuilder bcb)
-    : BaseSimulator::BuildingBlock(bId, bcb) {
+    : BaseSimulator::BuildingBlock(bId, bcb, SLattice::MAX_NB_NEIGHBORS) {
     OUTPUT << "SmartBlocksBlock #" << bId << " constructor" << endl;
-
-    for (int i=SLattice::North; i<=SLattice::West; i++) {
-        P2PNetworkInterfaces.push_back(new P2PNetworkInterface(this));
-    }
 }
 
 SmartBlocksBlock::~SmartBlocksBlock() {
     OUTPUT << "SmartBlocksBlock #" << blockId << " destructor" << endl;
 }
 
-P2PNetworkInterface *SmartBlocksBlock::getP2PNetworkInterfaceByRelPos(const PointCel &pos) {
-    if (pos.x==-1) return P2PNetworkInterfaces[SLattice::West];
-    else if (pos.x==1) return P2PNetworkInterfaces[SLattice::East];
-    else if (pos.y==-1) return P2PNetworkInterfaces[SLattice::South];
-    else if (pos.y==1) return P2PNetworkInterfaces[SLattice::North];
+P2PNetworkInterface *SmartBlocksBlock::getP2PNetworkInterfaceByRelPos(const Cell3DPosition &pos) {
+    if (pos[0]==-1) return P2PNetworkInterfaces[SLattice::West];
+    else if (pos[0]==1) return P2PNetworkInterfaces[SLattice::East];
+    else if (pos[1]==-1) return P2PNetworkInterfaces[SLattice::South];
+    else if (pos[1]==1) return P2PNetworkInterfaces[SLattice::North];
 
     return NULL;
 }
 
-SLattice::Direction SmartBlocksBlock::getDirection(P2PNetworkInterface *given_interface) {
+int SmartBlocksBlock::getDirection(P2PNetworkInterface *given_interface) {
     /*if( !given_interface) {
       return SLattice::Direction(0);
       }*/
@@ -73,7 +69,7 @@ Cell3DPosition SmartBlocksBlock::getPosition(SLattice::Direction d) {
     return p;
 }
 
-P2PNetworkInterface *SmartBlocksBlock::getP2PNetworkInterfaceByDestBlockId(int id) {
+P2PNetworkInterface *SmartBlocksBlock::getP2PNetworkInterfaceByDestBlockId(bID id) {
     int i=0;
     while (i<4 && (P2PNetworkInterfaces[i]->connectedInterface == NULL
                    || P2PNetworkInterfaces[i]->connectedInterface->hostBlock->blockId != id)) {
@@ -81,5 +77,22 @@ P2PNetworkInterface *SmartBlocksBlock::getP2PNetworkInterfaceByDestBlockId(int i
     }
     return (i<4?P2PNetworkInterfaces[i]:NULL);
 }
-    
+
+
+void SmartBlocksBlock::addNeighbor(P2PNetworkInterface *ni, BuildingBlock* target) {
+    OUTPUT << "Simulator: "<< blockId << " add neighbor " << target->blockId << " on "
+		   << getWorld()->lattice->getDirectionString(getDirection(ni)) << endl;
+    getScheduler()->schedule(
+		new AddNeighborEvent(getScheduler()->now(), this,
+							 getWorld()->lattice->getOppositeDirection(getDirection(ni)), target->blockId));
+}
+
+void SmartBlocksBlock::removeNeighbor(P2PNetworkInterface *ni) {
+    OUTPUT << "Simulator: "<< blockId << " remove neighbor on "
+		   << getWorld()->lattice->getDirectionString(getDirection(ni)) << endl;
+    getScheduler()->schedule(
+		new RemoveNeighborEvent(getScheduler()->now(), this,
+								getWorld()->lattice->getOppositeDirection(getDirection(ni))));
+}
+
 }
