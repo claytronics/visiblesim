@@ -93,13 +93,15 @@ void Rotation2DStartEvent::consume() {
     Time stepDuration = (long double)duration/(long double)steps;
     Time remaining = duration - stepDuration;
 #ifdef DURATION_MOTION_DEBUG
-    cerr << "----------" << endl;
-    cerr << "@" << concernedBlock->blockId << endl;
-    cerr << "Duration: " << duration << endl;
-    cerr << "Step duration: " << stepDuration << endl;
-    cerr << "Motion start at " << getScheduler()->now() << endl;
-    cerr << "Motion should end at " << getScheduler()->now()+duration << endl; 
-    cerr << "----------" << endl;
+    if (concernedBlock->blockId == 7) {
+      cerr << "----------" << endl;
+      cerr << "@" << concernedBlock->blockId << endl;
+      cerr << "Duration: " << duration << endl;
+      cerr << "Step duration: " << stepDuration << endl;
+      cerr << "Motion start at " << getScheduler()->now() << endl;
+      cerr << "Motion should end at " << getScheduler()->now()+duration << endl; 
+      cerr << "----------" << endl;
+    }
 #endif
     scheduler->schedule(new Rotation2DStepEvent(scheduler->now() + stepDuration, rb,pivot,angle,sens,remaining));
 }
@@ -141,7 +143,9 @@ void Rotation2DStepEvent::consume() {
 
     Scheduler *scheduler = getScheduler();
 #ifdef DURATION_MOTION_DEBUG
-    cerr << "@" << rb->blockId << " motion step, angle " << angle << " at " << getScheduler()->now() << " (" << date << ")" << endl; 
+    if (concernedBlock->blockId == 7) {
+      cerr << "@" << rb->blockId << " motion step, angle " << angle << " at " << getScheduler()->now() << " (" << date << ")" << endl; 
+    }
 #endif
     Matrix roty;
 
@@ -217,12 +221,14 @@ void Rotation2DStopEvent::consume() {
 #endif
 
 #ifdef DURATION_MOTION_DEBUG
-    cerr << "----------" << endl;
-    cerr << "@" << concernedBlock->blockId << endl;
-    cerr << "Now: " << getScheduler()->now() << endl;
-    cerr << "Motion end at " << date << endl;
-    cerr << "Communication should be re-established at " << date + COM_DELAY << endl;
-    cerr << "----------" << endl;
+    if (concernedBlock->blockId == 7) {
+      cerr << "----------" << endl;
+      cerr << "@" << concernedBlock->blockId << endl;
+      cerr << "Now: " << getScheduler()->now() << endl;
+      cerr << "Motion end at " << date << endl;
+      cerr << "Communication should be re-established at " << date + COM_DELAY << endl;
+      cerr << "----------" << endl;
+    }
 #endif
     
     stringstream info;

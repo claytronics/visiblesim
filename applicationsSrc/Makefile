@@ -1,12 +1,12 @@
 
 # GENERIC BlockCodes
-SUBDIRS = simpleColorC2D simpleColorRB simpleColorSB distanceRB simpleCatoms3D simpleColorBB
+SUBDIRS = simpleMotion simpleColorC2D simpleColorRB simpleColorSB distanceRB simpleColorBB
 
 # MELD BlockCodes
 SUBDIRS += meld MRMeld
 
 # TESTED Legacy codeBlocks
-SUBDIRS += noneCatoms2D robot01 sphereCatoms3D sbReconf smartBlocks1 bbCycle csgCatoms3D 
+SUBDIRS += noneCatoms2D robot01 sphereCatoms3D sbReconf smartBlocks1 bbCycle
 
 .PHONY: subdirs $(SUBDIRS) test
 

@@ -37,18 +37,22 @@ Catoms3DWorld::Catoms3DWorld(const Cell3DPosition &gridSize, const Vector3D &gri
     if (GlutContext::GUIisEnabled) {
 		objBlock = new ObjLoader::ObjLoader("../../simulatorCore/resources/textures/catoms3DTextures",
 											"catom3DV2connectorID.obj");
+        /*objBlock = new ObjLoader::ObjLoader("../../simulatorCore/resources/textures/catoms3DTextures",
+											"catom3Drepere3.obj");*/
 		objBlockForPicking =
 			new ObjLoader::ObjLoader("../../simulatorCore/resources/textures/catoms3DTextures",
 									 "catom3D_picking.obj");
 		objRepere = new ObjLoader::ObjLoader("../../simulatorCore/resources/textures/catoms3DTextures","repereCatom3D.obj");
-	}   
+	}
 
     lattice = new FCCLattice(gridSize, gridScale.hasZero() ? defaultBlockSize : gridScale);
+    motionRules = new Catoms3DMotionRules();
 }
 
 Catoms3DWorld::~Catoms3DWorld() {
     OUTPUT << "Catoms3DWorld destructor" << endl;
     /*	block linked are deleted by world::~world() */
+    delete motionRules;
 }
 
 void Catoms3DWorld::deleteWorld() {
@@ -61,7 +65,7 @@ void Catoms3DWorld::addBlock(bID blockId, BlockCodeBuilder bcb, const Cell3DPosi
 		maxBlockId = blockId;
 	else if (blockId == 0)
 		blockId = incrementBlockId();
-	
+
     Catoms3DBlock *catom = new Catoms3DBlock(blockId,bcb);
     buildingBlocksMap.insert(std::pair<int,BaseSimulator::BuildingBlock*>
 							 (catom->blockId, (BaseSimulator::BuildingBlock*)catom));
@@ -117,6 +121,7 @@ void Catoms3DWorld::glDraw() {
     unlock();
     glPopMatrix();
 
+
 // material for the grid walls
 	static const GLfloat white[]={0.8f,0.8f,0.8f,1.0f},
 		gray[]={0.2f,0.2f,0.2f,1.0f};
@@ -124,6 +129,14 @@ void Catoms3DWorld::glDraw() {
 		glMaterialfv(GL_FRONT,GL_DIFFUSE,white);
 		glMaterialfv(GL_FRONT,GL_SPECULAR,white);
 		glMaterialf(GL_FRONT,GL_SHININESS,40.0);
+
+        lattice->glDraw();
+
+		glMaterialfv(GL_FRONT,GL_AMBIENT,gray);
+		glMaterialfv(GL_FRONT,GL_DIFFUSE,white);
+		glMaterialfv(GL_FRONT,GL_SPECULAR,white);
+		glMaterialf(GL_FRONT,GL_SHININESS,40.0);
+
 		glPushMatrix();
 		enableTexture(true);
 		glBindTexture(GL_TEXTURE_2D,idTextureGrid);
